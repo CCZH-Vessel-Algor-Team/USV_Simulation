@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- 定义船体宏，支持物理参数覆盖 -->
+  <xacro:macro name="hull_macro" params="
+    name 
+    mass:=180.0 
+    ixx:=100.0 iyy:=100.0 izz:=200.0
+    visual_mesh:=package://wamv_description/meshes/hull.dae
+    xyz:='0 0 0'
+    rpy:='0 0 0'">
+
+    <link name="${name}">
+      <!-- 视觉属性 -->
+      <visual>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+        <geometry>
+          <mesh filename="${visual_mesh}"/>
+        </geometry>
+      </visual>
+
+      <!-- 碰撞属性 -->
+      <collision>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+        <geometry>
+          <mesh filename="${visual_mesh}"/>
+        </geometry>
+      </collision>
+
+      <!-- 惯性属性 -->
+      <inertial>
+        <mass value="${mass}"/>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+        <inertia ixx="${ixx}" ixy="0.0" ixz="0.0" 
+                 iyy="${iyy}" iyz="0.0" izz="${izz}"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+</robot>

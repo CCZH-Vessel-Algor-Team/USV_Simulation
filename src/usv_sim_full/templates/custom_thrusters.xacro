@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- 自定义推进器配置，支持参数化位置 -->
+  
+  <!-- 定义推进器位置参数 -->
+  <xacro:arg name="thruster_pos_x" default="-2.373776" />  <!-- 前后位置，默认-2.37米（船尾） -->
+  <xacro:arg name="thruster_pos_y_left" default="1.027135" />  <!-- 左侧推进器横向位置，默认1.03米 -->
+  <xacro:arg name="thruster_pos_y_right" default="-1.027135" />  <!-- 右侧推进器横向位置，默认-1.03米 -->
+  <xacro:arg name="thruster_pos_z" default="0.318237" />  <!-- 垂直位置，默认0.32米 -->
+
+  <xacro:include filename="$(find wamv_description)/urdf/thrusters/engine.xacro" />
+  
+  <!-- 使用参数定义推进器位置 -->
+  <xacro:engine 
+    prefix="left" 
+    position="$(arg thruster_pos_x) $(arg thruster_pos_y_left) $(arg thruster_pos_z)" />
+  <xacro:engine 
+    prefix="right" 
+    position="$(arg thruster_pos_x) $(arg thruster_pos_y_right) $(arg thruster_pos_z)" />
+
+  <xacro:include filename="$(find wamv_gazebo)/urdf/thruster_layouts/wamv_gazebo_thruster_config.xacro" />
+  <xacro:wamv_gazebo_thruster_config name="left" />
+  <xacro:wamv_gazebo_thruster_config name="right" />
+
+</robot>

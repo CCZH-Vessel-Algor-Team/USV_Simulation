@@ -1,0 +1,490 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.7">
+  <world name="ocean_usv_world">
+    <scene>
+      <sky>
+        <clouds>
+          <speed>12</speed>
+        </clouds>
+      </sky>
+      <grid>0</grid>
+      <origin_visual>0</origin_visual>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>-33.7242</latitude_deg>
+      <longitude_deg>150.68</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <light name="sun" type="directional">
+      <cast_shadows>1</cast_shadows>
+      <pose>0 0 10 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
+    </light>
+    <gui fullscreen="0">
+      <camera name="user_camera">
+        <pose>69.209 46.4468 53.5184 0 0.497799 -2.68764</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+    <model name="ocean_waves">
+      <static>true</static>
+      <plugin filename="libWavefieldModelPlugin.so" name="wavefield_plugin">
+        <static>false</static>
+        <update_rate>30</update_rate>
+        <size>1000 1000</size>
+        <cell_count>50 50</cell_count>
+        <wave>
+          <model>PMS</model>
+          <period>5</period>
+          <number>3</number>
+          <scale>2.5</scale>
+          <gain>0.1</gain>
+          <direction>1.0 0.0</direction>
+          <angle>0.4</angle>
+          <tau>2.0</tau>
+          <amplitude>0.0</amplitude>
+          
+          <steepness>0.0</steepness>
+        </wave>
+      </plugin>
+      <link name="ocean_waves_link">
+        <visual name="ocean_waves_visual">
+          <plugin filename="libWavefieldVisualPlugin.so" name="ocean_waves_visual_plugin">
+            <enableRtt>true</enableRtt>
+            <rttNoise>0.1</rttNoise>
+            <refractOpacity>0.2</refractOpacity>
+            <reflectOpacity>0.2</reflectOpacity>
+            <wave>
+              <model>PMS</model>
+              <period>5</period>
+              <number>3</number>
+              <scale>2.5</scale>
+              <gain>0.1</gain>
+              <direction>1.0 0.0</direction>
+              <angle>0.4</angle>
+              <tau>2.0</tau>
+              <amplitude>0.0</amplitude>
+              
+              <steepness>0.0</steepness>
+            </wave>
+          </plugin>
+          <geometry>
+            <mesh>
+              <scale>2.5 2.5 1</scale>
+              <uri>model://ocean_waves/meshes/mesh.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://ocean_waves/materials/scripts/waves.material</uri>
+              <name>WaveSim/GerstnerWaves</name>
+            </script>
+          </material>
+          <laser_retro>-1</laser_retro>
+        </visual>
+        <visual name="ocean_waves_below_visual">
+          <pose>0 0 -0.05 0 0 0</pose>
+          
+          <geometry>
+            <mesh>
+              <scale>2.5 2.5 1</scale>
+              <uri>model://ocean_waves/meshes/mesh_below.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://ocean_waves/materials/scripts/waves.material</uri>
+              <name>WaveSim/GerstnerWaves</name>
+            </script>
+          </material>
+          <laser_retro>-1</laser_retro>
+        </visual>
+      </link>
+    </model>
+    
+    <plugin name="wind" filename="libusv_gazebo_wind_plugin.so">
+      <wind_obj>
+        <name>wamv</name>
+        <link_name>wamv/base_link</link_name>
+        <coeff_vector>.5 .5 .33</coeff_vector>
+      </wind_obj>
+      <wind_direction>270</wind_direction>
+      <wind_mean_velocity>0</wind_mean_velocity>
+      <var_wind_gain_constants>0</var_wind_gain_constants>
+      <var_wind_time_constants>2</var_wind_time_constants>
+      <random_seed />
+      <update_rate>10</update_rate>
+      <topic_wind_speed>/vrx/debug/wind/speed</topic_wind_speed>
+      <topic_wind_direction>/vrx/debug/wind/direction</topic_wind_direction>
+    </plugin>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type="adiabatic" />
+    <physics type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <wind />
+    <model name="sandisland">
+      <pose>45.7512 3.07833 0 0 -0 0</pose>
+      <static>1</static>
+      <link name="silink">
+        <visual name="visual">
+          <geometry>
+            <mesh>
+              <uri>model://sim_env/models/sandisland/meshes/sandisland.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <mesh>
+              <uri>model://sim_env/models/sandisland/meshes/sandisland.dae</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode />
+            </contact>
+            <bounce />
+            <friction>
+              <torsional>
+                <ode />
+              </torsional>
+              <ode />
+            </friction>
+          </surface>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+  <model name="BOX_0">
+	<link name="BOX_0_link">
+		<inertial>
+			<pose>5.0 -2.0 0.3 0 0 0</pose>
+			<mass>10.0</mass>
+			<inertia>
+				<ixx>354.1666666666667</ixx>
+				<ixy>0</ixy>
+				<ixz>0</ixz>
+				<iyy>104.16666666666667</iyy>
+				<iyz>0</iyz>
+				<izz>416.6666666666667</izz>
+			</inertia>
+		</inertial>
+		<collision name="BOX_0_link_collision">
+			<pose>5.0 -2.0 0.3 0 0 0</pose>
+			<geometry>
+				<box>
+					<size>10.0 20.0 5.0</size>
+				</box>
+			</geometry>
+			<surface>
+				<contact>
+					<ode>
+						<kp>100000</kp>
+						<kd>100000</kd>
+					</ode>
+				</contact>
+				<friction>
+					<ode>
+						<mu>10</mu>
+						<mu2>10</mu2>
+					</ode>
+					<torsional>
+						<ode />
+					</torsional>
+				</friction>
+				<bounce />
+			</surface>
+			<max_contacts>10</max_contacts>
+		</collision>
+		<visual name="BOX_0_link_visual">
+			<pose>5.0 -2.0 0.3 0 0 0</pose>
+			<geometry>
+				<box>
+					<size>10.0 20.0 5.0</size>
+				</box>
+			</geometry>
+			<material>
+				<script>
+					<name>Gazebo/WoodFloor</name>
+					<uri>file://media/materials/scripts/gazebo.material</uri>
+				</script>
+			</material>
+		</visual>
+		<self_collide>0</self_collide>
+		<enable_wind>0</enable_wind>
+		<kinematic>0</kinematic>
+	</link>
+	<plugin name="BuoyancyPlugin" filename="libbuoyancy_gazebo_plugin.so">
+		<wave_model>ocean_waves</wave_model>
+		<fluid_density>1000</fluid_density>
+		<fluid_level>0</fluid_level>
+		<linear_drag>1000.0</linear_drag>
+		<angular_drag>200.0</angular_drag>
+		<buoyancy name="buoyancy_base">
+			<link_name>BOX_0_link</link_name>
+			<pose>5.0 -2.0 0.3 0 0 0</pose>
+			<geometry>
+				<sphere>
+					<radius>0.28794119114848615</radius>
+				</sphere>
+			</geometry>
+		</buoyancy>
+	</plugin>
+</model>
+<model name="BOX_1">
+	<link name="BOX_1_link">
+		<inertial>
+			<pose>-35.0 -20.0 0.3 0 0 0</pose>
+			<mass>10.0</mass>
+			<inertia>
+				<ixx>354.1666666666667</ixx>
+				<ixy>0</ixy>
+				<ixz>0</ixz>
+				<iyy>104.16666666666667</iyy>
+				<iyz>0</iyz>
+				<izz>416.6666666666667</izz>
+			</inertia>
+		</inertial>
+		<collision name="BOX_1_link_collision">
+			<pose>-35.0 -20.0 0.3 0 0 0</pose>
+			<geometry>
+				<box>
+					<size>10.0 20.0 5.0</size>
+				</box>
+			</geometry>
+			<surface>
+				<contact>
+					<ode>
+						<kp>100000</kp>
+						<kd>100000</kd>
+					</ode>
+				</contact>
+				<friction>
+					<ode>
+						<mu>10</mu>
+						<mu2>10</mu2>
+					</ode>
+					<torsional>
+						<ode />
+					</torsional>
+				</friction>
+				<bounce />
+			</surface>
+			<max_contacts>10</max_contacts>
+		</collision>
+		<visual name="BOX_1_link_visual">
+			<pose>-35.0 -20.0 0.3 0 0 0</pose>
+			<geometry>
+				<box>
+					<size>10.0 20.0 5.0</size>
+				</box>
+			</geometry>
+			<material>
+				<script>
+					<name>Gazebo/WoodFloor</name>
+					<uri>file://media/materials/scripts/gazebo.material</uri>
+				</script>
+			</material>
+		</visual>
+		<self_collide>0</self_collide>
+		<enable_wind>0</enable_wind>
+		<kinematic>0</kinematic>
+	</link>
+	<plugin name="BuoyancyPlugin" filename="libbuoyancy_gazebo_plugin.so">
+		<wave_model>ocean_waves</wave_model>
+		<fluid_density>1000</fluid_density>
+		<fluid_level>0</fluid_level>
+		<linear_drag>1000.0</linear_drag>
+		<angular_drag>200.0</angular_drag>
+		<buoyancy name="buoyancy_base">
+			<link_name>BOX_1_link</link_name>
+			<pose>-35.0 -20.0 0.3 0 0 0</pose>
+			<geometry>
+				<sphere>
+					<radius>0.28794119114848615</radius>
+				</sphere>
+			</geometry>
+		</buoyancy>
+	</plugin>
+</model>
+<model name="BOX_2">
+	<link name="BOX_2_link">
+		<inertial>
+			<pose>105.0 -9.0 0.3 0 0 0</pose>
+			<mass>10.0</mass>
+			<inertia>
+				<ixx>2104.166666666667</ixx>
+				<ixy>0</ixy>
+				<ixz>0</ixz>
+				<iyy>41.66666666666667</iyy>
+				<iyz>0</iyz>
+				<izz>2104.166666666667</izz>
+			</inertia>
+		</inertial>
+		<collision name="BOX_2_link_collision">
+			<pose>105.0 -9.0 0.3 0 0 0</pose>
+			<geometry>
+				<box>
+					<size>5.0 50.0 5.0</size>
+				</box>
+			</geometry>
+			<surface>
+				<contact>
+					<ode>
+						<kp>100000</kp>
+						<kd>100000</kd>
+					</ode>
+				</contact>
+				<friction>
+					<ode>
+						<mu>10</mu>
+						<mu2>10</mu2>
+					</ode>
+					<torsional>
+						<ode />
+					</torsional>
+				</friction>
+				<bounce />
+			</surface>
+			<max_contacts>10</max_contacts>
+		</collision>
+		<visual name="BOX_2_link_visual">
+			<pose>105.0 -9.0 0.3 0 0 0</pose>
+			<geometry>
+				<box>
+					<size>5.0 50.0 5.0</size>
+				</box>
+			</geometry>
+			<material>
+				<script>
+					<name>Gazebo/WoodFloor</name>
+					<uri>file://media/materials/scripts/gazebo.material</uri>
+				</script>
+			</material>
+		</visual>
+		<self_collide>0</self_collide>
+		<enable_wind>0</enable_wind>
+		<kinematic>0</kinematic>
+	</link>
+	<plugin name="BuoyancyPlugin" filename="libbuoyancy_gazebo_plugin.so">
+		<wave_model>ocean_waves</wave_model>
+		<fluid_density>1000</fluid_density>
+		<fluid_level>0</fluid_level>
+		<linear_drag>1000.0</linear_drag>
+		<angular_drag>200.0</angular_drag>
+		<buoyancy name="buoyancy_base">
+			<link_name>BOX_2_link</link_name>
+			<pose>105.0 -9.0 0.3 0 0 0</pose>
+			<geometry>
+				<sphere>
+					<radius>0.28794119114848615</radius>
+				</sphere>
+			</geometry>
+		</buoyancy>
+	</plugin>
+</model>
+<model name="BOX_3">
+	<link name="BOX_3_link">
+		<inertial>
+			<pose>55.0 -9.0 0.3 0 0 0</pose>
+			<mass>10.0</mass>
+			<inertia>
+				<ixx>770.8333333333334</ixx>
+				<ixy>0</ixy>
+				<ixz>0</ixz>
+				<iyy>41.66666666666667</iyy>
+				<iyz>0</iyz>
+				<izz>770.8333333333334</izz>
+			</inertia>
+		</inertial>
+		<collision name="BOX_3_link_collision">
+			<pose>55.0 -9.0 0.3 0 0 0</pose>
+			<geometry>
+				<box>
+					<size>5.0 30.0 5.0</size>
+				</box>
+			</geometry>
+			<surface>
+				<contact>
+					<ode>
+						<kp>100000</kp>
+						<kd>100000</kd>
+					</ode>
+				</contact>
+				<friction>
+					<ode>
+						<mu>10</mu>
+						<mu2>10</mu2>
+					</ode>
+					<torsional>
+						<ode />
+					</torsional>
+				</friction>
+				<bounce />
+			</surface>
+			<max_contacts>10</max_contacts>
+		</collision>
+		<visual name="BOX_3_link_visual">
+			<pose>55.0 -9.0 0.3 0 0 0</pose>
+			<geometry>
+				<box>
+					<size>5.0 30.0 5.0</size>
+				</box>
+			</geometry>
+			<material>
+				<script>
+					<name>Gazebo/WoodFloor</name>
+					<uri>file://media/materials/scripts/gazebo.material</uri>
+				</script>
+			</material>
+		</visual>
+		<self_collide>0</self_collide>
+		<enable_wind>0</enable_wind>
+		<kinematic>0</kinematic>
+	</link>
+	<plugin name="BuoyancyPlugin" filename="libbuoyancy_gazebo_plugin.so">
+		<wave_model>ocean_waves</wave_model>
+		<fluid_density>1000</fluid_density>
+		<fluid_level>0</fluid_level>
+		<linear_drag>1000.0</linear_drag>
+		<angular_drag>200.0</angular_drag>
+		<buoyancy name="buoyancy_base">
+			<link_name>BOX_3_link</link_name>
+			<pose>55.0 -9.0 0.3 0 0 0</pose>
+			<geometry>
+				<sphere>
+					<radius>0.28794119114848615</radius>
+				</sphere>
+			</geometry>
+		</buoyancy>
+	</plugin>
+</model>
+</world>
+</sdf>

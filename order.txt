@@ -1,0 +1,23 @@
+#前置的环境参数已经写在。bashrc文件中，因此可以直接启动
+
+# 启动vrx世界
+ros2 launch vrx_gz competition.launch.py world:=sydney_regatta
+
+#启动手柄控制命令
+ros2 launch vrx_gz usv_joy_teleop.py
+# 启动vrx世界的配套rviz界面
+ros2 launch vrx_gazebo rviz.launch.py
+
+
+#启动键盘控制指令
+cd ~/vrx_ws
+python3 dual_thruster_teleop_incre.py 
+
+
+#使用自定义的传感器布局启动vrx
+ros2 launch vrx_gz vrx_launch.py world:=sydney_regatta 
+component_yaml:=~/USV_ROS/src/usv_config.yaml
+
+
+
+ros2 launch vrx_gz competition.launch.py world:=sydney_regatta urdf:=`pwd`/wamv_target.urdf
