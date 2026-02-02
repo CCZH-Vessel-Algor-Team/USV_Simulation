@@ -296,233 +296,325 @@ usv_sim_full/
 
 # usv_sim_full - 无人水面航行器主控功能包
 
-## 📦 功能包概述
+## 📦 包概述
 
-`usv_sim_full`是USV仿真平台的核心功能包，负责协调整个仿真系统的启动、配置管理和运行时控制。
+`usv_sim_full`是USV仿真平台的核心协调包，负责整个仿真系统的启动、配置管理和运行时控制。该包实现了基于YAML配置的动态系统配置功能。
 
-## 🏗️ 功能包结构
+## 🏗️ 包结构详解
 
 ```
 usv_sim_full/
-├── launch/                     # 启动文件目录
-│   ├── main.launch.py          # 主启动协调器
-│   └── components/             # 组件启动文件
+├── launch/                     # 系统启动文件
+│   ├── main.launch.py          # 主启动协调器（入口点）
+│   └── components/             # 子系统组件
 │       ├── infra_sim.launch.py     # 基础设施仿真组件
 │       ├── robot_bringup.launch.py # 机器人系统组件  
 │       └── visualization.launch.py # 可视化组件
-├── config/                     # 配置文件目录
-│   └── full_config.yaml        # 完整功能配置示例
-├── scripts/                    # 核心脚本目录
-│   ├── session_manager.py      # 会话管理器（核心）
+├── config/                     # 配置文件
+│   └── full_config.yaml        # 完整配置示例
+├── scripts/                    # 核心执行脚本
+│   ├── session_manager.py      # 会话管理器（核心引擎）
 │   ├── dual_thruster_teleop_incre.py # 双推进器遥控器
 │   └── load_robot_description.py   # 机器人描述加载器
-├── templates/                  # URDF模板目录
+├── templates/                  # URDF模板文件
 │   └── wamv_no_battery.urdf.xacro  # 无电池WAM-V模板
-├── logs/                       # 运行时日志目录
-│   └── session_*               # 会话日志文件夹
-└── package.xml                 # 功能包描述文件
+├── logs/                       # 运行时日志（自动生成）
+│   └── session_*               # 会话日志目录
+└── package.xml                 # ROS 2包描述文件
 ```
 
-## 🎯 核心组件详解
+## 🎯 核心组件功能
 
 ### 1. 主启动协调器 (main.launch.py)
 
-**功能**：作为系统的中央协调器，负责：
-- 解析用户配置文件
+**职责**：作为系统的单一入口点，负责：
+- 解析用户提供的YAML配置文件
 - 调用会话管理器生成运行时配置
-- 启动各个子组件
-- 管理组件间的依赖关系
+- 按依赖顺序启动各个子组件
+- 管理整个系统的生命周期
 
 **使用方法**：
 ```bash
-ros2 launch usv_sim_full main.launch.py config_path:='./config/full_config.yaml'
+ros2 launch usv_sim_full main.launch.py config_path:='<path_to_config.yaml>'
 ```
 
-### 2. 会话管理器 (session_manager.py)
+### 2. 会话管理器 (session_manager.py) ⭐
 
-**功能**：动态配置管理系统的核心，负责：
-- 解析YAML配置文件
-- 生成传感器Xacro叠加层
-- 编译URDF机器人描述
-- 创建桥接配置文件
-- 生成RViz可视化配置
-- 管理会话生命周期
+**职责**：动态配置管理系统的核心引擎，负责：
+- 解析和验证YAML配置文件
+- 生成传感器Xacro叠加层定义
+- 编译最终的URDF机器人描述
+- 创建Gazebo-Ros桥接配置
+- 生成RViz可视化配置文件
+- 管理会话的创建、维护和清理
 
-**主要方法**：
-```python
-def create_session(config_path):  # 创建新会话
-def generate_sensors_overlay(config_data, session_dir):  # 生成传感器配置
-def compile_xacro_to_urdf(root_xacro_path, config_data, session_dir):  # 编译URDF
-def generate_bridge_config(config_data):  # 生成桥接配置
-def generate_rviz_config(config_data, session_dir):  # 生成RViz配置
+**核心方法**：
+```
+def create_session(config_path): 
+    """创建新的仿真会话，返回会话信息字典"""
+    pass
+
+def generate_sensors_overlay(config_data, session_dir): 
+    """根据配置生成传感器Xacro定义"""
+    pass
+
+def compile_xacro_to_urdf(xacro_input, config_data, session_dir): 
+    """编译Xacro模板为最终URDF"""
+    pass
+
+def generate_bridge_config(config_data): 
+    """生成传感器数据桥接配置"""
+    pass
+
+def generate_rviz_config(config_data, session_dir): 
+    """生成RViz可视化配置"""
+    pass
 ```
 
-### 3. 组件启动文件
+### 3. 子系统组件启动器
 
 #### 基础设施仿真组件 (infra_sim.launch.py)
-- 启动Gazebo仿真环境
-- 设置Gazebo资源路径
-- 启动全局时钟桥接
+- 启动Gazebo仿真环境和服务
+- 配置Gazebo资源搜索路径
+- 建立全局时钟同步桥接
+- 加载指定的世界场景
 
 #### 机器人系统组件 (robot_bringup.launch.py)  
-- 发布机器人状态信息
-- 创建Gazebo实体
-- 建立传感器数据桥接
-- 启动障碍物生成器
+- 发布机器人状态描述信息
+- 在Gazebo中创建机器人实体
+- 建立传感器数据转发桥接
+- 启动障碍物生成服务
 
 #### 可视化组件 (visualization.launch.py)
 - 启动RViz可视化界面
 - 加载动态生成的配置文件
+- 显示机器人模型和传感器数据
 
-## ⚙️ 配置系统
+## ⚙️ 配置系统详解
 
-### 配置文件结构
+### 配置文件结构规范
 
-``yaml
+```
+# 配置文件必须包含的基本结构
 robot:
-  # 基础配置
-  xacro_template: "wamv_no_battery.urdf.xacro"
-  thruster_config: "H"
+  # 必需字段
+  xacro_template: string        # URDF模板文件名
+  thruster_config: string       # 推进器布局配置(H/T/X)
   
-  # 物理参数覆盖
+  # 可选物理参数覆盖
   overrides:
-    mass: 180.0
-    inertia: [100.0, 100.0, 200.0]
-    visual_mesh: "custom_ship.stl"
+    mass: float                 # 质量(kg)
+    inertia: [ixx, iyy, izz]    # 惯性矩阵
+    visual_mesh: string         # 自定义外观网格
   
-  # 传感器配置
+  # 传感器配置（支持多种类型）
   sensors:
-    lidars:
-      - name: "front_lidar"
-        enabled: true
-        xyz: [1.0, 0.0, 1.5]
-        topic: "/sensors/lidar/front/points"
+    lidars: []                  # 激光雷达数组
+    cameras: []                 # 摄像头数组  
+    imus: []                    # IMU传感器数组
+    gps_sensors: []             # GPS传感器数组
 
 simulation:
   # 仿真环境配置
-  world_name: "sydney_regatta"
-  obstacles:
-    fixed:
-      - type: "buoy_start"
-        position: [10.0, 5.0, 0.0]
+  world_name: string            # Gazebo世界名称
+  obstacles:                    # 障碍物配置
+    fixed: []                   # 固定障碍物
+    random: {}                  # 随机障碍物参数
 ```
 
-### 配置项说明
+### 配置项详细说明
 
-| 配置项 | 类型 | 必需 | 描述 |
-|--------|------|------|------|
-| `robot.xacro_template` | string | 是 | URDF模板文件名 |
-| `robot.thruster_config` | string | 是 | 推进器布局(H/T/X) |
-| `robot.overrides.mass` | float | 否 | 质量覆盖值(kg) |
-| `robot.sensors.*.enabled` | bool | 是 | 传感器启用状态 |
-| `simulation.world_name` | string | 是 | Gazebo世界名称 |
+| 配置项 | 类型 | 必需 | 默认值 | 描述 |
+|--------|------|------|--------|------|
+| `robot.xacro_template` | string | 是 | - | URDF模板文件名 |
+| `robot.thruster_config` | string | 是 | "H" | 推进器布局(H/T/X) |
+| `robot.overrides.mass` | float | 否 | 模板默认值 | 机器人总质量(kg) |
+| `robot.sensors.*.enabled` | bool | 是 | false | 传感器启用状态 |
+| `simulation.world_name` | string | 是 | "empty" | Gazebo世界名称 |
 
-## 🔄 工作流程
+## 🔄 系统工作流程
 
 ```
-1. 用户启动 → main.launch.py
-2. 解析配置 → session_manager.py
-3. 生成会话 → 创建临时配置文件
-4. 启动基础设施 → infra_sim.launch.py
-5. 启动机器人 → robot_bringup.launch.py  
-6. 启动可视化 → visualization.launch.py
-7. 系统运行 ← 各组件协同工作
+用户启动 → main.launch.py
+    ↓
+解析配置 → session_manager.create_session()
+    ↓
+生成会话 → 创建临时配置文件和目录
+    ↓
+启动基础设施 → infra_sim.launch.py (Gazebo环境)
+    ↓
+启动机器人系统 → robot_bringup.launch.py (实体创建)
+    ↓
+启动可视化 → visualization.launch.py (RViz界面)
+    ↓
+系统运行 ← 各组件协同工作
 ```
 
-## 🛠️ 开发接口
+## 🛠️ 开发扩展指南
 
-### 扩展传感器支持
+### 添加新型传感器支持
 
-```python
-# 在session_manager.py中添加新传感器处理
-def generate_custom_sensor(sensor_config, session_dir):
-    """生成自定义传感器的Xacro定义"""
-    sensor_xacro = f'''
-    <xacro:macro name="custom_sensor_macro" params="name parent_link xyz rpy">
-        <xacro:custom_sensor name="${{name}}" parent_link="${{parent_link}}" 
-                           xyz="${{xyz}}" rpy="${{rpy}}"/>
+1. **配置定义扩展**
+```
+# 在配置文件中定义新传感器类型
+robot:
+  sensors:
+    sonar_arrays:
+      - name: "forward_sonar"
+        enabled: true
+        xyz: [1.0, 0.0, -0.3]
+        parameters:
+          beam_count: 48
+          frequency: 200000
+```
+
+2. **会话管理器扩展**
+```
+# 在session_manager.py中添加处理逻辑
+def generate_sonar_sensor(sensor_config):
+    """生成声纳传感器的Xacro宏定义"""
+    sonar_xacro = f'''
+    <xacro:macro name="sonar_macro" params="name parent_link xyz rpy">
+        <xacro:sonar_sensor name="${{name}}" parent_link="${{parent_link}}" 
+                          xyz="${{xyz}}" rpy="${{rpy}}"
+                          beam_count="{sensor_config['parameters']['beam_count']}"/>
     </xacro:macro>
     '''
-    return sensor_xacro
+    return sonar_xacro
 ```
 
-### 自定义配置处理器
+### 自定义控制算法集成
 
-```python
-# 添加新的配置处理逻辑
-def process_custom_config(config_data):
-    """处理用户自定义配置项"""
-    custom_params = config_data.get('custom_section', {})
-    # 实现自定义逻辑
-    return processed_config
+```
+# 创建自定义控制器类
+class PIDController:
+    def __init__(self, kp=1.0, ki=0.1, kd=0.01):
+        self.kp, self.ki, self.kd = kp, ki, kd
+        self.integral = 0.0
+        self.previous_error = 0.0
+    
+    def compute(self, error, dt):
+        """计算PID控制输出"""
+        self.integral += error * dt
+        derivative = (error - self.previous_error) / dt
+        output = self.kp * error + self.ki * self.integral + self.kd * derivative
+        self.previous_error = error
+        return output
+
+# 在会话管理器中集成
+def integrate_custom_controller(controller_config):
+    """集成用户自定义控制器"""
+    controller_type = controller_config.get('type', 'default')
+    if controller_type == 'pid':
+        return PIDController(**controller_config.get('parameters', {}))
 ```
 
-## 📊 性能监控
+## 📊 性能监控与调试
 
-### 日志文件结构
+### 会话日志结构
 
-每次运行都会在`logs/`目录下创建会话文件夹：
+每次运行都会在`logs/`目录下创建独立的会话文件夹：
 ```
 session_YYYYMMDD_HHMMSS/
 ├── source_config.yaml      # 用户原始配置备份
-├── final_robot.urdf        # 生成的最终URDF
+├── final_robot.urdf        # 生成的最终URDF文件
 ├── bridge_config.yaml      # 传感器桥接配置
 ├── session.rviz            # RViz配置文件
-└── obstacle_layout.json    # 障碍物布局文件
+├── obstacle_layout.json    # 障碍物布局定义
+└── session.log             # 会话运行日志
 ```
 
-### 调试信息
+### 调试工具集
 
-通过ROS 2日志系统查看详细运行信息：
 ```bash
-# 查看所有节点日志
-ros2 launch --debug usv_sim_full main.launch.py
+# 查看系统状态
+ros2 node list              # 列出所有运行节点
+ros2 topic list             # 列出所有话题
+ros2 service list           # 列出所有服务
 
-# 查看特定节点日志
-ros2 run usv_sim_full session_manager.py --ros-args --log-level debug
+# 监控特定数据流
+ros2 topic hz /sensors/lidar/front/points    # 查看话题频率
+ros2 topic echo /model/wamv/odometry        # 实时查看数据
+
+# 系统性能分析
+ros2 doctor                 # ROS 2系统诊断
+top                         # 系统资源监控
 ```
 
-## 🔧 故障排除
+## 🔧 故障排除指南
 
-### 常见问题解决
+### 常见配置错误
 
-1. **配置文件解析错误**
-   ```bash
-   # 验证YAML语法
-   python3 -c "import yaml; yaml.safe_load(open('config.yaml'))"
-   ```
+1. **YAML语法错误**
+```bash
+# 验证YAML文件语法
+python3 -c "import yaml; yaml.safe_load(open('<config_file>'))"
+```
 
-2. **URDF生成失败**
-   ```bash
-   # 手动测试Xacro编译
-   ros2 run xacro xacro templates/wamv_no_battery.urdf.xacro
-   ```
+2. **URDF编译失败**
+```bash
+# 手动测试Xacro编译
+ros2 run xacro xacro templates/wamv_no_battery.urdf.xacro --inorder
+```
 
 3. **传感器桥接异常**
-   ```bash
-   # 检查桥接配置
-   cat logs/session_*/bridge_config.yaml
-   ```
+```bash
+# 检查桥接配置
+cat logs/session_*/bridge_config.yaml
+ros2 run ros_gz_bridge parameter_bridge --help
+```
 
-## 📈 扩展开发
+### 性能优化建议
 
-### 添加新的机器人模板
+1. **减少不必要的传感器**：只启用需要的传感器以提高仿真效率
+2. **调整Gazebo参数**：适当降低仿真精度换取更高帧率
+3. **优化控制器频率**：平衡控制精度和计算负载
 
-1. 在`templates/`目录下创建新的Xacro文件
-2. 在配置文件中指定新模板：
-   ```yaml
-   robot:
-     xacro_template: "my_custom_robot.urdf.xacro"
-   ```
+## 📈 API参考文档
 
-### 集成新的仿真世界
+### SessionManager类
+```
+class SessionManager:
+    def __init__(self):
+        """初始化会话管理器"""
+        pass
+    
+    def create_session(self, config_path: str) -> dict:
+        """
+        创建新的仿真会话
+        
+        Args:
+            config_path: 用户配置文件路径
+            
+        Returns:
+            dict: 包含会话路径和配置文件信息的字典
+        """
+        pass
+    
+    def cleanup_session(self, session_path: str):
+        """
+        清理会话资源
+        
+        Args:
+            session_path: 会话目录路径
+        """
+        pass
+```
 
-1. 确保世界文件存在于VRX包中
-2. 在配置中指定：
-   ```yaml
-   simulation:
-     world_name: "my_custom_world"
-   ```
+### 配置验证器
+```python
+def validate_config(config_data: dict) -> bool:
+    """
+    验证配置文件的完整性和有效性
+    
+    Args:
+        config_data: 解析后的配置数据
+        
+    Returns:
+        bool: 配置是否有效
+    """
+    pass
+```
 
 ---
-*更多详细信息请参考主项目README.md*
+*有关项目整体架构和其他组件包的信息，请参见[主项目README](../../README.md)*
