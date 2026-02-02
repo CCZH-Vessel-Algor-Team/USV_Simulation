@@ -28,17 +28,20 @@ def generate_launch_description():
     # 获取launch配置
     world_name = LaunchConfiguration('world_name')
 
-    # 设置GZ_SIM_RESOURCE_PATH环境变量，确保能找到wamv_description
-    try:
-        wamv_path = get_package_share_directory('wamv_description')
-        wamv_models_path = os.path.join(wamv_path, 'models')  # 直接指向models目录
-    except:
-        # 如果找不到wamv_description包，使用默认路径
-        wamv_models_path = "/home/cczh/USV_ROS/src/USV_Simulation/install/wamv_description/share/wamv_description/models"
-
+    # 设置GZ_SIM_RESOURCE_PATH环境变量，确保能找到模型文件
+    usv_sim_path = get_package_share_directory('usv_sim_full')
+    usv_models_path = os.path.join(usv_sim_path, 'description')
+    
+    # 获取当前环境变量
     gz_resource_path = os.environ.get('GZ_SIM_RESOURCE_PATH', '')
-    # 添加模型路径到Gazebo资源路径
-    new_resource_path = f"{wamv_models_path}:{gz_resource_path}" if gz_resource_path else wamv_models_path
+    
+    # 构造新的资源路径，将我们的模型路径放在最前面
+    if gz_resource_path:
+        new_resource_path = f"{usv_models_path}:{gz_resource_path}"
+    else:
+        new_resource_path = usv_models_path
+    
+    print(f"Setting GZ_SIM_RESOURCE_PATH to: {new_resource_path}")
     
     set_resource_path = SetEnvironmentVariable(
         name='GZ_SIM_RESOURCE_PATH',
@@ -47,7 +50,12 @@ def generate_launch_description():
     
     # 同时设置GAZEBO_MODEL_PATH以兼容旧版本
     gazebo_model_path = os.environ.get('GAZEBO_MODEL_PATH', '')
-    new_model_path = f"{os.path.dirname(wamv_models_path)}:{gazebo_model_path}" if gazebo_model_path else os.path.dirname(wamv_models_path)
+    if gazebo_model_path:
+        new_model_path = f"{usv_models_path}:{gazebo_model_path}"
+    else:
+        new_model_path = usv_models_path
+    
+    print(f"Setting GAZEBO_MODEL_PATH to: {new_model_path}")
     
     set_model_path = SetEnvironmentVariable(
         name='GAZEBO_MODEL_PATH',
@@ -58,14 +66,8 @@ def generate_launch_description():
     from launch.actions import IncludeLaunchDescription
     from launch.launch_description_sources import PythonLaunchDescriptionSource
     
-    # 获取vrx_gz路径
-    try:
-        vrx_gz_path = get_package_share_directory('vrx_gz')
-    except:
-        vrx_gz_path = "/home/cczh/simulation/vrx_ws/install/vrx_gz/share/vrx_gz"
-    
-    # 构建世界文件路径
-    world_file = os.path.join(vrx_gz_path, "worlds", "sydney_regatta.sdf")
+    # 构建世界文件路径，直接使用usv_sim_full包内的worlds目录
+    world_file = os.path.join(usv_sim_path, "worlds", "sydney_regatta.sdf")
     
     # 使用ros_gz_sim的gz_sim.launch.py启动Gazebo
     gazebo_launch = IncludeLaunchDescription(

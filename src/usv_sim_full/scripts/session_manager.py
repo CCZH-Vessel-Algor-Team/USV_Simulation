@@ -249,14 +249,18 @@ def compile_xacro_to_urdf(root_xacro_path, config_data, session_dir):
             raise FileNotFoundError(f"Template not found: {local_template_path}")
         xacro_input = local_template_path
     else:
-        # 使用原始方式：通过ROS包查找
-        package_name = robot_config.get('package_name', 'wamv_gazebo')
-        xacro_relative_path = robot_config.get('xacro_relative_path', f'urdf/{xacro_template}')
-        try:
-            pkg_path = get_package_share_directory(package_name)
-            xacro_input = os.path.join(pkg_path, xacro_relative_path)
-        except Exception:
-            xacro_input = f"/home/cczh/simulation/vrx_ws/install/{package_name}/share/{package_name}/{xacro_relative_path}"
+        # 使用本地description目录中的xacro文件
+        usv_sim_path = get_package_share_directory('usv_sim_full')
+        xacro_input = os.path.join(usv_sim_path, 'description', 'urdf', xacro_template)
+        if not os.path.exists(xacro_input):
+            # 回退到原来的查找方式
+            package_name = robot_config.get('package_name', 'wamv_gazebo')
+            xacro_relative_path = robot_config.get('xacro_relative_path', f'urdf/{xacro_template}')
+            try:
+                pkg_path = get_package_share_directory(package_name)
+                xacro_input = os.path.join(pkg_path, xacro_relative_path)
+            except Exception:
+                xacro_input = f"/home/cczh/simulation/vrx_ws/install/{package_name}/share/{package_name}/{xacro_relative_path}"
 
     # 构建xacro命令
     cmd = [
@@ -346,6 +350,21 @@ def post_process_urdf_for_gazebo(urdf_path):
         'package://wamv_description/models/', 
         'model://'
     )
+    
+    # 特别处理PNG纹理文件路径
+    # 将 model://WAM-V-Base/mesh/WAM-V_Albedo.png 等替换为相对路径
+    # 或者使用正确的model://路径格式
+    import re
+    
+    # 匹配PNG纹理文件引用并替换为相对路径
+    png_pattern = r'model://([^/]+)/mesh/([^/]+\.png)'
+    def replace_png_path(match):
+        model_name = match.group(1)
+        texture_name = match.group(2)
+        # 使用相对路径或者从wamv_description包中正确引用
+        return f'model://{model_name}/mesh/{texture_name}'
+    
+    modified_content = re.sub(png_pattern, replace_png_path, modified_content)
     
     # 写回文件
     with open(urdf_path, 'w') as f:

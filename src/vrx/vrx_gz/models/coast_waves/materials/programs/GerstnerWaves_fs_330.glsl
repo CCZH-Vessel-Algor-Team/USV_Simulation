@@ -16,9 +16,9 @@
 #version 330
 
 ////////// Input parameters //////////
-// Textures
-uniform sampler2D bumpMap;
-uniform samplerCube cubeMap;
+// Removed texture samplers
+// uniform sampler2D bumpMap;
+// uniform samplerCube cubeMap;
 
 // Colors
 uniform vec4 deepColor;
@@ -31,17 +31,16 @@ in block
 {
   mat3 rotMatrix;
   vec3 eyeVec;
-  vec2 bumpCoord;
+  // Removed bumpCoord input
 } inPs;
 
 out vec4 fragColor;
 
 void main()
 {
-  // Apply bump mapping to normal vector to make waves look more detailed:
-  vec4 bump = texture(bumpMap, inPs.bumpCoord)*2.0 - 1.0;
-  vec3 N = normalize(inPs.rotMatrix * bump.xyz);
-
+  // Simplified normal calculation without bump mapping
+  vec3 N = normalize(vec3(0.0, 0.0, 1.0)); // Simple upward normal
+  
   // Reflected ray:
   vec3 E = normalize(inPs.eyeVec);
   vec3 R = reflect(E, N);
@@ -53,8 +52,8 @@ void main()
   // Gazebo requires rotated cube map lookup.
   // R = vec3(R.x, R.z, R.y);
 
-  // Get environment color of reflected ray:
-  vec4 envColor = texture(cubeMap, R, 0.0);
+  // Simplified environment color (solid blue water)
+  vec4 envColor = vec4(0.0, 0.2, 0.4, 1.0);
 
   // Cheap hdr effect:
   envColor.rgb *= (envColor.r+envColor.g+envColor.b)*hdrMultiplier;

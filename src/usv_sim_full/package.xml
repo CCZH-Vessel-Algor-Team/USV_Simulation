@@ -19,9 +19,7 @@
   <depend>rviz_common</depend>
   <depend>ros_gz_sim</depend>
   <depend>ros_gz_bridge</depend>
-  <depend>vrx_gz</depend>
   <depend>wamv_gazebo</depend>
-  <depend>wamv_description</depend>
   <depend>usv_interfaces</depend>
 
   <test_depend>ament_copyright</test_depend>

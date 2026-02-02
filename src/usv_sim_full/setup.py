@@ -17,6 +17,8 @@ setup(
         (os.path.join('share', package_name, 'templates'), glob('templates/*')),
         (os.path.join('share', package_name, 'test_env'), glob('test_env/*')),
         (os.path.join('share', package_name, 'launch/components'), glob('launch/components/*.py')),
+        # 移除不存在的description/models引用
+        (os.path.join('share', package_name, 'worlds'), glob('worlds/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

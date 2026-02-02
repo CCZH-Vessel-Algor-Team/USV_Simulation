@@ -45,8 +45,7 @@ uniform mat4 worldviewproj_matrix;
 uniform int Nwaves;
 uniform vec3 camera_position_object_space;
 uniform float rescale;
-uniform vec2 bumpScale;
-uniform vec2 bumpSpeed;
+// Removed bumpScale and bumpSpeed uniforms
 uniform float t;
 uniform vec3 amplitude;
 uniform vec3 wavenumber;
@@ -62,7 +61,7 @@ out block
 {
   mat3 rotMatrix;
   vec3 eyeVec;
-  vec2 bumpCoord;
+  // Removed bumpCoord output
 } outVs;
 
 // Compute linear combination of Gerstner waves as described in
@@ -140,9 +139,8 @@ void main()
 
   gl_Position = worldviewproj_matrix * P;
 
-  // Compute texture coordinates for bump map
-  outVs.bumpCoord = uv0.xy*bumpScale + t*bumpSpeed;
+  // Removed bump coordinate calculation
+  // outVs.bumpCoord = uv0.xy*bumpScale + t*bumpSpeed;
 
   outVs.eyeVec = P.xyz - camera_position_object_space; // eye position in vertex space
 }
-
