@@ -32,7 +32,7 @@
 
 ## 🏗️ 系统架构
 
-```mermaid
+``` mermaid
 graph TD
     A[YAML配置文件] --> B[Session Manager]
     B --> C[动态URDF生成]
@@ -71,7 +71,7 @@ graph TD
 
 ## 安装和构建
 
-```bash
+```
 # 进入工作空间
 cd /home/cczh/simulation/vrx_ws
 
@@ -293,3 +293,236 @@ usv_sim_full/
 ## 📄 许可证
 
 该项目使用 MIT 许可证 - 查看 [LICENSE](file:///home/cczh/simulation/vrx_ws/src/usv_sim_full/LICENSE) 文件了解详情。
+
+# usv_sim_full - 无人水面航行器主控功能包
+
+## 📦 功能包概述
+
+`usv_sim_full`是USV仿真平台的核心功能包，负责协调整个仿真系统的启动、配置管理和运行时控制。
+
+## 🏗️ 功能包结构
+
+```
+usv_sim_full/
+├── launch/                     # 启动文件目录
+│   ├── main.launch.py          # 主启动协调器
+│   └── components/             # 组件启动文件
+│       ├── infra_sim.launch.py     # 基础设施仿真组件
+│       ├── robot_bringup.launch.py # 机器人系统组件  
+│       └── visualization.launch.py # 可视化组件
+├── config/                     # 配置文件目录
+│   └── full_config.yaml        # 完整功能配置示例
+├── scripts/                    # 核心脚本目录
+│   ├── session_manager.py      # 会话管理器（核心）
+│   ├── dual_thruster_teleop_incre.py # 双推进器遥控器
+│   └── load_robot_description.py   # 机器人描述加载器
+├── templates/                  # URDF模板目录
+│   └── wamv_no_battery.urdf.xacro  # 无电池WAM-V模板
+├── logs/                       # 运行时日志目录
+│   └── session_*               # 会话日志文件夹
+└── package.xml                 # 功能包描述文件
+```
+
+## 🎯 核心组件详解
+
+### 1. 主启动协调器 (main.launch.py)
+
+**功能**：作为系统的中央协调器，负责：
+- 解析用户配置文件
+- 调用会话管理器生成运行时配置
+- 启动各个子组件
+- 管理组件间的依赖关系
+
+**使用方法**：
+```bash
+ros2 launch usv_sim_full main.launch.py config_path:='./config/full_config.yaml'
+```
+
+### 2. 会话管理器 (session_manager.py)
+
+**功能**：动态配置管理系统的核心，负责：
+- 解析YAML配置文件
+- 生成传感器Xacro叠加层
+- 编译URDF机器人描述
+- 创建桥接配置文件
+- 生成RViz可视化配置
+- 管理会话生命周期
+
+**主要方法**：
+```python
+def create_session(config_path):  # 创建新会话
+def generate_sensors_overlay(config_data, session_dir):  # 生成传感器配置
+def compile_xacro_to_urdf(root_xacro_path, config_data, session_dir):  # 编译URDF
+def generate_bridge_config(config_data):  # 生成桥接配置
+def generate_rviz_config(config_data, session_dir):  # 生成RViz配置
+```
+
+### 3. 组件启动文件
+
+#### 基础设施仿真组件 (infra_sim.launch.py)
+- 启动Gazebo仿真环境
+- 设置Gazebo资源路径
+- 启动全局时钟桥接
+
+#### 机器人系统组件 (robot_bringup.launch.py)  
+- 发布机器人状态信息
+- 创建Gazebo实体
+- 建立传感器数据桥接
+- 启动障碍物生成器
+
+#### 可视化组件 (visualization.launch.py)
+- 启动RViz可视化界面
+- 加载动态生成的配置文件
+
+## ⚙️ 配置系统
+
+### 配置文件结构
+
+``yaml
+robot:
+  # 基础配置
+  xacro_template: "wamv_no_battery.urdf.xacro"
+  thruster_config: "H"
+  
+  # 物理参数覆盖
+  overrides:
+    mass: 180.0
+    inertia: [100.0, 100.0, 200.0]
+    visual_mesh: "custom_ship.stl"
+  
+  # 传感器配置
+  sensors:
+    lidars:
+      - name: "front_lidar"
+        enabled: true
+        xyz: [1.0, 0.0, 1.5]
+        topic: "/sensors/lidar/front/points"
+
+simulation:
+  # 仿真环境配置
+  world_name: "sydney_regatta"
+  obstacles:
+    fixed:
+      - type: "buoy_start"
+        position: [10.0, 5.0, 0.0]
+```
+
+### 配置项说明
+
+| 配置项 | 类型 | 必需 | 描述 |
+|--------|------|------|------|
+| `robot.xacro_template` | string | 是 | URDF模板文件名 |
+| `robot.thruster_config` | string | 是 | 推进器布局(H/T/X) |
+| `robot.overrides.mass` | float | 否 | 质量覆盖值(kg) |
+| `robot.sensors.*.enabled` | bool | 是 | 传感器启用状态 |
+| `simulation.world_name` | string | 是 | Gazebo世界名称 |
+
+## 🔄 工作流程
+
+```
+1. 用户启动 → main.launch.py
+2. 解析配置 → session_manager.py
+3. 生成会话 → 创建临时配置文件
+4. 启动基础设施 → infra_sim.launch.py
+5. 启动机器人 → robot_bringup.launch.py  
+6. 启动可视化 → visualization.launch.py
+7. 系统运行 ← 各组件协同工作
+```
+
+## 🛠️ 开发接口
+
+### 扩展传感器支持
+
+```python
+# 在session_manager.py中添加新传感器处理
+def generate_custom_sensor(sensor_config, session_dir):
+    """生成自定义传感器的Xacro定义"""
+    sensor_xacro = f'''
+    <xacro:macro name="custom_sensor_macro" params="name parent_link xyz rpy">
+        <xacro:custom_sensor name="${{name}}" parent_link="${{parent_link}}" 
+                           xyz="${{xyz}}" rpy="${{rpy}}"/>
+    </xacro:macro>
+    '''
+    return sensor_xacro
+```
+
+### 自定义配置处理器
+
+```python
+# 添加新的配置处理逻辑
+def process_custom_config(config_data):
+    """处理用户自定义配置项"""
+    custom_params = config_data.get('custom_section', {})
+    # 实现自定义逻辑
+    return processed_config
+```
+
+## 📊 性能监控
+
+### 日志文件结构
+
+每次运行都会在`logs/`目录下创建会话文件夹：
+```
+session_YYYYMMDD_HHMMSS/
+├── source_config.yaml      # 用户原始配置备份
+├── final_robot.urdf        # 生成的最终URDF
+├── bridge_config.yaml      # 传感器桥接配置
+├── session.rviz            # RViz配置文件
+└── obstacle_layout.json    # 障碍物布局文件
+```
+
+### 调试信息
+
+通过ROS 2日志系统查看详细运行信息：
+```bash
+# 查看所有节点日志
+ros2 launch --debug usv_sim_full main.launch.py
+
+# 查看特定节点日志
+ros2 run usv_sim_full session_manager.py --ros-args --log-level debug
+```
+
+## 🔧 故障排除
+
+### 常见问题解决
+
+1. **配置文件解析错误**
+   ```bash
+   # 验证YAML语法
+   python3 -c "import yaml; yaml.safe_load(open('config.yaml'))"
+   ```
+
+2. **URDF生成失败**
+   ```bash
+   # 手动测试Xacro编译
+   ros2 run xacro xacro templates/wamv_no_battery.urdf.xacro
+   ```
+
+3. **传感器桥接异常**
+   ```bash
+   # 检查桥接配置
+   cat logs/session_*/bridge_config.yaml
+   ```
+
+## 📈 扩展开发
+
+### 添加新的机器人模板
+
+1. 在`templates/`目录下创建新的Xacro文件
+2. 在配置文件中指定新模板：
+   ```yaml
+   robot:
+     xacro_template: "my_custom_robot.urdf.xacro"
+   ```
+
+### 集成新的仿真世界
+
+1. 确保世界文件存在于VRX包中
+2. 在配置中指定：
+   ```yaml
+   simulation:
+     world_name: "my_custom_world"
+   ```
+
+---
+*更多详细信息请参考主项目README.md*

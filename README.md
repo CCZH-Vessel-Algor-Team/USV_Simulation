@@ -1,200 +1,311 @@
-# USV仿真系统 - 无人水面航行器仿真平台
+# USV_Simulation - 无人水面航行器仿真平台
 
-这是一个基于ROS 2 + Gazebo Garden + VRX的无人船（USV）仿真环境启动系统，支持通过YAML配置驱动的灵活仿真流程。它为水面无人船（如WAM-V）提供完整的建模、控制、传感器配置与可视化能力。
+[![ROS 2](https://img.shields.io/badge/ROS-2_Humble-blue.svg)](https://docs.ros.org/en/humble/)
+[![Gazebo](https://img.shields.io/badge/Gazebo-Garden-orange.svg)](https://gazebosim.org/)
+[![VRX](https://img.shields.io/badge/VRX-Competition-green.svg)](https://github.com/osrf/vrx)
+[![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](LICENSE)
 
-## 🚀 项目特点
+基于 **ROS 2 + Gazebo Garden + VRX** 的无人水面航行器（USV）高保真度仿真平台，专为WAM-V等水面无人船的研发、测试和竞赛训练而设计。
 
-- **模块化架构**：采用组件化设计，易于扩展和维护
-- **配置驱动**：通过YAML配置文件灵活定制仿真环境
-- **完整传感器套件**：支持激光雷达、摄像头、IMU、GPS等多种传感器
-- **实时控制**：支持键盘和手柄控制
-- **可视化界面**：集成RViz可视化工具
+## 🎯 项目特色
 
-## 📋 系统要求
+- **一体化仿真解决方案**：集成了物理仿真、传感器模拟、控制系统和可视化监控
+- **高度可配置**：通过YAML文件灵活定义机器人参数、传感器配置和环境设置
+- **模块化架构**：采用组件化设计，便于扩展新功能和自定义配置
+- **VRX竞赛兼容**：支持VRX标准竞赛环境和任务场景
+- **多控制方式**：支持键盘和手柄双重控制模式
 
-- Ubuntu 22.04 LTS
-- ROS 2 Humble Hawksbill
-- Gazebo Garden (或更高版本)
-- Python 3.10+
-- CMake 3.8+
+## 🚀 核心功能
 
-## 🛠️ 环境依赖安装
+### 🌊 物理仿真
+- 基于Gazebo Garden的高精度物理引擎
+- 真实的水动力学模拟（浮力、阻力、波浪影响）
+- 可配置的质量、惯性矩和物理参数
+- 支持多种船体构型（WAM-V标准配置）
 
-### ROS 2 Humble Hawksbill
-```bash
-# 添加仓库
-sudo apt update && sudo apt install -y software-properties-common
-sudo add-apt-repository universe
-sudo apt update
+### 🎮 控制系统
+- **双推进器控制**：独立控制左右推进器
+- **键盘控制**：WASD控制左侧推进器，方向键控制右侧推进器
+- **手柄控制**：支持游戏手柄实时操控
+- **急停功能**：空格键一键停止所有动作
 
-# 添加ROS仓库密钥
-sudo apt install curl gnupg lsb-release
-curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key | sudo gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg
+### 📡 传感器套件
+- **激光雷达**：360°环境感知，点云数据输出
+- **摄像头**：RGB图像采集，支持相机内参配置
+- **IMU**：惯性测量单元，提供姿态和加速度数据
+- **GPS**：全球定位系统，提供经纬度坐标
+- **里程计**：实时位姿和速度信息
 
-# 添加ROS仓库
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(source /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+### 🎨 可视化监控
+- **RViz集成**：3D可视化界面显示机器人状态
+- **传感器数据显示**：实时查看各传感器数据流
+- **TF变换树**：坐标系关系可视化
+- **轨迹跟踪**：运动路径记录和显示
 
-# 安装ROS 2 Humble
-sudo apt update
-sudo apt install ros-humble-desktop
-sudo apt install ros-humble-gazebo-ros-pkgs
-sudo apt install ros-humble-gazebo-dev
-sudo apt install ros-humble-rviz-visual-tools
+### 🌍 环境系统
+- **VRX标准场景**：支持sydney_regatta等竞赛环境
+- **程序化障碍物生成**：支持随机和固定布局
+- **动态天气模拟**：波浪、风力等环境因素
+- **多世界切换**：轻松切换不同的仿真环境
+
+## 🏗️ 系统架构
+
+```
+USV_Simulation/
+├── src/
+│   └── usv_sim_full/           # 主控功能包
+│       ├── launch/             # 启动文件
+│       │   ├── main.launch.py          # 主启动协调器
+│       │   └── components/             # 组件启动文件
+│       │       ├── infra_sim.launch.py # 基础设施仿真
+│       │       ├── robot_bringup.launch.py # 机器人系统
+│       │       └── visualization.launch.py # 可视化界面
+│       ├── config/             # 配置文件
+│       │   └── full_config.yaml        # 主配置文件
+│       ├── scripts/            # 核心脚本
+│       │   ├── session_manager.py      # 会话管理器
+│       │   └── dual_thruster_teleop_incre.py # 双推进器控制
+│       └── templates/          # URDF模板
+│           └── wamv_no_battery.urdf.xacro  # 无电池WAM-V模板
+├── install/                    # 构建输出目录
+└── logs/                      # 仿真会话日志
 ```
 
-### 设置ROS环境
+## 📦 技术栈
+
+| 组件 | 版本 | 用途 |
+|------|------|------|
+| **ROS 2** | Humble Hawksbill | 机器人操作系统框架 |
+| **Gazebo** | Garden (Harmonic) | 物理仿真引擎 |
+| **VRX** | 最新版 | 海上机器人竞赛框架 |
+| **Python** | 3.10+ | 脚本开发语言 |
+| **URDF/Xacro** | - | 机器人建模语言 |
+
+## 🛠️ 快速开始
+
+### 环境准备
+
 ```bash
-# 添加到 ~/.bashrc
+# 1. 安装ROS 2 Humble
+sudo apt update
+sudo apt install ros-humble-desktop
+
+# 2. 安装Gazebo和相关依赖
+sudo apt install ros-humble-gazebo-ros-pkgs ros-humble-gazebo-dev
+sudo apt install ros-humble-rviz-visual-tools
+
+# 3. 安装构建工具
+sudo apt install python3-colcon-common-extensions python3-rosdep
+
+# 4. 配置环境变量
 echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### 其他依赖
-```bash
-sudo apt install python3-colcon-common-extensions
-sudo apt install python3-rosdep
-sudo apt install ruby-dev  # 用于Gazebo Ruby脚本
-```
+### 构建项目
 
-## 🚀 快速开始
-
-### 1. 编译项目
 ```bash
-cd ~/simulation/vrx_ws
+# 进入工作空间
+cd /home/cczh/USV_ROS
 
 # 安装依赖
 rosdep install --from-paths src --ignore-src -r -y
 
-# 编译相关包
+# 构建项目
 colcon build --packages-select \
-  vrx_gazebo \
-  vrx_ros \
+  usv_sim_full \
   vrx_gz \
+  vrx_gazebo \
   wamv_description \
   wamv_gazebo \
-  usv_sim_full \
   --cmake-args -DCMAKE_BUILD_TYPE=Release
 
-# 源环境
+# 源设置环境
 source install/setup.bash
 ```
 
-### 2. 启动仿真
+### 运行仿真
 
-#### 启动主仿真系统
 ```bash
-# 启动完整仿真系统
+# 启动主仿真系统
 ros2 launch usv_sim_full main.launch.py config_path:='./src/usv_sim_full/config/full_config.yaml'
 
-# 或者启动船体测试环境（用于验证船体参数）
-ros2 launch usv_sim_full test_hull.launch.py
-```
-
-#### 启动VRX竞赛仿真
-```bash
-# 启动VRX世界
-ros2 launch vrx_gz competition.launch.py world:=sydney_regatta
-
-# 启动配套的RViz界面
-ros2 launch vrx_gazebo rviz.launch.py
-```
-
-### 3. 控制方式
-
-#### 键盘控制
-在另一个终端中运行：
-```bash
-cd ~/simulation/vrx_ws
+# 另开终端启动键盘控制
+cd /home/cczh/USV_ROS
 source install/setup.bash
-python3 dual_thruster_teleop_incre.py
+python3 src/usv_sim_full/scripts/dual_thruster_teleop_incre.py
 ```
 
-使用键盘控制船只：
-- 左侧推进器 (WASD):
-  - W: 左侧推力 +
-  - S: 左侧推力 -
-  - A: 左侧角度 +
-  - D: 左侧角度 -
-- 右侧推进器 (方向键):
-  - ↑: 右侧推力 +
-  - ↓: 右侧推力 -
-  - ←: 右侧角度 +
-  - →: 右侧角度 -
-- 空格键: 急停（所有状态归零）
-- Q键: 仅重置角度
-- E键: 仅重置推力
+## ⚙️ 配置说明
 
-#### 手柄控制
+### 主配置文件 (full_config.yaml)
+
+```yaml
+robot:
+  # 物理参数配置
+  overrides:
+    mass: 180.0           # 质量(kg)
+    inertia: [100.0, 100.0, 200.0]  # 惯性矩阵[kg·m²]
+    visual_mesh: "custom_ship.stl"  # 自定义船体外观
+  
+  # 推进器配置
+  thruster_config: "H"    # H(标准后推) / T(X型) / X(十字型)
+  
+  # 传感器启用状态
+  sensors:
+    lidars:
+      - name: "front_lidar"
+        enabled: true
+        xyz: [1.0, 0.0, 1.5]  # 安装位置[x,y,z]
+
+simulation:
+  world_name: "sydney_regatta"  # 仿真世界
+  obstacles:
+    fixed:                    # 固定障碍物
+      - type: "buoy_start"
+        position: [10.0, 5.0, 0.0]
+```
+
+### 关键配置项
+
+| 参数 | 类型 | 描述 |
+|------|------|------|
+| `mass` | float | 机器人总质量(kg) |
+| `inertia` | array[3] | 绕XYZ轴的转动惯量 |
+| `thruster_config` | string | 推进器布局配置 |
+| `world_name` | string | Gazebo世界名称 |
+| `sensors.*.enabled` | bool | 传感器启用开关 |
+
+## 🎯 使用示例
+
+### 1. 基础仿真测试
+
 ```bash
-# 启动手柄控制
-ros2 launch vrx_gz usv_joy_teleop.py
+# 启动最小配置仿真
+ros2 launch usv_sim_full main.launch.py config_path:='./src/usv_sim_full/config/minimal_config.yaml'
 ```
 
-## 🔧 配置说明
+### 2. 自定义传感器配置
 
-主要配置文件位于 `src/usv_sim_full/config/full_config.yaml`，包括：
-
-- **机器人配置**: 定义船体名称、物理参数、传感器等
-- **环境配置**: 指定仿真世界和Gazebo启动参数
-- **传感器配置**: 定义激光雷达、摄像头、IMU、GPS等传感器参数
-- **可视化配置**: 控制RViz是否启动及遥测数据
-
-## 📁 项目结构
-
-```
-simulation/
-├── dual_thruster_teleop.py          # 双推进器手柄控制脚本
-├── dual_thruster_teleop_incre.py    # 双推进器增量式键盘控制脚本
-├── src/                             # 源代码目录
-│   ├── generate.py                  # 生成脚本
-│   ├── generate_new.py              # 新版生成脚本
-│   ├── usv_sim_full/                # 完整版无人船仿真系统
-│   │   ├── config/                  # 配置文件
-│   │   ├── launch/                  # 启动文件
-│   │   ├── scripts/                 # 脚本文件
-│   │   └── ...
-│   ├── vrx/                         # VRX相关包
-│   └── 使用指南.md                   # 详细使用指南
+```yaml
+# 在配置文件中添加自定义传感器
+robot:
+  sensors:
+    cameras:
+      - name: "custom_camera"
+        enabled: true
+        xyz: [0.5, 0.0, 2.0]
+        rpy: [0.0, 0.2, 0.0]  # 俯仰角20度
+        topic: "/custom/camera/image_raw"
 ```
 
-## 🛠️ 自定义开发
+### 3. 物理参数调试
+
+```yaml
+# 调整船体物理特性进行测试
+robot:
+  overrides:
+    mass: 200.0              # 增加质量测试稳定性
+    xU: 150.0               # 调整X轴线性阻尼
+    yV: 120.0               # 调整Y轴线性阻尼
+```
+
+## 📊 数据接口
+
+### 发布的话题 (Published Topics)
+
+| 话题 | 类型 | 描述 |
+|------|------|------|
+| `/sensors/lidar/front/points` | sensor_msgs/PointCloud2 | 激光雷达点云数据 |
+| `/sensors/camera/front/image_raw` | sensor_msgs/Image | 前置摄像头图像 |
+| `/sensors/imu/data` | sensor_msgs/Imu | IMU传感器数据 |
+| `/sensors/gps/data` | sensor_msgs/NavSatFix | GPS定位数据 |
+| `/model/wamv/odometry` | nav_msgs/Odometry | 机器人里程计 |
+| `/wamv/thrusters/*/thrust` | std_msgs/Float64 | 推进器推力指令 |
+
+### 订阅的话题 (Subscribed Topics)
+
+| 话题 | 类型 | 描述 |
+|------|------|------|
+| `/wamv/thrusters/*/thrust` | std_msgs/Float64 | 推进器推力控制 |
+| `/wamv/thrusters/*/pos` | std_msgs/Float64 | 推进器角度控制 |
+
+## 🔧 开发指南
 
 ### 添加新传感器
-1. 修改`templates/sensor_macros.xacro`添加传感器宏定义
-2. 更新`session_manager.py`中的传感器处理逻辑
-3. 在配置文件中添加新传感器的配置
-4. 重新构建项目
 
-### 添加新世界
-1. 将`.sdf`世界文件放在`test_env`目录
-2. 更新`config/full_config.yaml`中的`world_name`
-3. 重新启动仿真
-
-## 🔍 故障排除
-
-### 编译错误
-如果遇到`Could not find a package configuration file provided by "gz-sim7"`错误，安装Gazebo Garden:
-```bash
-curl -fsSL https://gazebosim.jfrog.io/gazebosim/gazebo_signing.key | sudo gpg --dearmor -o /usr/share/keyrings/gazebo-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/gazebo-archive-keyring.gpg] https://gazebosim.jfrog.io/gazebosim/debian-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo.list > /dev/null
-sudo apt update
-sudo apt install gz-harmonic
+1. **修改配置文件**
+```yaml
+robot:
+  sensors:
+    custom_sensors:
+      - name: "new_sensor"
+        enabled: true
+        # 添加传感器特有参数
 ```
 
-### 传感器数据问题
-检查传感器话题是否有数据:
-```bash
-# 查看所有话题
-ros2 topic list
-
-# 检查特定话题是否有数据
-ros2 topic echo /sensors/imu/data
+2. **更新会话管理器**
+```python
+# 在session_manager.py中添加传感器处理逻辑
+def generate_custom_sensor(sensor_config):
+    # 生成传感器Xacro宏定义
+    pass
 ```
 
-## 🤝 贡献
+### 扩展控制算法
 
-欢迎提交Issue和Pull Request来帮助改进这个项目！
+```python
+# 自定义控制器示例
+class CustomController:
+    def __init__(self):
+        self.publisher = rospy.Publisher('/wamv/thrusters/left/thrust', Float64, queue_size=10)
+    
+    def control_callback(self, sensor_data):
+        # 实现自定义控制逻辑
+        thrust_command = self.calculate_thrust(sensor_data)
+        self.publisher.publish(thrust_command)
+```
+
+## 🐛 常见问题
+
+### Q: Gazebo无法找到模型文件？
+**A:** 确保正确设置了Gazebo资源路径：
+```bash
+export GZ_SIM_RESOURCE_PATH="/path/to/wamv_description/models:$GZ_SIM_RESOURCE_PATH"
+```
+
+### Q: 传感器数据不更新？
+**A:** 检查以下几点：
+1. 确认传感器在配置文件中已启用
+2. 查看对应话题是否存在：`ros2 topic list`
+3. 检查传感器桥接是否正常：`ros2 node list`
+
+### Q: 控制响应延迟？
+**A:** 优化建议：
+1. 降低Gazebo仿真步长
+2. 调整控制器发布频率
+3. 检查系统资源使用情况
+
+## 🤝 贡献指南
+
+欢迎提交Issue和Pull Request来改进项目！
+
+### 开发流程
+1. Fork项目仓库
+2. 创建功能分支：`git checkout -b feature/new-feature`
+3. 提交更改：`git commit -am 'Add new feature'`
+4. 推送到分支：`git push origin feature/new-feature`
+5. 创建Pull Request
 
 ## 📄 许可证
 
-该项目使用MIT许可证 - 查看[LICENSE](LICENSE)文件了解详情。
+本项目采用Apache 2.0许可证，详情请参见[LICENSE](LICENSE)文件。
+
+## 🙏 致谢
+
+- [VRX项目](https://github.com/osrf/vrx) - 提供海上机器人竞赛框架
+- [Gazebo社区](https://gazebosim.org/) - 强大的物理仿真引擎
+- [ROS 2团队](https://www.ros.org/) - 优秀的机器人操作系统
+
+---
+*Made with ❤️ for autonomous marine robotics*

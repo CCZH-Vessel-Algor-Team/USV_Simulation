@@ -1,0 +1,65 @@
+# ROS 2工作空间生成文件
+build/
+install/
+log/
+
+# 编译产物
+*.so
+*.dll
+*.dylib
+*.a
+*.lib
+
+# Python编译文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.pyc.orig
+
+# IDE和编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# 会话日志文件
+src/usv_sim_full/logs/
+
+# Gazebo相关
+*.sdf.tmp
+.gazebo/
+.gazeborc
+
+# ROS相关
+*.bag
+*.bag.active
+rosout.log
+.rospkg_cache
+
+# 测试相关
+.nosetests
+.coverage
+htmlcov/
+.tox/
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 备份文件
+*.bak
+*.backup
+*.old
+
+# 系统文件
+desktop.ini

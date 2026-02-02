@@ -319,8 +319,39 @@ def compile_xacro_to_urdf(root_xacro_path, config_data, session_dir):
     if result.returncode != 0:
         raise RuntimeError(f"Failed to compile Xacro to URDF:\nCommand: {' '.join(cmd)}\nError: {result.stderr}")
 
+    # 后处理：将package://协议替换为model://协议以便Gazebo能正确找到模型
+    post_process_urdf_for_gazebo(urdf_path)
+
     print(f"Generated URDF at: {urdf_path}")
     return urdf_path
+
+
+def post_process_urdf_for_gazebo(urdf_path):
+    """
+    后处理URDF文件，将package://协议的网格路径替换为正确的model://协议路径
+    这样Gazebo就能正确找到模型文件
+    
+    Args:
+        urdf_path (str): URDF文件路径
+    """
+    # 读取URDF文件
+    with open(urdf_path, 'r') as f:
+        urdf_content = f.read()
+    
+    # 替换package://wamv_description/models/为model://
+    # 这样Gazebo就能在模型路径中找到文件
+    # 例如: package://wamv_description/models/WAM-V-Base/mesh/M5_body.dae
+    # 变为: model://WAM-V-Base/mesh/M5_body.dae
+    modified_content = urdf_content.replace(
+        'package://wamv_description/models/', 
+        'model://'
+    )
+    
+    # 写回文件
+    with open(urdf_path, 'w') as f:
+        f.write(modified_content)
+    
+    print(f"Post-processed URDF for Gazebo compatibility")
 
 
 def generate_bridge_config(config_data):
