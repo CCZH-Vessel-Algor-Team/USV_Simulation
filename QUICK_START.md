@@ -16,7 +16,7 @@ ls src/USV_Simulation/  # 确认项目文件存在
 ```bash
 # 清理并构建
 rm -rf build install log
-colcon build --packages-up-to usv_sim_full
+colcon build 
 
 # 源设置环境
 source install/setup.bash
