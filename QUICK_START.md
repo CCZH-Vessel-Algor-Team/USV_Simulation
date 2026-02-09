@@ -8,7 +8,7 @@
 echo $ROS_DISTRO  # 应显示 "humble"
 
 # 进入工作空间
-cd <your_ros2_workspace>
+cd ./
 ls src/USV_Simulation/  # 确认项目文件存在
 ```
 
@@ -31,7 +31,7 @@ ros2 launch usv_sim_full main.launch.py config_path:='./src/usv_sim_full/config/
 ### 第4步：控制机器人 (1分钟)
 ```bash
 # 终端2：启动键盘控制
-cd <your_ros2_workspace>
+cd ./
 source install/setup.bash
 python3 src/usv_sim_full/scripts/dual_thruster_teleop_incre.py
 ```
@@ -39,11 +39,6 @@ python3 src/usv_sim_full/scripts/dual_thruster_teleop_incre.py
 ## 🎮 控制说明
 
 **键盘控制**：
-- `W/S`：左推进器前进/后退
-- `A/D`：左推进器左转/右转  
-- `↑/↓`：右推进器前进/后退
-- `←/→`：右推进器左转/右转
-- `空格`：紧急停止
 
 ## 🔍 验证系统运行
 
@@ -108,5 +103,4 @@ pkill -f "ros2 launch" && pkill -f "gz sim" && pkill -f "rviz2"
 ros2 launch usv_sim_full main.launch.py config_path:='./src/usv_sim_full/config/minimal_config.yaml'
 ```
 
----
 *需要深入了解？请查看[完整文档](README.md)*

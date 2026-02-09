@@ -72,8 +72,8 @@ graph TD
 ## 安装和构建
 
 ```
-# 进入工作空间
-cd /home/cczh/simulation/vrx_ws
+# 进入仓库根目录（或你的 ROS2 工作空间中包含本项目的目录）
+cd ./
 
 # 构建功能包
 colcon build --packages-select usv_sim_full
@@ -129,7 +129,7 @@ obstacles:
 ### 1. 构建项目
 
 ```bash
-cd /home/cczh/simulation/vrx_ws
+cd ./
 colcon build --packages-select usv_sim_full
 source install/setup.bash
 ```
@@ -146,7 +146,7 @@ ros2 launch usv_sim_full test_hull.launch.py
 
 ### 3. 自定义配置
 
-修改 [config/full_config.yaml](file:///home/cczh/simulation/vrx_ws/src/usv_sim_full/config/full_config.yaml) 文件来自定义船体和场景：
+修改 `config/full_config.yaml`（位于 `src/usv_sim_full/config/full_config.yaml`）文件来自定义船体和场景：
 
 1. 修改 `robot.overrides` 来定制船体物理/外观
 2. 调整 `obstacles` 来配置场景中的障碍物
@@ -162,7 +162,7 @@ ros2 launch usv_sim_full test_hull.launch.py
 ```
 
 此环境包含：
-- 简化的水面环境（[test_env/simple_water.sdf](file:///home/cczh/simulation/vrx_ws/src/usv_sim_full/test_env/simple_water.sdf)）
+- 简化的水面环境（`test_env/simple_water.sdf`）
 - 仅加载一个船体模型
 - 包含RViz可视化
 - 可快速测试船体外观、碰撞体积、重力和浮力交互
@@ -292,7 +292,7 @@ usv_sim_full/
 
 ## 📄 许可证
 
-该项目使用 MIT 许可证 - 查看 [LICENSE](file:///home/cczh/simulation/vrx_ws/src/usv_sim_full/LICENSE) 文件了解详情。
+该项目使用 MIT 许可证 - 查看 `LICENSE`（位于 `src/usv_sim_full/LICENSE`）文件了解详情。
 
 # usv_sim_full - 无人水面航行器主控功能包
 
