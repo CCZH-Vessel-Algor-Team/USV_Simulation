@@ -33,6 +33,10 @@ Thumbs.db
 
 # 会话日志文件
 src/usv_sim_full/logs/
+# Dev-only notes directories (tracked in dev branch only)
+notes/
+src/usv_sim_full/notes/
+src/vrx/notes/
 
 # Gazebo相关
 *.sdf.tmp
