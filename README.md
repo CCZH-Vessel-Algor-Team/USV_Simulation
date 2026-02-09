@@ -173,6 +173,53 @@ robot:
 - [VRX框架文档](https://github.com/osrf/vrx) - 官方VRX竞赛框架说明
 - [Gazebo Garden手册](https://gazebosim.org/docs/garden/) - 仿真引擎官方文档
 
+
+
+```mermaid
+flowchart LR
+  A[YAML: full_config.yaml]
+  B[session_manager.py]
+  C[xacro command - ros2 run xacro xacro with key:=value args]
+  D[wamv_no_battery.urdf.xacro]
+  E{Includes and Macros}
+  E1[macros_without_dynamics.xacro]
+  E2[wamv_gazebo_dynamics_param.xacro - macro usv_dynamics_gazebo]
+  E3[custom_thrusters.xacro]
+  E4[generated_sensors.xacro]
+  F[macros & sensor macros from wamv_gazebo and wamv_description]
+  G[final_robot.urdf]
+  H[robot_bringup.launch -> robot_state_publisher]
+  I[ros_gz_sim create using final_robot.urdf]
+
+  A --> B
+  B --> C
+  C --> D
+  D --> E
+  E --> E1
+  E --> E2
+  E --> E3
+  E --> E4
+  E1 --> F
+  E2 --> F
+  E3 --> F
+  E4 --> F
+  F --> G
+  G --> H
+  G --> I
+
+  %% Parameter mapping annotations
+  subgraph ParamMappings
+    P1[hull_length xU xUU yV ...]
+    P2[thruster_positions -> thruster_pos_x thruster_pos_y_left thruster_pos_y_right thruster_pos_z]
+    P3[sensors -> generated_sensors.xacro]
+  end
+  A -->|buoyancy_params/*| P1
+  A -->|overrides.thruster_positions| P2
+  A -->|sensors| P3
+  P1 --> C
+  P2 --> C
+  P3 --> C
+```
 ### 扩展示例
 ```python
 # 自定义控制器扩展

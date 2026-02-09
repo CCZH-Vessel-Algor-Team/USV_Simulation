@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!-- Local macros file that mirrors wamv_gazebo/macros.xacro but omits the dynamics include
+     so the caller can supply its own dynamics plugin configuration. -->
+<robot xmlns:xacro="http://ros.org/wiki/xacro"
+       name="WAM-V-local-macros">
+  <!-- NOTE: intentionally do NOT include wamv_gazebo dynamics plugin here -->
+
+  <!-- Include sensor macros from the upstream package so existing calls work -->
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/wamv_camera.xacro" />
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/wamv_gps.xacro" />
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/wamv_imu.xacro" />
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/wamv_planar_lidar.xacro" />
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/wamv_3d_lidar.xacro" />
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/lidar.xacro" />
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/wamv_p3d.xacro" />
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/wamv_pinger.xacro" />
+  <xacro:include filename="$(find wamv_gazebo)/urdf/components/ball_shooter.xacro" />
+
+  <!-- Any additional local macros (e.g. hull_macro) can be included by callers separately -->
+</robot>

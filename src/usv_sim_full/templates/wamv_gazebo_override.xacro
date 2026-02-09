@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!-- An override of upstream wamv_gazebo.xacro that uses a local macros file
+    (which omits the upstream dynamics macro). This macro intentionally
+    does NOT attach the usv_dynamics_gazebo plugin so callers can supply
+    their own gazebo <plugin> blocks (e.g. for custom hull/dynamics). -->
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Include our local macros file (which provides sensor/component macros)
+       but does NOT include the dynamics macro. -->
+  <xacro:include filename="$(find usv_sim_full)/templates/macros_without_dynamics.xacro" />
+
+  <!-- Macro to create a WAM-V with a customizable thruster layout. This
+       intentionally does not attach dynamics plugins; dynamics should be
+       provided by the caller (for example, via a wrapper xacro file). -->
+  <xacro:macro  name="wamv_gazebo" params="thruster_layout">
+  <!-- Defines the base vehicle. Prefer local copy in usv_sim_full to avoid depending on external wamv_description -->
+  <xacro:include filename="$(find usv_sim_full)/templates/wamv_base.urdf.xacro" />
+    <!-- Thruster Layout (caller provided path) -->
+    <xacro:include filename="${thruster_layout}"/>
+    <!-- NOTE: no usv_dynamics_gazebo call here; caller may add its own plugins -->
+  </xacro:macro>
+</robot>

@@ -13,6 +13,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import IncludeLaunchDescription
 from launch.actions import ExecuteProcess
@@ -101,7 +102,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         parameters=[{
-            'robot_description': Command(['cat ', urdf_path]),
+            'robot_description': ParameterValue(Command(['cat ', urdf_path]), value_type=str),
             'use_sim_time': use_sim_time
         }],
         output='screen'
