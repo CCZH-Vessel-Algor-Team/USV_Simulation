@@ -1,0 +1,84 @@
+[INFO] [launch]: All log files can be found below /home/cczh/.ros/log/2026-02-09-15-52-52-628647-cczh-MS-7D25-3479773
+[INFO] [launch]: Default logging verbosity is set to INFO
+Full session manager output: 'Post-processed URDF for Gazebo compatibility
+Generated URDF at: /home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/final_robot.urdf
+{"session_path": "/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252", "urdf_path": "/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/final_robot.urdf", "bridge_yaml_path": "/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/bridge_config.yaml", "rviz_config_path": "/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/session.rviz", "obstacle_layout_path": "/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/obstacle_layout.json"}'
+Setting GZ_SIM_RESOURCE_PATH to: /home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/description:/home/cczh/USV_ROS/src/USV_Simulation/install/vrx_gz/share/vrx_gz/models/tmp:/home/cczh/USV_ROS/src/USV_Simulation/install/vrx_gz/share/vrx_gz/models:/home/cczh/USV_ROS/src/USV_Simulation/install/vrx_gz/share/vrx_gz/worlds/2023_phase2:/home/cczh/USV_ROS/src/USV_Simulation/install/vrx_gz/share/vrx_gz/worlds/2023_practice:/home/cczh/USV_ROS/src/USV_Simulation/install/vrx_gz/share/vrx_gz/worlds:/home/cczh/USV_ROS/src/USV_Simulation/install/wamv_description/share/wamv_description/models:/home/cczh/USV_ROS/src/USV_Simulation/install/vrx_gazebo/share/vrx_gazebo/models:/home/cczh/USV_ROS/src/USV_Simulation/install/vrx_gazebo/share/
+Setting GAZEBO_MODEL_PATH to: /home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/description
+[INFO] [ruby $(which gz) sim-1]: process started with pid [3479779]
+[INFO] [parameter_bridge-2]: process started with pid [3479781]
+[INFO] [robot_state_publisher-3]: process started with pid [3479783]
+[INFO] [create-4]: process started with pid [3479786]
+[INFO] [parameter_bridge-5]: process started with pid [3479788]
+[INFO] [obstacle_spawner-6]: process started with pid [3479791]
+[INFO] [rviz2-7]: process started with pid [3479793]
+[create-4] [INFO] [1770623572.886689964] [ros_gz_sim]: Requesting list of world names.
+[robot_state_publisher-3] [WARN] [1770623572.893892033] [kdl_parser]: The root link wamv/base_link has an inertia specified in the URDF, but KDL does not support a root link with an inertia.  As a workaround, you can add an extra dummy link to your URDF.
+[robot_state_publisher-3] [INFO] [1770623572.893945596] [robot_state_publisher]: got segment front_lidar_link
+[robot_state_publisher-3] [INFO] [1770623572.893968219] [robot_state_publisher]: got segment gps_sensor_link
+[robot_state_publisher-3] [INFO] [1770623572.893970844] [robot_state_publisher]: got segment imu_sensor_link
+[robot_state_publisher-3] [INFO] [1770623572.893972633] [robot_state_publisher]: got segment main_cam_link
+[robot_state_publisher-3] [INFO] [1770623572.893974322] [robot_state_publisher]: got segment wamv/base_link
+[robot_state_publisher-3] [INFO] [1770623572.893976206] [robot_state_publisher]: got segment wamv/left_engine_link
+[robot_state_publisher-3] [INFO] [1770623572.893978356] [robot_state_publisher]: got segment wamv/left_propeller_link
+[robot_state_publisher-3] [INFO] [1770623572.893980004] [robot_state_publisher]: got segment wamv/right_engine_link
+[robot_state_publisher-3] [INFO] [1770623572.893981658] [robot_state_publisher]: got segment wamv/right_propeller_link
+[rviz2-7] [INFO] [1770623573.385421470] [rviz2]: Stereo is NOT SUPPORTED
+[rviz2-7] [INFO] [1770623573.385530594] [rviz2]: OpenGl version: 4.6 (GLSL 4.6)
+[rviz2-7] [INFO] [1770623573.562680862] [rviz2]: Stereo is NOT SUPPORTED
+[rviz2-7] [ERROR] [1770623573.600220593] [rviz2]: PluginlibFactory: The plugin for class 'rviz_default_plugins/Imu' failed to load. Error: According to the loaded plugin descriptions the class rviz_default_plugins/Imu with base class type rviz_common::Display does not exist. Declared types are  cartographer_rviz/SubmapsDisplay nav2_rviz_plugins/ParticleCloud rviz_default_plugins/AccelStamped rviz_default_plugins/Axes rviz_default_plugins/Camera rviz_default_plugins/DepthCloud rviz_default_plugins/Effort rviz_default_plugins/FluidPressure rviz_default_plugins/Grid rviz_default_plugins/GridCells rviz_default_plugins/Illuminance rviz_default_plugins/Image rviz_default_plugins/InteractiveMarkers rviz_default_plugins/LaserScan rviz_default_plugins/Map rviz_default_plugins/Marker rviz_default_plugins/MarkerArray rviz_default_plugins/Odometry rviz_default_plugins/Path rviz_default_plugins/PointCloud rviz_default_plugins/PointCloud2 rviz_default_plugins/PointStamped rviz_default_plugins/Polygon rviz_default_plugins/Pose rviz_default_plugins/PoseArray rviz_default_plugins/PoseWithCovariance rviz_default_plugins/Range rviz_default_plugins/RelativeHumidity rviz_default_plugins/RobotModel rviz_default_plugins/TF rviz_default_plugins/Temperature rviz_default_plugins/TwistStamped rviz_default_plugins/Wrench
+[rviz2-7] [INFO] [1770623573.681560292] [rviz2]: Stereo is NOT SUPPORTED
+[parameter_bridge-2] [INFO] [1770623573.892678544] [global_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.892791046] [sensor_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.894189909] [sensor_bridge]: Creating GZ->ROS Bridge: [/model/wamv/odometry (gz.msgs.Odometry) -> /model/wamv/odometry (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.896782569] [sensor_bridge]: Creating GZ->ROS Bridge: [/model/wamv/joint_state (gz.msgs.Model) -> /model/wamv/joint_state (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.897965114] [sensor_bridge]: Creating GZ->ROS Bridge: [/model/wamv/pose (gz.msgs.Pose_V) -> /model/wamv/pose (tf2_msgs/msg/TFMessage)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.898952556] [sensor_bridge]: Creating GZ->ROS Bridge: [/world/sydney_regatta/model/wamv/sensor/lidar/front/points (gz.msgs.PointCloudPacked) -> /sensors/lidar/front/points (sensor_msgs/msg/PointCloud2)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.899516446] [sensor_bridge]: Creating GZ->ROS Bridge: [/world/sydney_regatta/model/wamv/sensor/camera/front/image_raw (gz.msgs.Image) -> /sensors/camera/front/image_raw (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.899977189] [sensor_bridge]: Creating GZ->ROS Bridge: [/world/sydney_regatta/model/wamv/sensor/camera/front/camera_info (gz.msgs.CameraInfo) -> /sensors/camera/front/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.900516614] [sensor_bridge]: Creating GZ->ROS Bridge: [/world/sydney_regatta/model/wamv/sensor/imu/data (gz.msgs.IMU) -> /sensors/imu/data (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-5] [INFO] [1770623573.900978978] [sensor_bridge]: Creating GZ->ROS Bridge: [/world/sydney_regatta/model/wamv/sensor/gps/data (gz.msgs.NavSat) -> /sensors/gps/data (sensor_msgs/msg/NavSatFix)] (Lazy 0)
+[create-4] [INFO] [1770623573.931449181] [ros_gz_sim]: Requested creation of entity.
+[create-4] [INFO] [1770623573.931493012] [ros_gz_sim]: OK creation of entity.
+[INFO] [create-4]: process has finished cleanly [pid 3479786]
+[obstacle_spawner-6] Successfully spawned obstacle buoy_start
+[INFO] [obstacle_spawner-6]: process has finished cleanly [pid 3479791]
+[ruby $(which gz) sim-1] libEGL warning: egl: failed to create dri2 screen
+[ruby $(which gz) sim-1] libEGL warning: egl: failed to create dri2 screen
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="WAM-V-No-Battery"]/link[@name="wamv/base_link"]/plugin[@name="gz::sim::systems::Lidar"]:/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/final_robot.urdf:L0]: XML Element[plugin], child of element[link], not defined in SDF. Copying[plugin] as children of [link].
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="WAM-V-No-Battery"]/link[@name="wamv/base_link"]/plugin[@name="gz::sim::systems::GNSS"]:/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/final_robot.urdf:L0]: XML Element[plugin], child of element[link], not defined in SDF. Copying[plugin] as children of [link].
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="WAM-V-No-Battery"]/link[@name="wamv/base_link"]/plugin[@name="gz::sim::systems::ImuSensor"]:/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/final_robot.urdf:L0]: XML Element[plugin], child of element[link], not defined in SDF. Copying[plugin] as children of [link].
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="WAM-V-No-Battery"]/link[@name="wamv/base_link"]/plugin[@name="gz::sim::systems::CameraSensor"]:/home/cczh/USV_ROS/src/USV_Simulation/install/usv_sim_full/share/usv_sim_full/logs/session_20260209_155252/final_robot.urdf:L0]: XML Element[plugin], child of element[link], not defined in SDF. Copying[plugin] as children of [link].
+[ruby $(which gz) sim-1] [1;31m[Err] [UserCommands.cc:928] [0m[1;31mError Code [0m[1;31m1[0m[1;31m: [0m[1;31mMsg: [0m[1;31mError finding file [/tmp/tmp0s6t0xav.sdf].[0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [UserCommands.cc:928] [0m[1;31mError Code [0m[1;31m1[0m[1;31m: [0m[1;31mMsg: [0m[1;31mUnable to read file: [/tmp/tmp0s6t0xav.sdf][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/plugin[@name="vrx::WaveVisual"]:<data-string>:L1]: XML Element[plugin], child of element[sdf], not defined in SDF. Copying[plugin] as children of [sdf].
+[ruby $(which gz) sim-1] libEGL warning: egl: failed to create dri2 screen
+[ruby $(which gz) sim-1] libEGL warning: egl: failed to create dri2 screen
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="WAM-V-No-Battery"]/link[@name="wamv/base_link"]/plugin[@name="gz::sim::systems::Lidar"]:<data-string>:L627]: XML Element[plugin], child of element[link], not defined in SDF. Copying[plugin] as children of [link].
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="WAM-V-No-Battery"]/link[@name="wamv/base_link"]/plugin[@name="gz::sim::systems::GNSS"]:<data-string>:L631]: XML Element[plugin], child of element[link], not defined in SDF. Copying[plugin] as children of [link].
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="WAM-V-No-Battery"]/link[@name="wamv/base_link"]/plugin[@name="gz::sim::systems::ImuSensor"]:<data-string>:L635]: XML Element[plugin], child of element[link], not defined in SDF. Copying[plugin] as children of [link].
+[ruby $(which gz) sim-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="WAM-V-No-Battery"]/link[@name="wamv/base_link"]/plugin[@name="gz::sim::systems::CameraSensor"]:<data-string>:L639]: XML Element[plugin], child of element[link], not defined in SDF. Copying[plugin] as children of [link].
+[ruby $(which gz) sim-1] [1;31m[Err] [SystemPaths.cc:425] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Roughness.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SystemPaths.cc:525] [0m[1;31mCould not resolve file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Roughness.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SceneManager.cc:880] [0m[1;31mUnable to find file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Roughness.png[0m[1;31m][0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SystemPaths.cc:425] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Metalness.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SystemPaths.cc:525] [0m[1;31mCould not resolve file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Metalness.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SceneManager.cc:892] [0m[1;31mUnable to find file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Metalness.png[0m[1;31m][0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SystemPaths.cc:425] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Albedo.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SystemPaths.cc:525] [0m[1;31mCould not resolve file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Albedo.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SceneManager.cc:928] [0m[1;31mUnable to find file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Albedo.png[0m[1;31m][0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SystemPaths.cc:425] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Normal.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SystemPaths.cc:525] [0m[1;31mCould not resolve file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Normal.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[Err] [SceneManager.cc:940] [0m[1;31mUnable to find file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Normal.png[0m[1;31m][0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SystemPaths.cc:425] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Roughness.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SystemPaths.cc:525] [0m[1;31mCould not resolve file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Roughness.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SceneManager.cc:880] [0m[1;31mUnable to find file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Roughness.png[0m[1;31m][0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SystemPaths.cc:425] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Metalness.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SystemPaths.cc:525] [0m[1;31mCould not resolve file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Metalness.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SceneManager.cc:892] [0m[1;31mUnable to find file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Metalness.png[0m[1;31m][0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SystemPaths.cc:425] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Albedo.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SystemPaths.cc:525] [0m[1;31mCould not resolve file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Albedo.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SceneManager.cc:928] [0m[1;31mUnable to find file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Albedo.png[0m[1;31m][0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SystemPaths.cc:425] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Normal.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SystemPaths.cc:525] [0m[1;31mCould not resolve file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Normal.png[0m[1;31m][0m[1;31m[0m
+[ruby $(which gz) sim-1] [1;31m[GUI] [Err] [SceneManager.cc:940] [0m[1;31mUnable to find file [[0m[1;31mmodel://wamv_description/models/WAM-V-Base/mesh/WAM-V_Normal.png[0m[1;31m][0m

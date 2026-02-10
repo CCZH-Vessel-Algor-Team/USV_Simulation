@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="use_textures" default="false"/>
   <xacro:macro name="wamv_ball_shooter" params="name:='ball_shooter' frameId:='wamv/ball_shooter' x:=0.55 y:=0.35 z:=1.4 pitch:='0' yaw:='0'">
 
     <link name="${namespace}/${name}_base_link">
@@ -67,14 +68,16 @@
         <material>
           <diffuse>1.0 1.0 1.0</diffuse>
           <specular>1.0 1.0 1.0</specular>
-          <pbr>
-            <metal>
-              <albedo_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Albedo.png</albedo_map>
-              <normal_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Normal.png</normal_map>
-              <roughness_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Roughness.png</roughness_map>
-              <metalness_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Metalness.png</metalness_map>
-            </metal>
-          </pbr>
+          <xacro:if value="$(arg use_textures)">
+            <pbr>
+              <metal>
+                <albedo_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Albedo.png</albedo_map>
+                <normal_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Normal.png</normal_map>
+                <roughness_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Roughness.png</roughness_map>
+                <metalness_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Metalness.png</metalness_map>
+              </metal>
+            </pbr>
+          </xacro:if>
         </material>
       </visual>
     </gazebo>
@@ -84,14 +87,16 @@
         <material>
           <diffuse>1.0 1.0 1.0</diffuse>
           <specular>1.0 1.0 1.0</specular>
-          <pbr>
-            <metal>
-              <albedo_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Albedo.png</albedo_map>
-              <normal_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Normal.png</normal_map>
-              <roughness_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Roughness.png</roughness_map>
-              <metalness_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Metalness.png</metalness_map>
-            </metal>
-          </pbr>
+          <xacro:if value="$(arg use_textures)">
+            <pbr>
+              <metal>
+                <albedo_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Albedo.png</albedo_map>
+                <normal_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Normal.png</normal_map>
+                <roughness_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Roughness.png</roughness_map>
+                <metalness_map>model://vrx_gazebo/models/ball_shooter/materials/Textures/Launcher_Metalness.png</metalness_map>
+              </metal>
+            </pbr>
+          </xacro:if>
         </material>
       </visual>
     </gazebo>

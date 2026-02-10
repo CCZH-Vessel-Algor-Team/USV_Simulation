@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- optional arg to disable texture references (default: false) -->
+  <xacro:arg name="use_textures" default="false"/>
   <xacro:macro name="wamv_camera" params="name x:=0.5 y:=0 z:=1.5 post_z_from:=1.2965 R:=0 P:=0 Y:=0 post_Y:=0 visualize:=False">
     <!-- Define length variables for link positioning -->
     <xacro:property name="platform_z" value="${post_z_from}"/>
@@ -142,14 +144,16 @@
         <material>
           <diffuse>1.0 1.0 1.0</diffuse>
           <specular>1.0 1.0 1.0</specular>
-          <pbr>
-            <metal>
-              <albedo_map>model://vrx_gazebo/models/mono_camera/mesh/mono_camera_Albedo.png</albedo_map>
-              <normal_map>model://vrx_gazebo/models/mono_camera/mesh/mono_camera_Normal.png</normal_map>
-              <roughness_map>model://vrx_gazebo/models/mono_camera/mesh/mono_camera_Roughness.png</roughness_map>
-              <metalness_map>model://vrx_gazebo/models/mono_camera/mesh/mono_camera_Metalness.png</metalness_map>
-            </metal>
-          </pbr>
+          <xacro:if value="$(arg use_textures)">
+            <pbr>
+              <metal>
+                <albedo_map>model://vrx_gazebo/models/mono_camera/mesh/mono_camera_Albedo.png</albedo_map>
+                <normal_map>model://vrx_gazebo/models/mono_camera/mesh/mono_camera_Normal.png</normal_map>
+                <roughness_map>model://vrx_gazebo/models/mono_camera/mesh/mono_camera_Roughness.png</roughness_map>
+                <metalness_map>model://vrx_gazebo/models/mono_camera/mesh/mono_camera_Metalness.png</metalness_map>
+              </metal>
+            </pbr>
+          </xacro:if>
         </material>
       </visual>
 

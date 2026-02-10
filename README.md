@@ -14,6 +14,7 @@
 - 🚀 **[快速入门指南](QUICK_START.md)** - 5分钟快速体验
 - 🏗️ **[技术架构详解](src/usv_sim_full/README.md)** - 核心功能包深度解析  
 - 🛠️ **当前文档** - 项目整体介绍和使用概览
+ - 🧭 **[使用指南](src/使用指南.md)** - 更详细的安装与运行步骤
 
 ## 🎯 项目简介
 
@@ -77,18 +78,18 @@ sudo apt install ros-humble-ros-gz
 sudo apt install python3-colcon-common-extensions python3-rosdep
 ```
 
-### 构建和运行
+# 构建和运行
 
 ```bash
-# 构建所有包
-cd /home/cczh/USV_ROS
+# 构建所有包（在仓库根目录下执行）
+cd ./
 colcon build --packages-up-to usv_sim_full
 
 # 源设置环境
 source install/setup.bash
 
 # 启动仿真系统
-ros2 launch usv_sim_full main.launch.py config_path:='./src/usv_sim_full/config/full_config.yaml'
+ros2 launch usv_sim_full main.launch.py config_path:'./src/usv_sim_full/config/full_config.yaml'
 ```
 
 ## 🎮 核心功能演示
@@ -173,6 +174,53 @@ robot:
 - [VRX框架文档](https://github.com/osrf/vrx) - 官方VRX竞赛框架说明
 - [Gazebo Garden手册](https://gazebosim.org/docs/garden/) - 仿真引擎官方文档
 
+
+
+```mermaid
+flowchart LR
+  A[YAML: full_config.yaml]
+  B[session_manager.py]
+  C[xacro command - ros2 run xacro xacro with key:=value args]
+  D[wamv_no_battery.urdf.xacro]
+  E{Includes and Macros}
+  E1[macros_without_dynamics.xacro]
+  E2[wamv_gazebo_dynamics_param.xacro - macro usv_dynamics_gazebo]
+  E3[custom_thrusters.xacro]
+  E4[generated_sensors.xacro]
+  F[macros & sensor macros from wamv_gazebo and wamv_description]
+  G[final_robot.urdf]
+  H[robot_bringup.launch -> robot_state_publisher]
+  I[ros_gz_sim create using final_robot.urdf]
+
+  A --> B
+  B --> C
+  C --> D
+  D --> E
+  E --> E1
+  E --> E2
+  E --> E3
+  E --> E4
+  E1 --> F
+  E2 --> F
+  E3 --> F
+  E4 --> F
+  F --> G
+  G --> H
+  G --> I
+
+  %% Parameter mapping annotations
+  subgraph ParamMappings
+    P1[hull_length xU xUU yV ...]
+    P2[thruster_positions -> thruster_pos_x thruster_pos_y_left thruster_pos_y_right thruster_pos_z]
+    P3[sensors -> generated_sensors.xacro]
+  end
+  A -->|buoyancy_params/*| P1
+  A -->|overrides.thruster_positions| P2
+  A -->|sensors| P3
+  P1 --> C
+  P2 --> C
+  P3 --> C
+```
 ### 扩展示例
 ```python
 # 自定义控制器扩展
@@ -192,8 +240,8 @@ class AdvancedController(SessionManager):
 
 ### 环境配置问题
 ```bash
-# Q: Gazebo资源路径找不到？
-export GZ_SIM_RESOURCE_PATH="/home/cczh/USV_ROS/install/wamv_description/share/wamv_description/models:$GZ_SIM_RESOURCE_PATH"
+# Q: Gazebo资源路径找不到？（使用相对路径，假定在仓库根目录执行）
+export GZ_SIM_RESOURCE_PATH="install/wamv_description/share/wamv_description/models:$GZ_SIM_RESOURCE_PATH"
 
 # Q: ROS包依赖缺失？
 rosdep install --from-paths src --ignore-src -r -y

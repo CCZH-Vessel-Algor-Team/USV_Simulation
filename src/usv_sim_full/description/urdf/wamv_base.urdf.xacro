@@ -2,6 +2,11 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="wam-v">
   <!-- Required arg for melodic and kinetic... -->
   <xacro:arg name="namespace" default="wamv"/>
+  <!-- Allow overriding the base mass and inertial tensor from top-level xacro args -->
+  <xacro:arg name="mass" default="1900.0"/>
+  <xacro:arg name="ixx" default="1200"/>
+  <xacro:arg name="iyy" default="4000"/>
+  <xacro:arg name="izz" default="4500"/>
   <xacro:property name="namespace" value="$(arg namespace)" scope="global" />
   <!-- Macro for creating the main collisions as simple shapes. -->
   <xacro:macro name="main_collisions" params="prefix reflect:=1">
@@ -118,11 +123,11 @@
     </collision>
 
     <inertial>
-      <!-- From WAM-V spec sheet -->
-      <mass value="1900.0"/>
+      <!-- Mass and inertia can be overridden via top-level xacro args -->
+      <mass value="$(arg mass)"/>
       <origin xyz="0 0 -0.2" rpy="0 0 0"/> 
-      <!-- 惯性张量根据 1.9 吨、5m长、2.5m宽估算 -->
-      <inertia ixx="1200" ixy="0" ixz="0" iyy="4000" iyz="0" izz="4500"/>
+      <!-- Inertia tensor (diagonal) -->
+      <inertia ixx="$(arg ixx)" ixy="0" ixz="0" iyy="$(arg iyy)" iyz="0" izz="$(arg izz)"/>
     </inertial>
   </link>
 

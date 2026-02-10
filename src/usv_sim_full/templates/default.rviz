@@ -48,12 +48,7 @@ Visualization Manager:
     - Class: rviz_default_plugins/RobotModel
       Enabled: true
       Name: RobotModel
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /robot_description
+      Robot Description: robot_description
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/TF

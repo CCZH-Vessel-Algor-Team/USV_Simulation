@@ -2,8 +2,6 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="wam-v">
   <!-- Required arg for melodic and kinetic... -->
   <xacro:arg name="namespace" default="wamv"/>
-  <!-- Disable PBR texture references by default to avoid runtime model:// texture resolution errors; can be enabled by passing use_textures:=true -->
-  <xacro:arg name="use_textures" default="false"/>
   <!-- Allow overriding mass and inertia from top-level xacro args -->
   <xacro:arg name="mass" default="1900.0"/>
   <xacro:arg name="ixx" default="1200"/>
@@ -125,10 +123,10 @@
     </collision>
 
     <inertial>
-      <!-- Mass and inertia read from args (with defaults defined at the top) -->
+      <!-- From WAM-V spec sheet -->
       <mass value="$(arg mass)"/>
       <origin xyz="0 0 -0.2" rpy="0 0 0"/> 
-      <!-- Inertia tensor (diagonal) -->
+      <!-- 惯性张量根据 1.9 吨、5m长、2.5m宽估算 -->
       <inertia ixx="$(arg ixx)" ixy="0" ixz="0" iyy="$(arg iyy)" iyz="0" izz="$(arg izz)"/>
     </inertial>
   </link>
@@ -142,16 +140,14 @@
       <material>
         <diffuse>1.0 1.0 1.0</diffuse>
         <specular>1.0 1.0 1.0</specular>
-        <xacro:if value="$(arg use_textures)">
-          <pbr>
-            <metal>
-              <albedo_map>model://wamv_description/models/WAM-V-Base/mesh/WAM-V_Albedo.png</albedo_map>
-              <normal_map>model://wamv_description/models/WAM-V-Base/mesh/WAM-V_Normal.png</normal_map>
-              <roughness_map>model://wamv_description/models/WAM-V-Base/mesh/WAM-V_Roughness.png</roughness_map>
-              <metalness_map>model://wamv_description/models/WAM-V-Base/mesh/WAM-V_Metalness.png</metalness_map>
-            </metal>
-          </pbr>
-        </xacro:if>
+        <pbr>
+          <metal>
+            <albedo_map>model://wamv_description/models/WAM-V-Base/mesh/WAM-V_Albedo.png</albedo_map>
+            <normal_map>model://wamv_description/models/WAM-V-Base/mesh/WAM-V_Normal.png</normal_map>
+            <roughness_map>model://wamv_description/models/WAM-V-Base/mesh/WAM-V_Roughness.png</roughness_map>
+            <metalness_map>model://wamv_description/models/WAM-V-Base/mesh/WAM-V_Metalness.png</metalness_map>
+          </metal>
+        </pbr>
       </material>
     </visual>
 

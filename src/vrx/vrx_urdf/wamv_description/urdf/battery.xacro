@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="wam-v-batteries">
+  <!-- optional arg to disable texture references (default: false) -->
+  <xacro:arg name="use_textures" default="false"/>
   <xacro:macro name="battery" params="prefix position:='0 0 0' orientation:='0 0 0'">
     <link name="${namespace}/${prefix}_battery_link">
       <visual>
@@ -37,14 +39,16 @@
         <material>
           <diffuse>1.0 1.0 1.0</diffuse>
           <specular>1.0 1.0 1.0</specular>
-          <pbr>
-            <metal>
-              <albedo_map>model://vrx_gazebo/models/battery/mesh/battery_Albedo.png</albedo_map>
-              <normal_map>model://vrx_gazebo/models/battery/mesh/battery_Normal.png</normal_map>
-              <roughness_map>model://vrx_gazebo/models/battery/mesh/battery_Roughness.png</roughness_map>
-              <metalness_map>model://vrx_gazebo/models/battery/mesh/battery_Metalness.png</metalness_map>
-            </metal>
-          </pbr>
+          <xacro:if value="$(arg use_textures)">
+            <pbr>
+              <metal>
+                <albedo_map>model://vrx_gazebo/models/battery/mesh/battery_Albedo.png</albedo_map>
+                <normal_map>model://vrx_gazebo/models/battery/mesh/battery_Normal.png</normal_map>
+                <roughness_map>model://vrx_gazebo/models/battery/mesh/battery_Roughness.png</roughness_map>
+                <metalness_map>model://vrx_gazebo/models/battery/mesh/battery_Metalness.png</metalness_map>
+              </metal>
+            </pbr>
+          </xacro:if>
         </material>
       </visual>
     </gazebo>

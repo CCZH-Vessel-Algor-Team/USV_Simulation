@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!-- Parameterized dynamics macro for WAM-V.
+     Provides Surface and SimpleHydrodynamics plugin blocks with
+     configurable parameters so top-level xacro args can control behavior.
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="usv_dynamics_gazebo" params="name wavefield_size:=1000 
+      hull_length:=5.0 hull_radius:=0.5 fluid_level:=0 
+      xDotU:=100.0 yDotV:=200.0 nDotR:=200.0 
+      xU:=200.0 xUU:=300.0 yV:=400.0 yVV:=400.0 
+      zW:=1000.0 kP:=1000.0 kPP:=1500.0 mQ:=1500.0 mQQ:=1500.0 nR:=1500.0 nRR:=1500.0">
+
+    <!-- Left hull surface plugin -->
+    <gazebo>
+      <plugin filename="libSurface.so" name="vrx::Surface">
+        <link_name>${namespace}/base_link</link_name>
+        <hull_length>${hull_length}</hull_length>
+        <hull_radius>${hull_radius}</hull_radius>
+        <fluid_level>${fluid_level}</fluid_level>
+        <points>
+          <point>0.6 1.03 0</point>
+          <point>-1.4 1.03 0</point>
+        </points>
+        <wavefield>
+          <topic>/vrx/wavefield/parameters</topic>
+        </wavefield>
+      </plugin>
+
+      <!-- Right hull surface plugin -->
+      <plugin filename="libSurface.so" name="vrx::Surface">
+        <link_name>${namespace}/base_link</link_name>
+        <hull_length>${hull_length}</hull_length>
+        <hull_radius>${hull_radius}</hull_radius>
+        <fluid_level>${fluid_level}</fluid_level>
+        <points>
+          <point>0.6 -1.03 0</point>
+          <point>-1.4 -1.03 0</point>
+        </points>
+        <wavefield>
+          <topic>/vrx/wavefield/parameters</topic>
+        </wavefield>
+      </plugin>
+
+      <!-- Simple hydrodynamics plugin -->
+      <plugin filename="libSimpleHydrodynamics.so" name="vrx::SimpleHydrodynamics">
+        <link_name>${namespace}/base_link</link_name>
+        <!-- Added mass -->
+        <xDotU>${xDotU}</xDotU>
+        <yDotV>${yDotV}</yDotV>
+        <nDotR>${nDotR}</nDotR>
+        <!-- Linear and quadratic drag -->
+        <xU>${xU}</xU>
+        <xUU>${xUU}</xUU>
+        <yV>${yV}</yV>
+        <yVV>${yVV}</yVV>
+        <zW>${zW}</zW>
+        <kP>${kP}</kP>
+        <kPP>${kPP}</kPP>
+        <mQ>${mQ}</mQ>
+        <mQQ>${mQQ}</mQQ>
+        <nR>${nR}</nR>
+        <nRR>${nRR}</nRR>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
+</robot>
