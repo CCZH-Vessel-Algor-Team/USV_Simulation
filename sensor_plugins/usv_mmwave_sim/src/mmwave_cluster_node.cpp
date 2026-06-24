@@ -117,7 +117,6 @@ public:
     doppler_prefilter_threshold_ = declare_parameter<double>("doppler_prefilter_threshold", 0.05);
     min_cluster_rcs_mean_ = declare_parameter<double>("min_cluster_rcs_mean", 0.0);
     max_clusters_ = declare_parameter<int>("max_clusters", 0);
-    motion_speed_threshold_ = declare_parameter<double>("motion_speed_threshold", 0.3);
     min_size_h_m_ = declare_parameter<double>("min_size_h_m", 0.5);
     output_use_reliable_qos_ = declare_parameter<bool>("output_use_reliable_qos", true);
 
@@ -272,7 +271,6 @@ private:
     out.header = msg->header;
     out.targets.reserve(valid.size());
 
-    uint32_t track_id = 1;
     for (const auto &c : valid) {
       usv_interfaces::msg::MmwaveTarget t;
       t.x = c.cx;
@@ -282,10 +280,7 @@ private:
       t.size_w = std::max(0.5, c.max_y - c.min_y);
       t.size_l = std::max(0.5, c.max_x - c.min_x);
       t.size_h = std::max(min_size_h_m_, c.max_z - c.min_z);
-      const double speed = std::sqrt(t.v_x * t.v_x + t.v_y * t.v_y);
-      t.objmotion_status = (speed > motion_speed_threshold_) ?
-        static_cast<uint8_t>(1) : static_cast<uint8_t>(0);
-      t.track_id = track_id++;
+      t.snr = c.sum_rcs / static_cast<double>(c.count);
       out.targets.push_back(t);
     }
 
@@ -304,7 +299,6 @@ private:
   double doppler_prefilter_threshold_{0.05};
   double min_cluster_rcs_mean_{0.0};
   int max_clusters_{0};
-  double motion_speed_threshold_{0.3};
   double min_size_h_m_{0.5};
   bool output_use_reliable_qos_{true};
   bool use_xy_only_{false};
