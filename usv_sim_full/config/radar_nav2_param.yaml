@@ -23,6 +23,8 @@ global_costmap:
       # origin_y: -400.0
       plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "inflation_layer"]
       # plugins: ["static_layer","inflation_layer"]
+      # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
+      filters: ["keepout_filter"]
 
 
 
@@ -99,6 +101,11 @@ global_costmap:
         inflation_radius: 20.0 # 根据船只大小调整
         cost_scaling_factor: 0.3   # 膨胀代价的衰减速度,越大衰减越快
 
+      keepout_filter:
+        plugin: "nav2_costmap_2d::KeepoutFilter"
+        enabled: True
+        filter_info_topic: "/keepout_costmap_filter_info"
+
       always_send_full_costmap: true
 
 local_costmap:
@@ -116,6 +123,8 @@ local_costmap:
       resolution: 0.2
       # plugins: ["static_layer", "inflation_layer"]
       plugins: ["obstacle_layer", "ts_projection_layer", "inflation_layer"]
+      # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
+      filters: ["keepout_filter"]
 
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -164,6 +173,11 @@ local_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         inflation_radius: 10.0    # 1.5
         cost_scaling_factor: 2.0
+
+      keepout_filter:
+        plugin: "nav2_costmap_2d::KeepoutFilter"
+        enabled: True
+        filter_info_topic: "/keepout_costmap_filter_info"
 
       always_send_full_costmap: true
 

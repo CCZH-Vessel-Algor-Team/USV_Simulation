@@ -260,6 +260,10 @@ def generate_launch_description():
         trackship_pkg, 'config', 'target_snapshot_to_tracked_ship.yaml'
     )
 
+    default_vector_object_params = os.path.join(
+        usv_sim_full_pkg, 'config', 'vector_object_server_params.yaml'
+    )
+
     default_localization_params = os.path.join(
         usv_sim_full_pkg, 'config', 'robot_localization_gps.yaml'
     )
@@ -325,6 +329,7 @@ def generate_launch_description():
             'nav2_tf_readiness_gate|'
             'sim_vision_node|sim_mmwave_node|late_fusion_node|'
             'target_snapshot_to_tracked_ship|'
+            'vector_object_server|keepout_costmap_filter_info_server|lifecycle_manager_keepout_zone|'
             'scenario_ground_truth_node|ground_truth_gazebo_entity|ground_truth_gazebo_models'
         )
         subprocess.run(
@@ -510,6 +515,48 @@ def generate_launch_description():
             gate_exit_handler,
         ]
 
+    def vector_object_server_launch(context, *args, **kwargs):
+        if LaunchConfiguration('enable_keepout_filter').perform(context).lower() != 'true':
+            return [
+                LogInfo(msg='enable_keepout_filter:=false，跳过 vector_object_server。'),
+            ]
+        params = LaunchConfiguration('vector_object_params_file').perform(context)
+        use_sim = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
+        return [
+            LogInfo(
+                msg=(
+                    '启动 vector_object_server（静态禁航区，默认空 mask；'
+                    f'参数 {params}；service /vector_object_server/add_shapes 可动态注入）'
+                )
+            ),
+            Node(
+                package='nav2_colregs_vector_object_server',
+                executable='vector_object_server',
+                name='vector_object_server',
+                output='screen',
+                parameters=[params],
+            ),
+            Node(
+                package='nav2_map_server',
+                executable='costmap_filter_info_server',
+                name='keepout_costmap_filter_info_server',
+                output='screen',
+                parameters=[params],
+            ),
+            Node(
+                package='nav2_lifecycle_manager',
+                executable='lifecycle_manager',
+                name='lifecycle_manager_keepout_zone',
+                output='screen',
+                parameters=[
+                    {'use_sim_time': use_sim},
+                    {'autostart': True},
+                    {'node_names': ['vector_object_server',
+                                    'keepout_costmap_filter_info_server']},
+                ],
+            ),
+        ]
+
     return LaunchDescription([
         DeclareLaunchArgument(
             'config_path',
@@ -555,6 +602,19 @@ def generate_launch_description():
             'convert_to_trackship_params_file',
             default_value=default_convert_to_trackship_params,
             description='convert_to_trackship 参数（input/output topic 等）',
+        ),
+        DeclareLaunchArgument(
+            'enable_keepout_filter',
+            default_value='true',
+            description=(
+                'true：启动 vector_object_server + keepout costmap filter（默认空 mask，'
+                '可经 /vector_object_server/add_shapes 动态注入静态障碍）；false：不启动'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'vector_object_params_file',
+            default_value=default_vector_object_params,
+            description='vector_object_server 参数（默认 config/vector_object_server_params.yaml，空禁航区）',
         ),
         DeclareLaunchArgument(
             'nav2_namespace',
@@ -689,5 +749,6 @@ def generate_launch_description():
         OpaqueFunction(function=_convert_to_trackship_node),
         map_server,
         map_lifecycle_manager,
+        OpaqueFunction(function=vector_object_server_launch),
         OpaqueFunction(function=nav2_readiness_and_deferred_launch),
     ])
