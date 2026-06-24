@@ -1,0 +1,8 @@
+# Session logs（包根 logs/ 及历史内层路径）
+logs/
+usv_sim_full/logs/
+**/session_*/
+
+# Python 字节码缓存（运行/导入时自动再生）
+__pycache__/
+*.py[cod]

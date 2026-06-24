@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="usv_dynamics_gazebo" params="name wavefield_size:=1000">
+    <!--fei Gazebo Plugin for simulating WAM-V dynamics -->
+    <gazebo>
+      <!--fei ==================== 左舷船体插件 ==================== -->
+      <!--fei 左舷船体水面交互插件，模拟左舷船体与水面的相互作用 -->
+      <plugin
+        filename="libSurface.so"
+        name="vrx::Surface">
+        <link_name>${namespace}/base_link</link_name>
+        <hull_length>5.0</hull_length>
+        <hull_radius>0.5</hull_radius>
+        <fluid_level>0</fluid_level>
+        <points>
+          <!-- 增加到 4 个采样点，分布在 5 米长的船体上 -->
+          <point>2.0 1.2 0</point>   <!-- 前 -->
+          <point>0.6 1.2 0</point>   <!-- 中前 -->
+          <point>-0.6 1.2 0</point>  <!-- 中后 -->
+          <point>-2.0 1.2 0</point>  <!-- 后 -->
+        </points>
+        <!-- 指定波场参数的ROS话题 -->
+        <wavefield>
+          <topic>/vrx/wavefield/parameters</topic>
+        </wavefield>
+      </plugin>
+
+      <!--fei ==================== 右舷船体插件 ==================== -->
+      <!--fei 右舷船体水面交互插件，模拟右舷船体与水面的相互作用 -->
+      <plugin
+        filename="libSurface.so"
+        name="vrx::Surface">
+        <link_name>${namespace}/base_link</link_name>
+        <hull_length>5</hull_length>
+        <hull_radius>0.5</hull_radius>
+        <fluid_level>0</fluid_level>
+        <points>
+          <point>2.0 -1.2 0</point>
+          <point>0.6 -1.2 0</point>
+          <point>-0.6 -1.2 0</point>
+          <point>-2.0 -1.2 0</point>
+        </points>
+        <wavefield>
+          <topic>/vrx/wavefield/parameters</topic>
+        </wavefield>
+      </plugin>
+
+      <!--fei ==================== 流体动力学插件 ==================== -->
+      <!--fei 简单流体动力学插件，模拟水阻力、附加质量等流体动力学效应 -->
+      <plugin
+        filename="libSimpleHydrodynamics.so"
+        name="vrx::SimpleHydrodynamics">
+        <link_name>${namespace}/base_link</link_name>
+        <!--fei ==================== 附加质量参数 ==================== -->
+        <!--fei 定义流体对运动的惯性影响（附加质量） -->
+        <xDotU>100.0</xDotU>
+        <yDotV>200.0</yDotV>
+        <nDotR>200.0</nDotR>
+        <!--fei ==================== 线性和二次阻力参数 ==================== -->
+        <!--fei 定义各种方向上的线性阻力和二次阻力系数 -->
+        <xU>200.0</xU>
+        <xUU>300.0</xUU>
+        <yV>400.0</yV>
+        <yVV>400.0</yVV>
+        <zW>1000.0</zW> <!-- 限制上下颠簸 -->
+        <kP>1000.0</kP> <!-- 限制左右横摇 -->
+        <mQ>1500.0</mQ> <!-- 限制前后俯仰 -->
+        <nR>1500.0</nR> <!-- 旋转阻力 -->
+      </plugin>
+        <!-- xU、xUU：X方向线性和二次阻力
+        yV、yVV：Y方向线性和二次阻力
+        zW：Z方向阻力
+        kP、kPP：滚转方向阻力
+        mQ、mQQ：俯仰方向阻力
+        nR、nRR：偏航方向阻力 -->
+    </gazebo>
+  </xacro:macro>
+</robot>

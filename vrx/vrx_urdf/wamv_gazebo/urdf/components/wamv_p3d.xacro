@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="wamv_p3d" params="name:=ground_truth_odometry">
+    <gazebo>
+      <plugin
+        filename="gz-sim-odometry-publisher-system"
+        name="gz::sim::systems::OdometryPublisher">
+        <dimensions>3</dimensions>
+        <!-- 不低于前向激光 update_rate(20Hz)，避免 RViz 点云按消息时间戳查 TF 时外推失败 -->
+        <odom_publish_frequency>30.0</odom_publish_frequency>
+        <!-- 与 ROS 侧 /{namespace}/odom、map->{namespace}/odom TF 对齐；多船时避免共用全局 odom -->
+        <odom_frame>$(arg namespace)/odom</odom_frame>
+        <!-- Use the session namespace if provided; fall back to the historical wamv path
+             Note: this assumes the top-level xacro defines an arg named 'namespace' when
+             compiling. session_manager currently passes this arg. -->
+        <robot_base_frame>$(arg namespace)/base_link</robot_base_frame>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
+</robot>

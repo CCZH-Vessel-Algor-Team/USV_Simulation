@@ -1,0 +1,233 @@
+import os
+import tempfile
+import yaml
+from launch import LaunchDescription
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    ExecuteProcess,
+    LogInfo,
+    GroupAction,
+    OpaqueFunction,
+    SetEnvironmentVariable,
+)
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import PushRosNamespace, Node
+from ament_index_python.packages import get_package_share_directory
+from usv_sim_full.launch_config_helpers import (
+    default_radar_nav2_param_yaml,
+    launch_verbose_enabled,
+    quiet_ros_node_kwargs,
+)
+
+
+def _nav2_params_subst_robot_ns(obj, ns: str):
+    """将 radar_nav2_param.yaml 中的 __ROBOT_NS__ 替换为实际船名（无首尾 /）。"""
+    if isinstance(obj, dict):
+        return {k: _nav2_params_subst_robot_ns(v, ns) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_nav2_params_subst_robot_ns(x, ns) for x in obj]
+    if isinstance(obj, str):
+        return obj.replace('__ROBOT_NS__', ns)
+    return obj
+
+
+def generate_launch_description():
+    # 获取 nav2_bringup 引擎的启动文件路径
+    nav2_bringup_pkg = get_package_share_directory('nav2_bringup')
+    nav2_launch_file = os.path.join(nav2_bringup_pkg, 'launch', 'navigation_launch.py')
+
+    launch_dir = os.path.dirname(os.path.abspath(__file__))
+    default_nav2_params_file = default_radar_nav2_param_yaml(launch_dir)
+
+    namespace = LaunchConfiguration('namespace')
+    params_file = LaunchConfiguration('params_file')
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    verbose_launch = LaunchConfiguration('verbose_launch')
+    enable_tf_namespace_relay = LaunchConfiguration('enable_tf_namespace_relay')
+
+    def launch_tf_relay_node(context, *args, **kwargs):
+        if enable_tf_namespace_relay.perform(context).lower() != 'true':
+            return [
+                LogInfo(
+                    msg=(
+                        'enable_tf_namespace_relay:=false，跳过 tf_namespace_relay '
+                        '（假定 main.launch 或其它进程已提供 /{ns}/tf）'
+                    )
+                ),
+            ]
+        v = verbose_launch.perform(context)
+        ns = namespace.perform(context).strip().strip('/') or 'usv_1'
+        return [
+            Node(
+                package='usv_sim_full',
+                executable='tf_namespace_relay',
+                name='tf_namespace_relay',
+                namespace=ns,
+                parameters=[{
+                    'namespace': ns,
+                    'use_sim_time': use_sim_time,
+                }],
+                **quiet_ros_node_kwargs(v),
+            )
+        ]
+
+    def _launch_nav2_with_namespaced_map(context, *args, **kwargs):
+        raw_ns = namespace.perform(context).strip().strip('/')
+        resolved_params_file = params_file.perform(context)
+        resolved_use_sim_time = use_sim_time.perform(context)
+        v_launch = verbose_launch.perform(context)
+
+        prefix_logs = []
+        if not launch_verbose_enabled(v_launch):
+            prefix_logs.append(
+                SetEnvironmentVariable(
+                    name='RCUTILS_LOGGING_SEVERITY',
+                    value='WARN',
+                )
+            )
+        if not raw_ns:
+            resolved_ns = 'usv_1'
+            prefix_logs.append(
+                LogInfo(
+                    msg=(
+                        '[WARN] Nav2 namespace 为空，参数与 map_topic 回退为 usv_1；'
+                        '请显式传入 namespace:=<船名> 与 full_config 中 robot_*.name 一致。'
+                    )
+                )
+            )
+        else:
+            resolved_ns = raw_ns
+
+        # map_topic = f'/{resolved_ns}/map/navradar/occupancy_grid'
+        map_topic = '/map'
+
+        with open(resolved_params_file, 'r') as f:
+            nav2_params = yaml.safe_load(f) or {}
+
+        nav2_params = _nav2_params_subst_robot_ns(nav2_params, resolved_ns)
+
+        try:
+            nav2_params['global_costmap']['global_costmap']['ros__parameters']['static_layer']['map_topic'] = map_topic
+            nav2_params['local_costmap']['local_costmap']['ros__parameters']['static_layer']['map_topic'] = map_topic
+        except KeyError:
+            pass
+
+        gcp = nav2_params.get('global_costmap', {}).get('global_costmap', {}).get('ros__parameters', {})
+        lcp = nav2_params.get('local_costmap', {}).get('local_costmap', {}).get('ros__parameters', {})
+        robot_bf = str(gcp.get('robot_base_frame', '?'))
+        local_gf = str(lcp.get('global_frame', '?'))
+
+        tmp_file = tempfile.NamedTemporaryFile(
+            mode='w',
+            prefix=f'nav2_{resolved_ns}_',
+            suffix='.yaml',
+            delete=False,
+        )
+        with tmp_file:
+            yaml.safe_dump(nav2_params, tmp_file, sort_keys=False)
+
+        info = LogInfo(
+            msg=(
+                'Nav2 参数已按船名注入: namespace='
+                + resolved_ns
+                + ' robot_base_frame='
+                + robot_bf
+                + ' local_costmap.global_frame='
+                + local_gf
+                + ' static_layer.map_topic='
+                + map_topic
+            )
+        )
+
+        stack = GroupAction([
+            PushRosNamespace(namespace=namespace),
+            Node(
+                package='usv_sim_full',
+                executable='clearing_scan_publisher',
+                name='clearing_scan_publisher',
+                parameters=[{
+                    'topic': '/clearing_scan',
+                    'frame_id': resolved_ns + '/base_link',
+                    'max_range': 200.0,
+                    'num_rays': 3600,
+                    'publish_rate': 5.0,
+                    'use_sim_time': resolved_use_sim_time == 'true' or resolved_use_sim_time == 'True',
+                }],
+                output='screen',
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(nav2_launch_file),
+                launch_arguments={
+                    'namespace': namespace,
+                    'params_file': tmp_file.name,
+                    'use_sim_time': resolved_use_sim_time,
+                }.items()
+            )
+        ])
+
+        return [*prefix_logs, info, stack]
+
+    def launch_thruster_bridge(context, *args, **kwargs):
+        ns = namespace.perform(context).strip().strip('/')
+        v = verbose_launch.perform(context)
+        out = 'screen' if launch_verbose_enabled(v) else 'log'
+        return [
+            ExecuteProcess(
+                cmd=[
+                    'ros2',
+                    'run',
+                    'usv_sim_full',
+                    'cmd_vel_to_thruster',
+                    '--ros-args',
+                    '-r',
+                    f'__ns:=/{ns}',
+                    # '-r',
+                    # 'cmd_vel:=cmd_vel_smoothed',
+                    '-p',
+                    f'namespace:={ns}',
+                ],
+                name='cmd_vel_to_thruster',
+                output=out,
+            )
+        ]
+
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            'namespace',
+            default_value='usv_1',
+            description=(
+                '本船 ROS 命名空间，须与 full_config 中该船 name 及 TF 前缀一致 '
+                '（与 nav2_sim_full_bringup 的 nav2_namespace 解析结果相同）。'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'params_file',
+            default_value=default_nav2_params_file,
+            description='Nav2 parameters file path for this vessel instance'
+        ),
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='true',
+            description='Use simulation clock'
+        ),
+        DeclareLaunchArgument(
+            'verbose_launch',
+            default_value='false',
+            description='true：TF 中继与 cmd_vel→桨 进程输出到终端；false：写入日志文件'
+        ),
+        DeclareLaunchArgument(
+            'enable_tf_namespace_relay',
+            default_value='false',
+            description=(
+                'true：本 launch 内启动 tf_namespace_relay。'
+                '经 nav2_sim_full_bringup 启动时应为 false（relay 已在 main.launch 随仿真常驻）'
+            ),
+        ),
+        OpaqueFunction(function=launch_tf_relay_node),
+        LogInfo(msg=['Starting Nav2 navigation stack for ', namespace, '...']),
+        OpaqueFunction(function=_launch_nav2_with_namespaced_map),
+        LogInfo(msg=['Starting cmd_vel to thruster bridge for ', namespace, '...']),
+        OpaqueFunction(function=launch_thruster_bridge),
+    ])

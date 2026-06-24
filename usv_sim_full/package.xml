@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>usv_sim_full</name>
+  <version>0.1.0</version>
+  <description>功能完备的、基于 YAML 驱动的 USV 仿真启动包</description>
+  <maintainer email="1471072588@qq.com">cczh</maintainer>
+  <license>Apache-2.0</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>rosgraph_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>xacro</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>rviz2</depend>
+  <depend>rviz_common</depend>
+  <depend>ros_gz_sim</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>robot_localization</depend>
+  <depend>usv_mmwave_sim</depend>
+  <depend>wamv_gazebo</depend>
+  <exec_depend>vrx_ros</exec_depend>
+  <exec_depend>vrx_gz</exec_depend>
+  <depend>usv_interfaces</depend>
+  <exec_depend>ground_truth_sim</exec_depend>
+  <exec_depend>ground_truth_sensor_sim</exec_depend>
+  <exec_depend>usv_late_fusion</exec_depend>
+  <exec_depend>convert_to_trackship</exec_depend>
+  <!-- Nav2 + COLREGs：源码位于 usv_ws/src/usv_nav/src，勿依赖 apt navigation2 -->
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_colregs_msgs</exec_depend>
+  <exec_depend>nav2_colregs_alos_controller</exec_depend>
+  <exec_depend>nav2_colregs_costmap_layers</exec_depend>
+  <!-- 未声明时 colcon 的 packages-up-to usv_sim_full 不会编此二包，launch 会报 package not found -->
+  <exec_depend>gy_radar_driver</exec_depend>
+  <exec_depend>radar_gz_bridge</exec_depend>
+  <!-- Gazebo 海事雷达系统插件（infra_sim 注入 GZ_SIM_SYSTEM_PLUGIN_PATH） -->
+  <exec_depend>gz_maritime_radar_plugin</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

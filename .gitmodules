@@ -1,0 +1,8 @@
+# usv_simulation 仓 — 第三方子模块
+# 将 <ORG> 替换为团队 PX4 fork；若直接用上游则改为 https://github.com/PX4/PX4-Autopilot.git
+# 克隆: git clone --recurse-submodules https://github.com/<ORG>/usv_simulation.git
+
+[submodule "third_party/PX4-Autopilot"]
+	path = third_party/PX4-Autopilot
+	url = https://github.com/CCZH-Vessel-Algor-Team/PX4-Autopilot.git
+	branch = main

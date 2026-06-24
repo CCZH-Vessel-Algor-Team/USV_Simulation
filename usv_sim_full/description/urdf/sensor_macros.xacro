@@ -1,0 +1,700 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" xmlns:gz="http://www.gz.org/schema/sdf">
+  <!-- Include sensor parameters from external file -->
+  <xacro:include filename="./sensor_params.xacro"/>
+
+  <!-- 3D LIDAR Macro for Gazebo Harmonic -->
+  <xacro:macro name="vlp16_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' topic:=/points
+                                          update_rate:=${lidar_update_rate} 
+                                          horizontal_samples:=${lidar_horizontal_samples} 
+                                          vertical_samples:=${lidar_vertical_samples}
+                                          horizontal_min_angle:=${lidar_horizontal_min_angle}
+                                          horizontal_max_angle:=${lidar_horizontal_max_angle}
+                                          vertical_min_angle:=${lidar_vertical_min_angle}
+                                          vertical_max_angle:=${lidar_vertical_max_angle}
+                                          min_range:=${lidar_min_range} 
+                                          max_range:=${lidar_max_range} 
+                                          range_resolution:=${lidar_range_resolution} 
+                                          noise_stddev:=${lidar_noise_stddev}">
+    <link name="${name}_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.05" length="0.1"/>
+        </geometry>
+      </collision>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.05" length="0.1"/>
+        </geometry>
+        <material name="gray">
+          <color rgba="0.5 0.5 0.5 1"/>
+        </material>
+      </visual>
+
+      <inertial>
+        <mass value="0.1"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <gazebo reference="${name}_link">
+      <sensor name="${name}" type="gpu_ray">
+        <topic>${topic}</topic>
+        <gz_frame_id>${name}_link</gz_frame_id>
+        <update_rate>${update_rate}</update_rate>
+        <ray>
+          <visibility_mask>7</visibility_mask>
+          <scan>
+            <horizontal>
+              <samples>${horizontal_samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>${horizontal_min_angle}</min_angle>
+              <max_angle>${horizontal_max_angle}</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>${vertical_samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>${vertical_min_angle}</min_angle>
+              <max_angle>${vertical_max_angle}</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>${min_range}</min>
+            <max>${max_range}</max>
+            <resolution>${range_resolution}</resolution>
+          </range>
+          <noise>
+              <type>gaussian</type>
+              <mean>0</mean>
+              <stddev>${noise_stddev}</stddev>
+          </noise>
+        </ray>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Camera Macro for Gazebo Harmonic -->
+  <xacro:macro name="camera_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' topic:=/image_raw info_topic:=/camera_info
+                                           update_rate:=${camera_update_rate} 
+                                           horizontal_fov:=${camera_horizontal_fov} 
+                                           width:=${camera_width} 
+                                           height:=${camera_height}
+                                           near_clip:=${camera_near_clip} 
+                                           far_clip:=${camera_far_clip} 
+                                           noise_stddev:=${camera_noise_stddev}
+                                           distortion_k1:=${camera_distortion_k1} 
+                                           distortion_k2:=${camera_distortion_k2} 
+                                           distortion_k3:=${camera_distortion_k3}">
+    <link name="${name}_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.05 0.05 0.05"/>
+        </geometry>
+      </collision>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.05 0.05 0.05"/>
+        </geometry>
+        <material name="black">
+          <color rgba="0 0 0 1"/>
+        </material>
+      </visual>
+
+      <inertial>
+        <mass value="0.1"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <gazebo reference="${name}_link">
+      <sensor name="${name}" type="camera">
+        <topic>${topic}</topic>
+        <gz_frame_id>${name}_link</gz_frame_id>
+        <update_rate>${update_rate}</update_rate>
+        <camera name="${name}">
+          <horizontal_fov>${horizontal_fov}</horizontal_fov>
+          <image>
+            <width>${width}</width>
+            <height>${height}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>${near_clip}</near>
+            <far>${far_clip}</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>${noise_stddev}</stddev>
+          </noise>
+          <distortion>
+            <k1>${distortion_k1}</k1>
+            <k2>${distortion_k2}</k2>
+            <k3>${distortion_k3}</k3>
+          </distortion>
+        </camera>
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- IMU Macro for Gazebo Harmonic -->
+  <xacro:macro name="imu_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' topic:=/imu/data 
+                                        update_rate:=${imu_update_rate}
+                                        angular_velocity_x_stddev:=${imu_angular_velocity_x_stddev} 
+                                        angular_velocity_y_stddev:=${imu_angular_velocity_y_stddev}
+                                        angular_velocity_z_stddev:=${imu_angular_velocity_z_stddev}
+                                        angular_velocity_x_bias_stddev:=${imu_angular_velocity_x_bias_stddev}
+                                        angular_velocity_y_bias_stddev:=${imu_angular_velocity_y_bias_stddev}
+                                        angular_velocity_z_bias_stddev:=${imu_angular_velocity_z_bias_stddev}
+                                        linear_acceleration_x_stddev:=${imu_linear_acceleration_x_stddev} 
+                                        linear_acceleration_y_stddev:=${imu_linear_acceleration_y_stddev}
+                                        linear_acceleration_z_stddev:=${imu_linear_acceleration_z_stddev}
+                                        linear_acceleration_x_bias_stddev:=${imu_linear_acceleration_x_bias_stddev}
+                                        linear_acceleration_y_bias_stddev:=${imu_linear_acceleration_y_bias_stddev}
+                                        linear_acceleration_z_bias_stddev:=${imu_linear_acceleration_z_bias_stddev}">
+    <link name="${name}_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.02 0.02 0.02"/>
+        </geometry>
+      </collision>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.02 0.02 0.02"/>
+        </geometry>
+        <material name="blue">
+          <color rgba="0 0 1 1"/>
+        </material>
+      </visual>
+
+      <inertial>
+        <mass value="0.01"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <gazebo reference="${name}_link">
+      <sensor name="${name}" type="imu">
+        <topic>${topic}</topic>
+        <frame_id>${name}_link</frame_id>
+        <gz_frame_id>${name}_link</gz_frame_id>
+        <update_rate>${update_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+        <imu>
+          <angular_velocity>
+            <x>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${angular_velocity_x_stddev}</stddev>
+                <bias_mean>0</bias_mean>
+                <bias_stddev>${angular_velocity_x_bias_stddev}</bias_stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${angular_velocity_y_stddev}</stddev>
+                <bias_mean>0</bias_mean>
+                <bias_stddev>${angular_velocity_y_bias_stddev}</bias_stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${angular_velocity_z_stddev}</stddev>
+                <bias_mean>0</bias_mean>
+                <bias_stddev>${angular_velocity_z_bias_stddev}</bias_stddev>
+              </noise>
+            </z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${linear_acceleration_x_stddev}</stddev>
+                <bias_mean>0</bias_mean>
+                <bias_stddev>${linear_acceleration_x_bias_stddev}</bias_stddev>
+              </noise>
+            </x>
+            <y>
+             <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${linear_acceleration_y_stddev}</stddev>
+                <bias_mean>0</bias_mean>
+                <bias_stddev>${linear_acceleration_y_bias_stddev}</bias_stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${linear_acceleration_z_stddev}</stddev>
+                <bias_mean>0</bias_mean>
+                <bias_stddev>${linear_acceleration_z_bias_stddev}</bias_stddev>
+              </noise>
+            </z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- GPS Macro for Gazebo Harmonic -->
+  <xacro:macro name="gps_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' topic:=/gps/data 
+                                        update_rate:=${gps_update_rate}
+                                        position_horizontal_stddev:=${gps_position_horizontal_stddev} 
+                                        position_vertical_stddev:=${gps_position_vertical_stddev}
+                                        velocity_horizontal_stddev:=${gps_velocity_horizontal_stddev} 
+                                        velocity_vertical_stddev:=${gps_velocity_vertical_stddev}
+                                        position_sway_stddev:=${gps_position_sway_stddev}
+                                        position_heave_stddev:=${gps_position_heave_stddev}
+                                        velocity_sway_stddev:=${gps_velocity_sway_stddev}
+                                        velocity_heave_stddev:=${gps_velocity_heave_stddev}">
+    <link name="${name}_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.02 0.02 0.02"/>
+        </geometry>
+      </collision>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.02 0.02 0.02"/>
+        </geometry>
+        <material name="green">
+          <color rgba="0 1 0 1"/>
+        </material>
+      </visual>
+
+      <inertial>
+        <mass value="0.01"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <gazebo reference="${name}_link">
+      <sensor name="${name}" type="navsat">
+        <topic>${topic}</topic>
+        <gz_frame_id>${name}_link</gz_frame_id>
+        <update_rate>${update_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <gps>
+          <position_sensing>
+            <horizontal>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${position_horizontal_stddev}</stddev>
+              </noise>
+            </horizontal>
+            <vertical>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${position_vertical_stddev}</stddev>
+              </noise>
+            </vertical>
+          </position_sensing>
+          <velocity_sensing>
+            <horizontal>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${velocity_horizontal_stddev}</stddev>
+              </noise>
+            </horizontal>
+            <vertical>
+              <noise type="gaussian">
+                <mean>0</mean>
+                <stddev>${velocity_vertical_stddev}</stddev>
+              </noise>
+            </vertical>
+          </velocity_sensing>
+        </gps>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Magnetometer Macro for Gazebo Harmonic -->
+  <xacro:macro name="magnetometer_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' topic:=/magnetic_field
+                                                  update_rate:=${magnetometer_update_rate}
+                                                  field_tesla_x:=${magnetometer_field_tesla_x}
+                                                  field_tesla_y:=${magnetometer_field_tesla_y}
+                                                  field_tesla_z:=${magnetometer_field_tesla_z}
+                                                  noise_stddev:=${magnetometer_noise_stddev}">
+    <link name="${name}_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.04 0.04 0.02"/>
+        </geometry>
+      </collision>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.04 0.04 0.02"/>
+        </geometry>
+        <material name="magnetometer_green">
+          <color rgba="0 0.7 0.2 1"/>
+        </material>
+      </visual>
+
+      <inertial>
+        <mass value="0.02"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <gazebo reference="${name}_link">
+      <sensor name="${name}" type="magnetometer">
+        <topic>${topic}</topic>
+        <gz_frame_id>${name}_link</gz_frame_id>
+        <update_rate>${update_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <magnetometer>
+          <x>
+            <noise type="gaussian">
+              <mean>${field_tesla_x}</mean>
+              <stddev>${noise_stddev}</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>${field_tesla_y}</mean>
+              <stddev>${noise_stddev}</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>${field_tesla_z}</mean>
+              <stddev>${noise_stddev}</stddev>
+            </noise>
+          </z>
+        </magnetometer>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Barometer / air pressure Macro for Gazebo Harmonic -->
+  <xacro:macro name="barometer_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' topic:=/air_pressure
+                                             update_rate:=${barometer_update_rate}
+                                             reference_altitude:=${barometer_reference_altitude}
+                                             pressure_stddev:=${barometer_pressure_stddev}">
+    <link name="${name}_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.04 0.04 0.02"/>
+        </geometry>
+      </collision>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.04 0.04 0.02"/>
+        </geometry>
+        <material name="barometer_blue">
+          <color rgba="0.1 0.3 0.9 1"/>
+        </material>
+      </visual>
+
+      <inertial>
+        <mass value="0.02"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <gazebo reference="${name}_link">
+      <sensor name="${name}" type="air_pressure">
+        <topic>${topic}</topic>
+        <gz_frame_id>${name}_link</gz_frame_id>
+        <update_rate>${update_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <air_pressure>
+          <reference_altitude>${reference_altitude}</reference_altitude>
+          <pressure>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>${pressure_stddev}</stddev>
+            </noise>
+          </pressure>
+        </air_pressure>
+        <plugin filename="gz-sim-air-pressure-system"
+                name="gz::sim::systems::AirPressure">
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- mmWave：与 VLP16 同款 gpu_ray → gz.msgs.PointCloudPacked → ros_gz_bridge；几何内参见 sensor_config mmwave.default。
+       4D 字段（doppler/rcs/海杂波/误差）由 usv_mmwave_sim::mmwave_4d_cloud_node 在 ROS 侧生成。
+       topic 与激光一致为命名空间下的路径（无前导 /），桥接 gz 侧为 /{robot}{topic}/points（见 session_manager）。 -->
+  <xacro:macro name="mmwave_radar_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' topic:=/mmwave/points">
+    <link name="${name}_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.10 0.06 0.04"/>
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.10 0.06 0.04"/>
+        </geometry>
+        <material name="mmwave_black">
+          <color rgba="0.1 0.1 0.1 1"/>
+        </material>
+      </visual>
+      <inertial>
+        <mass value="0.15"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <gazebo reference="${name}_link">
+      <sensor name="${name}_mmwave_gpu_ray" type="gpu_ray">
+        <topic>${topic}</topic>
+        <gz_frame_id>${name}_link</gz_frame_id>
+        <update_rate>${mmwave_update_rate_hz}</update_rate>
+        <ray>
+          <visibility_mask>7</visibility_mask>
+          <scan>
+            <horizontal>
+              <samples>${mmwave_horizontal_ray_samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>${mmwave_h_min_angle}</min_angle>
+              <max_angle>${mmwave_h_max_angle}</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>${mmwave_vertical_ray_samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>${mmwave_v_min_angle}</min_angle>
+              <max_angle>${mmwave_v_max_angle}</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>${mmwave_min_range}</min>
+            <max>${mmwave_gpu_ray_max_m}</max>
+            <resolution>${mmwave_gpu_ray_range_resolution}</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>${mmwave_gpu_ray_noise_stddev}</stddev>
+          </noise>
+        </ray>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Maritime Radar Macro for Gazebo Harmonic -->
+  <xacro:macro name="maritime_radar_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' radar_topic:=/radar/spokes 
+                                                   min_range:=${radar_min_range} 
+                                                   max_range:=${radar_max_range} 
+                                                   angular_resolution:=${radar_angular_resolution} 
+                                                   rpm:=${radar_rpm}
+                                                   linear_resolution:=${radar_linear_resolution} 
+                                                   min_elevation_angle:=${radar_min_elevation_angle}
+                                                   internal_lidar_update_rate:=${radar_internal_lidar_update_rate}
+                                                   internal_lidar_vertical_samples:=${radar_internal_lidar_vertical_samples}
+                                                   internal_lidar_min_angle:=${radar_internal_lidar_min_angle}
+                                                   internal_lidar_max_angle:=${radar_internal_lidar_max_angle}
+                                                   internal_lidar_min_range:=${radar_internal_lidar_min_range}
+                                                   internal_lidar_range_resolution:=${radar_internal_lidar_range_resolution}
+                                                   internal_lidar_noise_stddev:=${radar_internal_lidar_noise_stddev}">
+    
+    <!-- Radar Base -->
+    <link name="${name}_base_link">
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.08" length="0.05"/>
+        </geometry>
+        <material name="radar_base_mat">
+          <color rgba="0.2 0.2 0.2 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.08" length="0.05"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${name}_base_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${name}_base_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <!-- Radar Antenna (Rotating part) -->
+    <link name="${name}_antenna_link">
+      <inertial>
+        <mass value="0.3"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.005" ixy="0" ixz="0" iyy="0.02" iyz="0" izz="0.02"/>
+      </inertial>
+      
+      <visual>
+        <!-- Offset vertically from base -->
+        <origin xyz="0 0 0.055" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.4 0.1 0.06"/>
+        </geometry>
+        <material name="radar_antenna_mat">
+          <color rgba="0.9 0.9 0.9 1"/>
+        </material>
+      </visual>
+      
+      <collision>
+        <origin xyz="0 0 0.055" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.4 0.1 0.06"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Radar rotation joint -->
+    <joint name="${name}_joint" type="continuous">
+      <parent link="${name}_base_link"/>
+      <child link="${name}_antenna_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <!-- <dynamics damping="0.001"/> -->
+    </joint>
+
+    <gazebo reference="${name}_antenna_link">
+      <!-- GPU LiDAR Sensor for inner raycasting -->
+      <sensor name="${name}_lidar" type="gpu_lidar">
+        <pose>0.15 0 0.055 0 0 0</pose>
+        <!-- The inner topic can be hardcoded or derived -->
+        <topic>${name}/internal_lidar</topic>
+        <gz_frame_id>${name}_antenna_link</gz_frame_id>
+        <update_rate>${internal_lidar_update_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <ray>
+          <visibility_mask>0xFFFFFFF7</visibility_mask>
+          <scan>
+            <horizontal>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>${internal_lidar_vertical_samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>${internal_lidar_min_angle}</min_angle>
+              <max_angle>${internal_lidar_max_angle}</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>${internal_lidar_min_range}</min>
+            <max>${max_range}</max>
+            <resolution>${internal_lidar_range_resolution}</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>${internal_lidar_noise_stddev}</stddev>
+          </noise>
+        </ray>
+      </sensor>
+    </gazebo>
+
+    <gazebo>
+      <!-- Radar rotation controller -->
+      <plugin filename="gz-sim-joint-controller-system" name="gz::sim::systems::JointController">
+        <joint_name>${name}_joint</joint_name>
+        <initial_velocity>${-(rpm * 3.14159 / 30.0)}</initial_velocity>
+      </plugin>
+
+      <!-- Maritime Radar Data Processing Plugin -->
+      <plugin filename="MaritimeRadarPlugin" name="maritime_radar">
+        <joint_name>${name}_joint</joint_name>
+        <lidar_topic>${name}/internal_lidar</lidar_topic>
+        <radar_topic>${radar_topic}</radar_topic>
+        <angular_resolution>${angular_resolution}</angular_resolution>
+        <linear_resolution>${linear_resolution}</linear_resolution>
+        <min_range>${min_range}</min_range>
+        <max_range>${max_range}</max_range>
+        <min_elevation_angle>${min_elevation_angle}</min_elevation_angle>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>

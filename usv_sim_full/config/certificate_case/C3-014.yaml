@@ -1,0 +1,25 @@
+scenario_id: C3-014
+description: 危险追越+危险被追越
+own_ship:
+  initial_speed_knots: 10.0
+  initial_heading_deg: 0.0
+timing: sequential
+target_ships:
+- id: TS1
+  type: overtaking
+  is_dangerous: true
+  target_tcpa_seconds: 10.0
+  speed_knots: 8.0
+  encounter_range_max_m: 50.0
+  target_dcpa_meters: 0.0
+  encounter_range_m: 50.0
+- id: TS2
+  type: overtaken
+  is_dangerous: true
+  target_tcpa_seconds: 10.0
+  speed_knots: 16.0
+  encounter_range_max_m: 50.0
+  target_dcpa_meters: 0.0
+  encounter_range_m: 50.0
+  spawn_delay_sec: 95.0
+  sequence_index: 1

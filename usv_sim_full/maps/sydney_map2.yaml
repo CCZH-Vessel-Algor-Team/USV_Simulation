@@ -1,0 +1,9 @@
+free_thresh: 0.25
+image: sydney_map2.pgm
+negate: 0
+occupied_thresh: 0.65
+origin:
+- -1224.2978515625
+- -715.8042602539062
+- 0.0
+resolution: 0.3

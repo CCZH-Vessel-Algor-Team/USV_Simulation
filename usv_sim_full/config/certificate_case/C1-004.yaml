@@ -1,0 +1,16 @@
+scenario_id: C1-004
+description: 非危险右舷交叉
+own_ship:
+  initial_speed_knots: 10.0
+  initial_heading_deg: 0.0
+target_ships:
+- id: TS1
+  type: crossing_right
+  is_dangerous: false
+  target_tcpa_seconds: 10.0
+  speed_knots: 12.0
+  encounter_range_max_m: 50.0
+  target_dcpa_meters: 55.0
+  dcpa_safe_m: 55.0
+  crossing_angle_deg: 90.0
+  lateral_span_m: 110.0

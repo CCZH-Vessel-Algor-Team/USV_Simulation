@@ -1,0 +1,17 @@
+/**:
+  ros__parameters:
+    input_topic: /radar/points_4d
+    output_topic: /sim/radar/mmw/objects
+    radar_id: front
+    cluster_mode: xyz
+    cluster_eps_m: 4.0
+    cluster_min_points: 3
+    min_rcs: 2.0
+    max_range_m: 300.0
+    enable_doppler_prefilter: false
+    doppler_prefilter_threshold: 0.05
+    min_cluster_rcs_mean: 0.0
+    max_clusters: 0
+    motion_speed_threshold: 0.3
+    min_size_h_m: 0.5
+    output_use_reliable_qos: true

@@ -1,0 +1,231 @@
+# Nav2 + 海事雷达栅格。占位符 __ROBOT_NS__（无首尾 /）表示船名，如 usv_1。
+# 由 nav2_thruster_bringup.launch.py 替换，便于多船重复加载同一文件。
+# 涉及项：robot_base_frame；local_costmap.global_frame 与 behavior_server.local_frame
+#（与仿真 TF 中 {robot}/odom 一致，勿用裸 odom）。
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      # footprint: "[[2.5, 1.0], [2.5, -1.0], [-2.5, -1.0], [-2.5, 1.0]]"
+      # footprint_padding: 0.5
+
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: __ROBOT_NS__/base_link
+      use_sim_time: True
+
+      rolling_window: false
+      track_unknown_space: false      # true
+      width: 800
+      height: 800
+      resolution: 0.3   # comform static layer resolution
+      # origin_x: -400.0
+      # origin_y: -400.0
+      plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "inflation_layer"]
+      # plugins: ["static_layer","inflation_layer"]
+
+
+
+      obstacle_layer:
+
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: front_lidar
+
+        front_lidar:
+          topic: /usv_1/sensors/lidar/front_lidar/points
+          data_type: "PointCloud2"
+          marking: true
+          clearing: true
+
+          obstacle_min_range: 0.5
+          obstacle_max_range: 200.0
+          raytrace_min_range: 0.5
+          raytrace_max_range: 200.0
+
+          min_obstacle_height: -1.0
+          max_obstacle_height: 2.0
+
+          expected_update_rate: 1.0
+          observation_persistence: 0.5
+          inf_is_valid: true
+
+      ts_projection_layer:
+        plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
+        enabled: True
+        track_timeout: 5.0
+
+      static_layer:
+        # plugin: "nav2_costmap_2d::StaticLayer"
+        # map_subscribe_transient_local: False
+
+        # map_topic: "/map/navradar/occupancy_grid"
+        # subscribe_to_updates: true
+        # lethal_cost_threshold: 50
+
+        plugin: "nav2_costmap_2d::StaticLayer"
+        enabled: true
+
+        # map_server 发布的地图话题， 发现在nav2_thruster_bringup.launch.py中被重新覆盖，后期注意更改！
+        map_topic: /map
+
+        # 必须建议打开，否则 static_layer 启动晚可能收不到 /map
+        map_subscribe_transient_local: true
+
+        # PGM/YAML 静态地图一般没有动态 update
+        subscribe_to_updates: false
+
+        transform_tolerance: 0.5
+
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        enabled: true
+        inflation_radius: 20.0 # 根据船只大小调整
+        cost_scaling_factor: 0.3   # 膨胀代价的衰减速度,越大衰减越快
+
+      always_send_full_costmap: true
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+
+      update_frequency: 5.0
+      publish_frequency: 5.0
+      global_frame: __ROBOT_NS__/odom
+      robot_base_frame: __ROBOT_NS__/base_link
+      use_sim_time: true
+      rolling_window: true
+      width: 50  # 局部避障范围通常比雷达量程小
+      height: 50
+      resolution: 0.2
+      # plugins: ["static_layer", "inflation_layer"]
+      plugins: ["obstacle_layer", "ts_projection_layer", "inflation_layer"]
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: front_lidar
+
+        front_lidar:
+          topic: /usv_1/sensors/lidar/front_lidar/points
+          data_type: "PointCloud2"
+          marking: true
+          clearing: true
+
+          obstacle_min_range: 0.5
+          obstacle_max_range: 80.0
+          raytrace_min_range: 0.5
+          raytrace_max_range: 90.0
+
+          min_obstacle_height: -1.0
+          max_obstacle_height: 2.0
+
+          expected_update_rate: 5.0
+          observation_persistence: 0.5
+          inf_is_valid: false
+
+      ts_projection_layer:
+        plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
+        enabled: True
+        track_timeout: 5.0
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 10.0    # 1.5
+        cost_scaling_factor: 2.0
+
+      always_send_full_costmap: true
+
+planner_server:
+  ros__parameters:
+
+    planner_plugins:
+      - GridBased
+
+    GridBased:
+      plugin: "nav2_navfn_planner::NavfnPlanner"  # 经典A*
+      tolerance: 0.5
+      use_astar: true                        # false即为dijstra
+      allow_unknown: false                    # 可以让未知区域可通行
+#控制器配置，很难调，我勉强让他跑的可以了
+controller_server:
+  ros__parameters:
+    controller_frequency: 10.0    # 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001   # 0.5
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 0.3
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
+    controller_plugins: ["FollowPath"]
+
+    # Progress checker parameters
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.1   # 0.5
+      movement_time_allowance: 60.0   # 10.0
+
+    general_goal_checker:
+      stateful: True
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 1.5      # 0.25
+      yaw_goal_tolerance: 6.28    # 0.25
+    # ALOS (Adaptive Line-of-Sight) — sideslip-compensated guidance
+    FollowPath:
+      plugin: "nav2_colregs_alos_controller::ALOSController"
+      desired_linear_vel: 1.0
+      max_linear_accel: 0.2
+      max_angular_vel: 0.5
+      max_angular_accel: 0.5
+      forward_dist: 6.0
+      gamma: 0.0006
+      beta_hat0: 0.0
+      reset_beta_on_new_path: true
+      max_angle_for_motion: 1.0
+      max_robot_pose_search_dist: 10.0
+
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: True
+    global_frame: map
+    robot_base_frame: __ROBOT_NS__/base_link
+    odom_topic: odom
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: True
+    global_frame: map
+    robot_base_frame: __ROBOT_NS__/base_link
+    local_frame: __ROBOT_NS__/odom
+
+collision_monitor:
+  ros__parameters:
+    use_sim_time: true
+    base_frame_id: "usv_1/base_link"
+    odom_frame_id: "usv_1/odom"
+    cmd_vel_in_topic: "cmd_vel_smoothed"
+    cmd_vel_out_topic: "cmd_vel"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.5
+    source_timeout: 1.0
+
+    polygons: ["StopPolygon"]
+
+    StopPolygon:
+      type: "circle"
+      radius: 2.0
+      action_type: "stop"
+      min_points: 1
+      visualize: true
+
+    observation_sources: ["nav_radar_points"]
+
+    nav_radar_points:
+      type: "pointcloud"
+      topic: "/usv_1/sensors/radar/nav/points"
+      enabled: true
+      min_height: -2.0
+      max_height: 5.0
+

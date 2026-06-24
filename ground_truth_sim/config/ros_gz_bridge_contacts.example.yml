@@ -1,0 +1,12 @@
+# 将 Gazebo Sim 的 Contacts 桥接到 ROS，供 ground_truth_gazebo_models_node 的 collision_topic 使用。
+# 步骤：在仿真终端执行 `gz topic -l` 找到你的接触传感器话题（通常含 contact / contacts）。
+# 将下面示例中的 WORLD、MODEL、LINK、SENSOR 替换为实际名称，并把 ROS 侧话题名与
+# gazebo_ground_truth_bridge.yaml 里的 collision_topic 设为一致（例如 /sim/gazebo_contacts）。
+#
+# Humble 常用单行桥接命令示例：
+#
+# ros2 run ros_gz_bridge parameter_bridge \
+#   /sim/gazebo_contacts@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts]@/world/WORLD/model/MODEL/link/LINK/sensor/SENSOR/contact
+#
+# 若使用自定义插件只发布模型名字符串，可桥接到 std_msgs/String 并配置
+# collision_string_topic；回调中 data 为单个 model_name。

@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Load sensor configuration from YAML file -->
+  <xacro:property name="sensor_config" value="${load_yaml('$(find usv_sim_full)/config/sensor_config.yaml')}"/>
+
+  <!-- LIDAR Parameters -->
+  <xacro:property name="lidar_update_rate" value="${sensor_config['lidar']['vlp16']['update_rate']}"/>
+  <xacro:property name="lidar_horizontal_samples" value="${sensor_config['lidar']['vlp16']['horizontal_samples']}"/>
+  <xacro:property name="lidar_vertical_samples" value="${sensor_config['lidar']['vlp16']['vertical_samples']}"/>
+  <xacro:property name="lidar_horizontal_min_angle" value="${sensor_config['lidar']['vlp16']['horizontal_min_angle']}"/>
+  <xacro:property name="lidar_horizontal_max_angle" value="${sensor_config['lidar']['vlp16']['horizontal_max_angle']}"/>
+  <xacro:property name="lidar_vertical_min_angle" value="${sensor_config['lidar']['vlp16']['vertical_min_angle']}"/>
+  <xacro:property name="lidar_vertical_max_angle" value="${sensor_config['lidar']['vlp16']['vertical_max_angle']}"/>
+  <xacro:property name="lidar_min_range" value="${sensor_config['lidar']['vlp16']['min_range']}"/>
+  <xacro:property name="lidar_max_range" value="${sensor_config['lidar']['vlp16']['max_range']}"/>
+  <xacro:property name="lidar_range_resolution" value="${sensor_config['lidar']['vlp16']['range_resolution']}"/>
+  <xacro:property name="lidar_noise_stddev" value="${sensor_config['lidar']['vlp16']['noise_stddev']}"/>
+
+  <!-- Camera Parameters -->
+  <xacro:property name="camera_update_rate" value="${sensor_config['camera']['default']['update_rate']}"/>
+  <xacro:property name="camera_horizontal_fov" value="${sensor_config['camera']['default']['horizontal_fov']}"/>
+  <xacro:property name="camera_width" value="${sensor_config['camera']['default']['width']}"/>
+  <xacro:property name="camera_height" value="${sensor_config['camera']['default']['height']}"/>
+  <xacro:property name="camera_near_clip" value="${sensor_config['camera']['default']['near_clip']}"/>
+  <xacro:property name="camera_far_clip" value="${sensor_config['camera']['default']['far_clip']}"/>
+  <xacro:property name="camera_noise_stddev" value="${sensor_config['camera']['default']['noise_stddev']}"/>
+  <xacro:property name="camera_distortion_k1" value="${sensor_config['camera']['default']['distortion_k1']}"/>
+  <xacro:property name="camera_distortion_k2" value="${sensor_config['camera']['default']['distortion_k2']}"/>
+  <xacro:property name="camera_distortion_k3" value="${sensor_config['camera']['default']['distortion_k3']}"/>
+
+  <!-- IMU Parameters -->
+  <xacro:property name="imu_update_rate" value="${sensor_config['imu']['default']['update_rate']}"/>
+  <xacro:property name="imu_angular_velocity_stddev" value="${sensor_config['imu']['default']['angular_velocity_stddev']}"/>
+  <xacro:property name="imu_angular_velocity_bias_stddev" value="${sensor_config['imu']['default']['angular_velocity_bias_stddev']}"/>
+  <xacro:property name="imu_angular_velocity_x_stddev" value="${sensor_config['imu']['default']['angular_velocity_x_stddev']}"/>
+  <xacro:property name="imu_angular_velocity_y_stddev" value="${sensor_config['imu']['default']['angular_velocity_y_stddev']}"/>
+  <xacro:property name="imu_angular_velocity_z_stddev" value="${sensor_config['imu']['default']['angular_velocity_z_stddev']}"/>
+  <xacro:property name="imu_angular_velocity_x_bias_stddev" value="${sensor_config['imu']['default']['angular_velocity_x_bias_stddev']}"/>
+  <xacro:property name="imu_angular_velocity_y_bias_stddev" value="${sensor_config['imu']['default']['angular_velocity_y_bias_stddev']}"/>
+  <xacro:property name="imu_angular_velocity_z_bias_stddev" value="${sensor_config['imu']['default']['angular_velocity_z_bias_stddev']}"/>
+  <xacro:property name="imu_linear_acceleration_stddev" value="${sensor_config['imu']['default']['linear_acceleration_stddev']}"/>
+  <xacro:property name="imu_linear_acceleration_bias_stddev" value="${sensor_config['imu']['default']['linear_acceleration_bias_stddev']}"/>
+  <xacro:property name="imu_linear_acceleration_x_stddev" value="${sensor_config['imu']['default']['linear_acceleration_x_stddev']}"/>
+  <xacro:property name="imu_linear_acceleration_y_stddev" value="${sensor_config['imu']['default']['linear_acceleration_y_stddev']}"/>
+  <xacro:property name="imu_linear_acceleration_z_stddev" value="${sensor_config['imu']['default']['linear_acceleration_z_stddev']}"/>
+  <xacro:property name="imu_linear_acceleration_x_bias_stddev" value="${sensor_config['imu']['default']['linear_acceleration_x_bias_stddev']}"/>
+  <xacro:property name="imu_linear_acceleration_y_bias_stddev" value="${sensor_config['imu']['default']['linear_acceleration_y_bias_stddev']}"/>
+  <xacro:property name="imu_linear_acceleration_z_bias_stddev" value="${sensor_config['imu']['default']['linear_acceleration_z_bias_stddev']}"/>
+
+  <!-- GPS Parameters -->
+  <xacro:property name="gps_update_rate" value="${sensor_config['gps']['default']['update_rate']}"/>
+  <xacro:property name="gps_position_horizontal_stddev" value="${sensor_config['gps']['default']['position_horizontal_stddev']}"/>
+  <xacro:property name="gps_position_vertical_stddev" value="${sensor_config['gps']['default']['position_vertical_stddev']}"/>
+  <xacro:property name="gps_velocity_horizontal_stddev" value="${sensor_config['gps']['default']['velocity_horizontal_stddev']}"/>
+  <xacro:property name="gps_velocity_vertical_stddev" value="${sensor_config['gps']['default']['velocity_vertical_stddev']}"/>
+  <xacro:property name="gps_position_sway_stddev" value="${sensor_config['gps']['default']['position_sway_stddev']}"/>
+  <xacro:property name="gps_position_heave_stddev" value="${sensor_config['gps']['default']['position_heave_stddev']}"/>
+  <xacro:property name="gps_velocity_sway_stddev" value="${sensor_config['gps']['default']['velocity_sway_stddev']}"/>
+  <xacro:property name="gps_velocity_heave_stddev" value="${sensor_config['gps']['default']['velocity_heave_stddev']}"/>
+
+  <!-- Magnetometer Parameters -->
+  <xacro:property name="magnetometer_update_rate" value="${sensor_config['magnetometer']['default']['update_rate']}"/>
+  <xacro:property name="magnetometer_field_tesla_x" value="${sensor_config['magnetometer']['default']['field_tesla_x']}"/>
+  <xacro:property name="magnetometer_field_tesla_y" value="${sensor_config['magnetometer']['default']['field_tesla_y']}"/>
+  <xacro:property name="magnetometer_field_tesla_z" value="${sensor_config['magnetometer']['default']['field_tesla_z']}"/>
+  <xacro:property name="magnetometer_noise_stddev" value="${sensor_config['magnetometer']['default']['noise_stddev']}"/>
+
+  <!-- Barometer Parameters -->
+  <xacro:property name="barometer_update_rate" value="${sensor_config['barometer']['default']['update_rate']}"/>
+  <xacro:property name="barometer_reference_altitude" value="${sensor_config['barometer']['default']['reference_altitude']}"/>
+  <xacro:property name="barometer_pressure_stddev" value="${sensor_config['barometer']['default']['pressure_stddev']}"/>
+  
+  <!-- Radar Parameters -->
+  <xacro:property name="radar_min_range" value="${sensor_config['radar']['maritime']['min_range']}"/>
+  <xacro:property name="radar_max_range" value="${sensor_config['radar']['maritime']['max_range']}"/>
+  <xacro:property name="radar_angular_resolution" value="${sensor_config['radar']['maritime']['angular_resolution']}"/>
+  <xacro:property name="radar_rpm" value="${sensor_config['radar']['maritime']['rpm']}"/>
+  <xacro:property name="radar_linear_resolution" value="${sensor_config['radar']['maritime']['linear_resolution']}"/>
+  <xacro:property name="radar_min_elevation_angle" value="${sensor_config['radar']['maritime']['min_elevation_angle']}"/>
+
+  <!-- Radar Internal LiDAR Parameters -->
+  <xacro:property name="radar_internal_lidar_update_rate" value="${sensor_config['radar']['maritime']['internal_lidar_update_rate']}"/>
+  <xacro:property name="radar_internal_lidar_vertical_samples" value="${sensor_config['radar']['maritime']['internal_lidar_vertical_samples']}"/>
+  <xacro:property name="radar_internal_lidar_min_angle" value="${sensor_config['radar']['maritime']['internal_lidar_min_angle']}"/>
+  <xacro:property name="radar_internal_lidar_max_angle" value="${sensor_config['radar']['maritime']['internal_lidar_max_angle']}"/>
+  <xacro:property name="radar_internal_lidar_min_range" value="${sensor_config['radar']['maritime']['internal_lidar_min_range']}"/>
+  <xacro:property name="radar_internal_lidar_range_resolution" value="${sensor_config['radar']['maritime']['internal_lidar_range_resolution']}"/>
+  <xacro:property name="radar_internal_lidar_noise_stddev" value="${sensor_config['radar']['maritime']['internal_lidar_noise_stddev']}"/>
+
+  <!-- mmWave：gpu_ray 几何由 YAML 驱动；角度为弧度、关于雷达前向对称 -->
+  <xacro:property name="mmwave_deg2rad" value="0.017453292519943295"/>
+  <xacro:property name="mmwave_horizontal_fov_deg" value="${sensor_config['mmwave']['default']['horizontal_fov_deg']}"/>
+  <xacro:property name="mmwave_vertical_fov_deg" value="${sensor_config['mmwave']['default']['vertical_fov_deg']}"/>
+  <xacro:property name="mmwave_azimuth_resolution_deg" value="${sensor_config['mmwave']['default']['azimuth_resolution_deg']}"/>
+  <xacro:property name="mmwave_elevation_resolution_deg" value="${sensor_config['mmwave']['default']['elevation_resolution_deg']}"/>
+  <xacro:property name="mmwave_min_range" value="${sensor_config['mmwave']['default']['min_range']}"/>
+  <xacro:property name="mmwave_max_range" value="${sensor_config['mmwave']['default']['max_range']}"/>
+  <xacro:property name="mmwave_perception_range_limit_m" value="${sensor_config['mmwave']['default']['perception_range_limit_m']}"/>
+  <xacro:property name="mmwave_gpu_ray_max_m" value="${sensor_config['mmwave']['default']['gpu_ray_max_range']}"/>
+  <xacro:property name="mmwave_horizontal_ray_samples" value="${sensor_config['mmwave']['default']['horizontal_ray_samples']}"/>
+  <xacro:property name="mmwave_vertical_ray_samples" value="${sensor_config['mmwave']['default']['vertical_ray_samples']}"/>
+  <xacro:property name="mmwave_gpu_ray_range_resolution" value="${sensor_config['mmwave']['default']['gpu_ray_range_resolution']}"/>
+  <xacro:property name="mmwave_gpu_ray_noise_stddev" value="${sensor_config['mmwave']['default']['gpu_ray_noise_stddev']}"/>
+  <xacro:property name="mmwave_h_min_angle" value="${-0.5 * mmwave_horizontal_fov_deg * mmwave_deg2rad}"/>
+  <xacro:property name="mmwave_h_max_angle" value="${0.5 * mmwave_horizontal_fov_deg * mmwave_deg2rad}"/>
+  <xacro:property name="mmwave_v_min_angle" value="${-0.5 * mmwave_vertical_fov_deg * mmwave_deg2rad}"/>
+  <xacro:property name="mmwave_v_max_angle" value="${0.5 * mmwave_vertical_fov_deg * mmwave_deg2rad}"/>
+  <xacro:property name="mmwave_update_rate_hz" value="${sensor_config['mmwave']['default']['update_rate_hz']}"/>
+  <xacro:property name="mmwave_base_rcs" value="${sensor_config['mmwave']['default']['base_rcs']}"/>
+  <xacro:property name="mmwave_rcs_distance_decay" value="${sensor_config['mmwave']['default']['rcs_distance_decay']}"/>
+  <xacro:property name="mmwave_enable_sea_clutter" value="${sensor_config['mmwave']['default']['enable_sea_clutter']}"/>
+  <xacro:property name="mmwave_sea_clutter_probability" value="${sensor_config['mmwave']['default']['sea_clutter_probability']}"/>
+  <xacro:property name="mmwave_sea_clutter_amplitude" value="${sensor_config['mmwave']['default']['sea_clutter_amplitude']}"/>
+  <xacro:property name="mmwave_enable_range_measurement_error" value="${sensor_config['mmwave']['default']['enable_range_measurement_error']}"/>
+  <xacro:property name="mmwave_enable_azimuth_measurement_error" value="${sensor_config['mmwave']['default']['enable_azimuth_measurement_error']}"/>
+  <xacro:property name="mmwave_range_error_at_reference_m" value="${sensor_config['mmwave']['default']['range_error_at_reference_m']}"/>
+  <xacro:property name="mmwave_range_error_reference_m" value="${sensor_config['mmwave']['default']['range_error_reference_m']}"/>
+  <xacro:property name="mmwave_azimuth_error_std_deg" value="${sensor_config['mmwave']['default']['azimuth_error_std_deg']}"/>
+</robot>

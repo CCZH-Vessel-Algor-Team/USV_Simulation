@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="$(arg model_name)">
+
+  <!-- VRX mb_marker_buoy：柱状浮标 + 底部浮体，与 sydney_regatta 场景中 Fuel 模型几何一致 -->
+  <xacro:arg name="model_name" default="mb_marker_buoy"/>
+  <xacro:arg name="color" default="Green"/>
+
+  <link name="link">
+    <visual name="visual">
+      <!-- mesh 为 Y_UP，绕 X 轴 90° 对齐 Gazebo Z_UP -->
+      <origin xyz="0 0 0" rpy="1.57079 0 0"/>
+      <geometry>
+        <mesh filename="package://usv_sim_full/description/models/mb_marker_buoy/meshes/mb_marker_buoy.dae"/>
+      </geometry>
+    </visual>
+
+    <collision name="collision_body">
+      <origin xyz="0 -0.02 0.02" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.15" length="1.15"/>
+      </geometry>
+    </collision>
+
+    <collision name="collision_base">
+      <origin xyz="0 0 -0.3" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.325" length="0.1"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 -0.5" rpy="0 0 0"/>
+      <mass value="20.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="0.1"/>
+    </inertial>
+  </link>
+
+  <gazebo reference="link">
+    <static>true</static>
+    <visual name="visual">
+      <material>
+        <script>
+          <uri>model://mb_marker_buoy/materials/scripts/mb_marker_buoy.material</uri>
+          <name>mb_marker_buoy/$(arg color)</name>
+        </script>
+      </material>
+    </visual>
+  </gazebo>
+
+</robot>

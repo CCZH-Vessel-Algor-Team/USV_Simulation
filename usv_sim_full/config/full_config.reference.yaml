@@ -1,0 +1,332 @@
+# =============================================================================
+# full_config.yaml — 字段参考（带注释，不作为默认启动配置）
+# =============================================================================
+# 说明：
+# - 本文件仅供查阅；默认仿真仍使用 full_config.yaml（或其它 config_path）。
+# - 权威消费者：session_manager、main.launch.py、scenario_manager_node、robot_bringup 等；
+#   若代码与文档不一致，以 Python 实现为准。
+# - 多船：顶层键须为 robot_1、robot_2、…（数字升序）；亦支持旧式单块 robot:（少用）。
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# environment — Gazebo 世界
+# -----------------------------------------------------------------------------
+# world_name: 与 usv_sim_full/worlds/<name>.sdf 或 .world 文件名（无后缀）一致；
+#             同时用于 scenario_manager_node 的 /world/<world_name>/create 服务名。
+environment:
+  world_name: sydney_regatta
+
+# -----------------------------------------------------------------------------
+# sensor_config_path — 传感器内参/默认值（毫米波海杂波、GPU ray 采样等）
+# -----------------------------------------------------------------------------
+# 相对路径：相对于「当前这份 full_config 文件」所在目录解析（与 user_config_path 同目录基准）。
+# session_manager 会将其拷贝到会话目录下的 sensor_config.yaml，并参与 URDF / 桥接 / mmwave 节点参数。
+sensor_config_path: config/sensor_config.yaml
+
+# -----------------------------------------------------------------------------
+# obstacles — 静态障碍 + 可选随机区域 → 会话 obstacle_layout.json
+# -----------------------------------------------------------------------------
+# 消费者：session_manager.generate_obstacles → obstacle_spawner（首船 bringup 时 spawn）。
+#
+# fixed_list[]:
+#   name   — 模型名（Gazebo 内唯一）。
+#   type   — cylinder | box（与 obstacle_spawner 一致）。
+#   pose   — 至少 [x, y, z]；亦可写满 6 元 [x,y,z,roll,pitch,yaw]（JSON 内会原样保存，spawn 实现可能只用前三元）。
+#   size   — cylinder: [radius, height]；box: [width, height, depth]。
+#   color  — Red / Green / Blue / Yellow / Black / White（大小写与脚本一致）。
+#
+# random_areas[]（可选）:
+#   center: [x, y]  radius  count  type  size_range: [min, max]  color  name
+obstacles:
+  fixed_list:
+    - name: buoy_start
+      type: cylinder
+      pose: [15.0, 0.0, 0.0]
+      size: [0.5, 5.0]
+      color: Green
+
+# -----------------------------------------------------------------------------
+# scenario — 动态障碍（scenario_manager_node）
+# -----------------------------------------------------------------------------
+# dynamic_obstacles[]:
+#   name      — 运行时会变为 dyn_<name>（除非已以 dyn_ 开头），用于 Gazebo 实体与 cmd_vel 话题。
+#   shape     — cylinder（默认）| box | mesh_profile；影响生成的 SDF 几何。
+#   color     — 同上静态障碍颜色名。
+#   speed     — 沿航路前进的标量速度（与内部控制逻辑配合）。
+#   loop      — 是否在航路点间往返循环。
+#   waypoints — [[x,y], [x,y], ...]；至少 2 个点才有巡逻运动。
+#   size — 可选。圆柱： [radius, length]；长方体： [sx, sy, sz]。缺省圆柱 r=0.8,h=1.2，长方体 1.2³。
+#   mesh_profile — 当 shape=mesh_profile 时必填；YAML 路径相对当前 full_config 文件解析。
+#     需至少包含：
+#       mesh.uri / mesh.scale / mesh.pose_offset.xyz+rpy
+#       collision_group.pose_offset.xyz+rpy
+#       boxes[].size_lwh_m / boxes[].pose_xyz_m
+#   插入方式 — scenario_manager_node 仅使用 ros_gz_sim create（gz-transport），不依赖 rclpy /world/.../SpawnEntity。
+#
+# ground_truth_sim（可选，与 dynamic_obstacles 同级）:
+#   enabled — true 时 main.launch 启动周邻目标真值（与 dynamic_obstacles 同级）。
+#   gazebo_visual — true 时启动 scenario_ground_truth_gazebo_entity（ground_truth_gazebo_entity_node）：
+#     从 Gazebo 实体 pose 发布 /sim/ground_truth + markers（单轨，truth_source=gazebo_entity）；
+#     false 时仅启动 scenario_ground_truth_node（kinematic 积分，无 Gazebo 周邻实体）。
+#     默认 gazebo_target_geometry: box — 按 size_l×size_w×size_h 生成长方体 SDF；
+#     可选 mesh_profile — 按 gazebo_mesh_profile YAML 生成 mesh visual + compound collision。
+#     spawn 用 ros_gz_sim create；运动由 VelocityControl + cmd_vel；删除用 /world/<world>/remove。
+#   update_dt — 控制/发布周期（秒），默认 0.02。
+#   model_mass_kg — SDF 质量（kg），默认 50。
+#   truth_velocity_lowpass_tau — 由 pose 差分估计 v_x/v_y 的一阶低通时间常数（秒），默认 0.2。
+#   gazebo_mesh_profile — mesh_profile 模式必填；相对当前 full_config 文件解析。
+#   gazebo_model_prefix — 实体名前缀，默认 gt_ctrv_。
+#   spawn_delay_sec — 仿真时钟延迟后再 spawn/发布（默认 10）；未 spawn 的 track 不进入 /sim/ground_truth。
+#   world_service_wait_sec — gz service 超时毫秒（默认 1.0s）。
+#   cylinder_radius_cap_m / cylinder_height_cap_m — >0 时：box 模式对水平对角半长与高度缩放上限；cylinder 模式为半径/高度上限（米）；0 不限制。
+#   collision_topic — 非空时订阅 ros_gz_interfaces/Contacts（话题名勿带前导 /），须 ros_gz_bridge 从 Gazebo contact 桥接；模型名命中 {gazebo_model_prefix}{track_id} 时从 Gazebo 删除并抑制重生，直至该 track_id 从 /sim/ground_truth 消失。
+#   collision_string_topic — 可选：订阅 std_msgs/String，data 为模型基名（如 gt_ctrv_1），语义同上。
+#   collision_debounce_sec — 碰撞去抖（秒）。
+#   reference_robot — 环带采样圆心：TF parent reference_frame → child {reference_robot}/{reference_child_frame} 的平移；缺省为第一艘 robot 名。
+#   reference_child_frame — 默认 base_link。
+#   reference_tf_timeout_sec — TF 不可用超过该秒数则在 map 原点生成目标并发布（避免永不发 /sim/ground_truth）；0 表示无限等待。
+#   reference_frame — 通常为 map。
+#   frame_id — GlobalTrackArray.header.frame_id，与积分坐标系一致，通常为 map。
+#   fence_enabled — true 时仅在 frame_id 平面用轴对齐矩形围栏；越界目标从 /sim/ground_truth 移除（RViz 同步删标记）。
+#   fence_min_x / fence_max_x / fence_min_y / fence_max_y — 围栏闭区间边界（米）。
+#   fence_maintain_target_count — true 时越界后立即在框内随机补生，保持 target_count；false 则数量只减不增。
+#   motion_mode — ctrv（默认，随机 CTRV）| waypoint（固定航路点往返巡逻）。
+#   fixed_targets[] — motion_mode=waypoint 时必填；忽略 target_count。每项字段：
+#     track_id, speed, loop, waypoints[[x,y],...]（至少 2 点）；
+#     可选 size_width/size_length/size_height、is_ais_matched、matched_mmsi。
+#   fixed_targets_json — 可选 JSON 字符串，与 fixed_targets 二选一（CLI 覆盖用）。
+#   waypoint_arrival_threshold_m — 到点判定半径（米），默认 0.5。
+#   waypoint 模式下 fence_maintain_target_count 不生效（不随机补生）。
+#   启用围栏时初始位置在框内均匀采样（不再用 annulus 相对参考船环带）；未启用时仍为 annulus_* + reference。
+#   其余 speed_min、omega_limit、target_count、annulus_* 等同 ground_truth_node ROS 参数。
+#   （Nav2 代价地图是否订阅真值：暂缓，由后续需求单独设计，例如 PointCloud2 + voxel_layer。）
+scenario:
+  dynamic_obstacles:
+    - name: target_ship_1
+      shape: mesh_profile
+      mesh_profile: ../description/models/target_ship/10m_mesh_profile.yaml
+      color: Yellow
+      speed: 2.0
+      loop: true
+      waypoints:
+        - [20.0, 0.0]
+        - [20.0, 30.0]
+  # ground_truth_sim:
+  #   enabled: true
+  #   gazebo_visual: true
+  #   reference_robot: usv_1
+  #   reference_frame: map
+  #   frame_id: map
+  #   target_count: 5
+  #   annulus_radius_min: 50.0
+  #   annulus_radius_max: 500.0
+
+# -----------------------------------------------------------------------------
+# visualization — RViz 与桥接侧行为
+# -----------------------------------------------------------------------------
+# launch_rviz: main.launch.py 是否在会话生成后启动 RViz（默认 true）。
+# enable_telemetry: 为 false 时 session_manager 生成桥接配置可跳过部分遥测相关条目（见 session_manager 实现）。
+visualization:
+  launch_rviz: true
+  enable_telemetry: true
+
+# -----------------------------------------------------------------------------
+# robot_N — 单船配置块（示例 robot_1）
+# -----------------------------------------------------------------------------
+# name:
+#   ROS/Gazebo 模型名，兼作 xacro namespace；sanitize 后用于文件名 final_robot_<sanitized>.urdf。
+#
+# enable_env_dynamics / env_dynamics:
+#   为 true 时 main.launch 为本船启动 usv_env_dynamics（风浪流增益 k_wind、k_current）。
+#
+# xacro_template:
+#   位于 usv_sim_full/description/urdf/ 下的文件名，例如 wamv_no_battery.urdf.xacro。
+#
+# thruster_config / thrusters:
+#   推进器布局与是否启用推进器相关话题桥接（见 session_manager.generate_bridge_config）。
+#
+# spawn_pose: [x, y, z, roll, pitch, yaw] — gz create / robot_bringup 初始位姿。
+#
+# overrides:
+#   visual_mesh, mass, inertia[ixx,iyy,izz] — 传入 xacro。
+#   thruster_positions — 左右桨位置等。
+#   ground_truth_enabled — 是否启用 Gazebo P3D 真值里程计（与 ground_truth_sim 节点无直接等同关系）。
+#
+# buoyancy_params:
+#   全部传入船体 xacro 浮力/流体参数块（键名与 wamv 模板一致）。
+#
+# 周邻 CTRV 真值（ground_truth_sim 节点）已迁至 scenario.ground_truth_sim（与 dynamic_obstacles 同级），
+# 见上文 scenario 段注释；不再在 robot_N 块内配置。
+#
+# sensors[]:
+#   name          — 传感器逻辑名，参与 topic 默认路径与 gz 话题名。
+#   type          — lidar | camera | imu | gps | maritime_radar | mmwave_radar
+#   parent_link   — URDF 父 link，一般为 base_link。
+#   xyz, rpy      — 相对 parent_link 的安装位姿。
+#   override_topic— 不含机器人名前缀的 ROS 话题（建议以 / 开头）；最终为 /$(arg namespace)/<strip 后的路径>。
+#   enabled       — false 时不生成该传感器的宏与桥接。
+#   update_rate   — imu/gps 等可选（Hz）；未写则用 session_manager 内默认值。
+#
+# 传感器 override_topic 摘要：
+#   - 毫米波 mmwave_radar：gpu_ray → ros_gz_bridge …/points_gz → usv_mmwave_sim 发布 …/points（五字段）。
+#   - 海事雷达 maritime_radar：此处为 radar_gz_bridge 输出的 ROS 扇区话题（marine_sensor_msgs/RadarSector），
+#     与 gz 侧 …/spokes 不同。
+#   完整规则与 usv_interfaces 话题模板见 full_config.yaml 顶部注释。
+
+robot_1:
+  name: usv_1
+  enable_env_dynamics: true
+  env_dynamics:
+    k_wind: 1.5
+    k_current: 250.0
+  xacro_template: wamv_no_battery.urdf.xacro
+  thruster_config: CUSTOM
+  thrusters:
+    enabled: true
+  spawn_pose: [0.0, 0.0, 0.5, 0.0, 0.0, 0.0]
+  overrides:
+    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
+    mass: 500.0
+    inertia: [100.0, 100.0, 200.0]
+    thruster_positions:
+      thruster_pos_x: -2.373776
+      thruster_pos_y_left: 0.7
+      thruster_pos_y_right: -0.8
+      thruster_pos_z: 0.318237
+    ground_truth_enabled: true
+  buoyancy_params:
+    hull_length: 4.9
+    hull_radius: 0.213
+    fluid_level: 0.0
+    xDotU: 0.0
+    yDotV: 0.0
+    nDotR: 0.0
+    xU: 100.0
+    xUU: 150.0
+    yV: 100.0
+    yVV: 100.0
+    zW: 500.0
+    kP: 300.0
+    kPP: 600.0
+    mQ: 900.0
+    mQQ: 900.0
+    nR: 800.0
+    nRR: 800.0
+
+  # 传感器列表可使用 YAML 锚点，供 robot_2 用 *default_ship_sensors 复用同一份列表。
+  # 下列列表与仓库默认 full_config.yaml 一致，便于对照；修改默认船载传感器请改 full_config.yaml。
+  sensors: &default_ship_sensors
+    # --- lidar：PointCloud2，override_topic 默认亦可省略（session_manager 会按 name 拼路径）---
+    - name: front_lidar
+      type: lidar
+      parent_link: base_link
+      xyz: [0.7, 0.0, 1.8]
+      rpy: [0.0, 0.0, 0.0]
+      override_topic: /sensors/lidar/front_lidar/points
+      enabled: true
+    # --- camera：Image，每只相机独立 name / topic ---
+    - name: front_cam
+      type: camera
+      parent_link: base_link
+      xyz: [0.5, 0.0, 1.8]
+      rpy: [0.0, 0.0, 0.0]
+      override_topic: /sensors/camera/front_cam/image_raw
+      enabled: true
+    - name: left_cam
+      type: camera
+      parent_link: base_link
+      xyz: [0, 0.5, 1.8]
+      rpy: [0.0, 0.0, 1.57]
+      override_topic: /sensors/camera/left_cam/image_raw
+      enabled: true
+    - name: right_cam
+      type: camera
+      parent_link: base_link
+      xyz: [0, -0.5, 1.8]
+      rpy: [0.0, 0.0, -1.57]
+      override_topic: /sensors/camera/right_cam/image_raw
+      enabled: true
+    - name: rear_cam
+      type: camera
+      parent_link: base_link
+      xyz: [-0.5, 0, 1.8]
+      rpy: [0.0, 0.0, 3.14]
+      override_topic: /sensors/camera/rear_cam/image_raw
+      enabled: true
+    # --- imu / gps：可选 update_rate（Hz）---
+    - name: imu_sensor
+      type: imu
+      parent_link: base_link
+      xyz: [0, 0.0, 1.8]
+      rpy: [0.0, 0.0, 0.0]
+      override_topic: /sensors/imu/imu_sensor/data
+      update_rate: 100
+      enabled: true
+    - name: gps_sensor
+      type: gps
+      parent_link: base_link
+      xyz: [0, 0.0, 1.9]
+      rpy: [0.0, 0.0, 0.0]
+      override_topic: /sensors/gps/gps_sensor/data
+      update_rate: 20
+      enabled: true
+    # --- maritime_radar：扇区话题 → radar_gz_bridge → marine_sensor_msgs/RadarSector ---
+    - name: mari_radar
+      type: maritime_radar
+      parent_link: base_link
+      xyz: [0.0, 0.0, 2.0]
+      rpy: [0.0, 0.0, 0.0]
+      override_topic: /sensors/radar/nav/sector
+      enabled: true
+    # --- mmwave_radar：URDF gpu_ray → …/points_gz → mmwave_4d_cloud_node → …/points（五字段）---
+    - name: mmwave_front
+      type: mmwave_radar
+      parent_link: base_link
+      xyz: [0.0, 0.0, 1.9]
+      rpy: [0.0, 0.0, 0.0]
+      override_topic: /sensors/mmwave/mmwave_front/points
+      enabled: true
+
+# -----------------------------------------------------------------------------
+# robot_2 — 第二艘船（结构同 robot_1）；可与 robot_1 不同 spawn_pose
+# -----------------------------------------------------------------------------
+robot_2:
+  name: usv_2
+  enable_env_dynamics: true
+  env_dynamics:
+    k_wind: 1.5
+    k_current: 250.0
+  xacro_template: wamv_no_battery.urdf.xacro
+  thruster_config: CUSTOM
+  thrusters:
+    enabled: true
+  spawn_pose: [0.0, 5.0, 0.5, 0.0, 0.0, 0.0]
+  overrides:
+    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
+    mass: 500.0
+    inertia: [100.0, 100.0, 200.0]
+    thruster_positions:
+      thruster_pos_x: -2.373776
+      thruster_pos_y_left: 0.7
+      thruster_pos_y_right: -0.8
+      thruster_pos_z: 0.318237
+    ground_truth_enabled: true
+  buoyancy_params:
+    hull_length: 4.9
+    hull_radius: 0.213
+    fluid_level: 0.0
+    xDotU: 0.0
+    yDotV: 0.0
+    nDotR: 0.0
+    xU: 100.0
+    xUU: 150.0
+    yV: 100.0
+    yVV: 100.0
+    zW: 500.0
+    kP: 300.0
+    kPP: 600.0
+    mQ: 900.0
+    mQQ: 900.0
+    nR: 800.0
+    nRR: 800.0
+  sensors: *default_ship_sensors

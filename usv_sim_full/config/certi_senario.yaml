@@ -1,0 +1,192 @@
+# 认证仿真基底（单船本船）；会遇局面由 certificate_case/*.yaml + merge_certi_config.py 合并生成。
+# 启动：ros2 launch usv_sim_full certifi_launch.launch.py case_config:=.../certificate_case/C1-001.yaml
+# 字段详解见同目录 full_config.reference.yaml。
+# override_topic（传感器内）：不含机器人名前缀；最终话题为 /{robot.name}/ + 去掉首 / 后的路径。
+#   毫米波示例 /sensors/mmwave/.../points；海事雷达为 ROS 扇区话题（非 gz …/spokes）。
+environment:
+  world_name: sydney_regatta_open_water
+# 传感器内参 YAML（相对本文件目录）；session_manager 拷入会话目录参与 URDF/桥接/mmwave 节点。
+sensor_config_path: config/sensor_config.yaml
+# 静态障碍 → 会话 obstacle_layout.json → obstacle_spawner。
+obstacles:
+  fixed_list: []
+# 动态障碍由 certificate_case 合并注入；ground_truth_sim 由合并脚本强制 enabled: false。
+scenario:
+  dynamic_obstacles: []
+# RViz 是否随 main 启动；enable_telemetry 影响 session_manager 桥接生成。
+visualization:
+  launch_rviz: true
+  enable_telemetry: true
+
+# 船 1（robot_<N> 按数字排序）。周邻 CTRV 真值见 scenario.ground_truth_sim；overrides.ground_truth_enabled 仅为 xacro P3D。
+# enable_env_dynamics：本船 usv_env_dynamics；false 时本船不启该节点。
+robot_1:
+  name: usv_1
+  enable_env_dynamics: true
+  env_dynamics:
+    k_wind: 1.5
+    k_current: 250.0
+  xacro_template: wamv_no_battery.urdf.xacro
+  thruster_config: CUSTOM
+  thrusters:
+    enabled: true
+  spawn_pose:
+  - 0.0
+  - 0.0
+  - 0.5
+  - 0.0
+  - 0.0
+  - 0.0
+  overrides:
+    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
+    mass: 500.0
+    inertia:
+    - 100.0
+    - 100.0
+    - 200.0
+    thruster_positions:
+      thruster_pos_x: -2.373776
+      # 左右须关于船体中心线对称，否则等推力也会产生偏航力矩（表现为绕圈）
+      thruster_pos_y_left: 0.75
+      thruster_pos_y_right: -0.75
+      thruster_pos_z: 0.318237
+    ground_truth_enabled: true
+  buoyancy_params:
+    hull_length: 4.9
+    hull_radius: 0.213
+    fluid_level: 0.0
+    xDotU: 0.0
+    yDotV: 0.0
+    nDotR: 0.0
+    xU: 100.0
+    xUU: 150.0
+    yV: 100.0
+    yVV: 100.0
+    zW: 500.0
+    kP: 300.0
+    kPP: 600.0
+    mQ: 900.0
+    mQQ: 900.0
+    nR: 800.0
+    nRR: 800.0
+  sensors: &default_ship_sensors
+  - name: front_lidar
+    type: lidar
+    parent_link: base_link
+    xyz:
+    - 0.7
+    - 0.0
+    - 1.8
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/lidar/front_lidar/points
+    enabled: false
+  - name: front_cam
+    type: camera
+    parent_link: base_link
+    xyz:
+    - 0.5
+    - 0.0
+    - 1.8
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/camera/front_cam/image_raw
+    enabled: true
+  - name: left_cam
+    type: camera
+    parent_link: base_link
+    xyz:
+    - 0
+    - 0.5
+    - 1.8
+    rpy:
+    - 0.0
+    - 0.0
+    - 1.57
+    override_topic: /sensors/camera/left_cam/image_raw
+    enabled: false
+  - name: right_cam
+    type: camera
+    parent_link: base_link
+    xyz:
+    - 0
+    - -0.5
+    - 1.8
+    rpy:
+    - 0.0
+    - 0.0
+    - -1.57
+    override_topic: /sensors/camera/right_cam/image_raw
+    enabled: false
+  - name: rear_cam
+    type: camera
+    parent_link: base_link
+    xyz:
+    - -0.5
+    - 0
+    - 1.8
+    rpy:
+    - 0.0
+    - 0.0
+    - 3.14
+    override_topic: /sensors/camera/rear_cam/image_raw
+    enabled: false
+  - name: imu_sensor
+    type: imu
+    parent_link: base_link
+    xyz:
+    - 0
+    - 0.0
+    - 1.8
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/imu/imu_sensor/data
+    update_rate: 100
+    enabled: true
+  - name: gps_sensor
+    type: gps
+    parent_link: base_link
+    xyz:
+    - 0
+    - 0.0
+    - 1.9
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/gps/gps_sensor/data
+    update_rate: 20
+    enabled: true
+  - name: mari_radar
+    type: maritime_radar
+    parent_link: base_link
+    xyz:
+    - 0.0
+    - 0.0
+    - 2.0
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/radar/nav/sector
+    enabled: true
+  # mmwave：gpu_ray→…/points_gz→mmwave_4d_cloud_node→…/points；内参 sensor_config.yaml -> mmwave.default。
+  - name: mmwave_front
+    type: mmwave_radar
+    parent_link: base_link
+    xyz:
+    - 0.0
+    - 0.0
+    - 1.9
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/mmwave/mmwave_front/points
+    enabled: true

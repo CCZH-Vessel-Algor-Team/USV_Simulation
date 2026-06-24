@@ -1,0 +1,108 @@
+# =============================================================================
+# GY雷达驱动完整参数配置文件
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 雷达控制节点参数
+# -----------------------------------------------------------------------------
+radar_control_node:
+  ros__parameters:
+    # ---------- 雷达控制参数 ----------
+    radar_range: 1000          # 量程(米): 250,500,750,1000,1500,2000,3000,4000,6000,8000,12000,16000,24000,36000,48000,64000,80000
+    radar_rpm: 2               # 转速档位: 0=24rpm, 1=36rpm, 2=48rpm, 3=60rpm, 4=96rpm
+    radar_gain: -1             # 增益: -1=自动, 0-255=手动
+    sea_clutter: -1            # 海浪抑制: -1=自动, 0-255=手动
+    rain_clutter: 0            # 雨雪抑制: 0-255
+    side_lobe: -1              # 旁瓣抑制: -1=自动, 0-255=手动
+    beam_sharpening: 2         # 波束锐化: 0-3
+    interference_reject: 1     # 干扰抑制: 0=关, 1=低, 2=中, 3=高
+    noise_reject: 1            # 噪声抑制: 0=关, 1=低, 2=高
+    target_stretch: true       # 目标扩展
+    target_boost: 2            # 目标增强: 0=关, 1=低, 2=高
+
+    # ---------- 惯导配置 ----------
+    enable_ins: true
+    ins_ip: "224.100.100.30"
+    ins_port: 20842
+
+    # ---------- 系统配置 ----------
+    auto_transmit: true
+    watchdog_interval_ms: 5000
+
+# -----------------------------------------------------------------------------
+# 雷达数据节点参数
+# -----------------------------------------------------------------------------
+radar_data_node:
+  ros__parameters:
+    frame_id: "radar_link"
+    publish_original: false
+    enable_spoke_output: true
+    debug_spoke_info: false    # 调试开关
+    
+    # 检测参数 (运行时自动更新)
+    range_max: 0.0
+    range_min: 0.0
+    num_echoes: 0
+    range_cells: 0
+
+# -----------------------------------------------------------------------------
+# ARPA目标节点参数
+# -----------------------------------------------------------------------------
+arpa_receiver_node:
+  ros__parameters:
+    frame_id: "radar_link"
+    publish_rate: 20.0
+    debug_mode: false
+    danger_distance_m: 500
+    danger_time_sec: 300
+
+# -----------------------------------------------------------------------------
+# 雷达TF节点参数
+# -----------------------------------------------------------------------------
+radar_tf_node:
+  ros__parameters:
+    parent_frame: "radar_link"
+    child_frame_prefix: "arpa_target_"
+    coordinate_system: "head_up"   # "north_up" 或 "head_up"
+    invert_bearing: false
+    debug_log: false
+
+# -----------------------------------------------------------------------------
+# 自适应雷达建图节点参数
+# -----------------------------------------------------------------------------
+adaptive_radar_grid_map_node:
+  ros__parameters:
+    # ---------- 地图参数 ----------
+    map.frame_id: "map"
+    map.length: 200.0
+    map.width: 200.0
+    map.resolution: 1.0
+    map.pub_interval: 0.1
+
+    # ---------- 滤波参数 ----------
+    filter.near_clutter_range: 5.0
+    filter.invert_angle: true
+
+    # ---------- 强度映射参数 ----------
+    intensity.min_value: 0.0
+    intensity.max_value: 15.0
+    intensity.threshold: 1.0
+    intensity.mapping_type: "linear"    # linear, exponential, sigmoid, sqrt, quadratic
+    intensity.exponential_base: 2.0
+    intensity.sigmoid_steepness: 0.5
+    intensity.sigmoid_midpoint: 7.5
+    intensity.low_as_free: true
+    intensity.free_threshold: 2.0
+
+    # ---------- 自适应参数 ----------
+    adaptive.enable: true
+    adaptive.size_margin: 1.5
+    adaptive.resolution_factor: 2.0
+    adaptive.min_resolution: 0.5
+    adaptive.max_resolution: 200.0
+    adaptive.change_threshold: 0.1
+
+    # ---------- 队列参数 ----------
+    max_queue_size: 1000
+    control_node_name: "radar_control_node"
+    data_node_name: "radar_data_node"

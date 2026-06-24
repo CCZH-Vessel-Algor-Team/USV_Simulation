@@ -1,0 +1,62 @@
+# 单目标直线航路隔离测试（open water，无 ping-pong 折返）。
+#
+# 用途：验证 Gazebo 实体沿固定方向前进，不应出现非预期的 XY 回退。
+#
+# 启动：
+#   ros2 launch usv_sim_full ground_truth_test.launch.py \
+#     config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/ground_truth_straight_test.yaml \
+#     gz_headless:=true use_rviz:=false
+#
+# 轨迹分析（另开终端，仿真运行约 15s 后）：
+#   python3 $(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/tools/analyze_entity_trajectory.py \
+#     --config $(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/ground_truth_straight_test.yaml \
+#     --duration-sec 90 --backward-speed-threshold 0.3
+
+environment:
+  world_name: sydney_regatta_open_water
+
+obstacles:
+  fixed_list: []
+
+scenario:
+  dynamic_obstacles: []
+  ground_truth_sim:
+    enabled: true
+    gazebo_visual: true
+    motion_mode: waypoint
+    spawn_delay_sec: 5.0
+    update_dt: 0.02
+    model_mass_kg: 50.0
+    cmd_vel_omega_limit: 0.12
+    waypoint_omega_limit: 0.12
+    world_service_wait_sec: 2.0
+    attitude_monitor_enabled: false
+    heading_sync_enabled: false
+    spawn_thread_pool_size: 2
+    gazebo_target_geometry: mesh_profile
+    gazebo_mesh_profile: ../description/models/target_ship/10m_mesh_profile.yaml
+    gazebo_model_prefix: gt_ctrv_
+    frame_id: map
+    reference_robot: ""
+    reference_frame: map
+    reference_tf_timeout_sec: 0.0
+    waypoint_arrival_threshold_m: 0.5
+    size_width_min: 3.6
+    size_width_max: 3.6
+    size_length_min: 10.0
+    size_length_max: 10.0
+    size_height_min: 2.0
+    size_height_max: 2.0
+    fixed_targets:
+      - track_id: 1
+        speed: 3.0
+        loop: false
+        is_ais_matched: true
+        matched_mmsi: 411000001
+        waypoints:
+          - [0.0, 0.0]
+          - [120.0, 0.0]
+
+visualization:
+  launch_rviz: false
+  enable_telemetry: false

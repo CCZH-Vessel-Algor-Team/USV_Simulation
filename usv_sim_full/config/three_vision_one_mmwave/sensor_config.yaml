@@ -1,0 +1,144 @@
+# 三视觉 + 毫米波场景专用内参（与 ground_truth_sensor_sim_params.yaml 视场角一致）。
+# 150° 对称视觉栈：每路半角 0.5235987756 rad（60°），水平 FOV = 2×半角 = 1.0471975512 rad。
+# Sensor configuration parameters for USV simulation
+
+lidar:
+  vlp16:
+    update_rate: 20                    # 激光雷达更新频率 (Hz)
+    horizontal_samples: 2000           # 水平方向采样点数
+    vertical_samples: 16               # 垂直方向采样点数
+    horizontal_min_angle: -3.14159     # 水平最小扫描角度 (弧度)
+    horizontal_max_angle: 3.14159      # 水平最大扫描角度 (弧度)
+    vertical_min_angle: -0.261799      # 垂直最小扫描角度 (弧度)
+    vertical_max_angle: 0.261799       # 垂直最大扫描角度 (弧度)
+    min_range: 5.0                     # 最小测距范围 (m)
+    max_range: 120.0                   # 最大测距范围 (m)
+    range_resolution: 0.01             # 距离分辨率 (m)
+    noise_stddev: 0.03                 # 测距噪声标准差 (m)
+# 缺少真实相机的运动模糊、局部快门、自动曝光、逆光等
+camera:
+  default:
+    update_rate: 23                    # 相机更新频率 (Hz)
+    horizontal_fov: 1.0471975512       # 水平视场角 (弧度)，2×0.5235987756，与 sim_vision_* fov_half_angle 一致
+    width: 640                        # 图像宽度 (像素)
+    height: 480                       # 图像高度 (像素)
+    near_clip: 5.1                     # 近裁剪面距离 (m)
+    far_clip: 230                      # 远裁剪面距离 (m)
+    noise_stddev: 0.02                 # 图像噪声标准差
+    distortion_k1: -0.1                # 径向畸变系数k1
+    distortion_k2: 0.01                # 径向畸变系数k2
+    distortion_k3: 0                   # 径向畸变系数k3
+#缺少随时间漂移的bias，温度影响、非线型误差等
+imu:
+  default:
+    update_rate: 200                   # IMU更新频率 (Hz)
+    # Angular velocity noise parameters
+    angular_velocity_stddev: 0.00061   # 角速度总噪声标准差 (rad/s)
+    angular_velocity_bias_stddev: 0.003 # 角速度偏置噪声标准差 (rad/s)
+    # Allow individual axis configuration (optional, defaults to above values if not specified)
+    angular_velocity_x_stddev: 0.00061 # X轴角速度噪声标准差 (rad/s)
+    angular_velocity_y_stddev: 0.00061 # Y轴角速度噪声标准差 (rad/s)
+    angular_velocity_z_stddev: 0.00061 # Z轴角速度噪声标准差 (rad/s)
+    angular_velocity_x_bias_stddev: 0.003 # X轴角速度偏置噪声标准差 (rad/s)
+    angular_velocity_y_bias_stddev: 0.003 # Y轴角速度偏置噪声标准差 (rad/s)
+    angular_velocity_z_bias_stddev: 0.003 # Z轴角速度偏置噪声标准差 (rad/s)
+    # Linear acceleration noise parameters
+    linear_acceleration_stddev: 0.0038 # 线性加速度总噪声标准差 (m/s²)
+    linear_acceleration_bias_stddev: 0.01 # 线性加速度偏置噪声标准差 (m/s²)
+    # Allow individual axis configuration (optional, defaults to above values if not specified)
+    linear_acceleration_x_stddev: 0.0038 # X轴线性加速度噪声标准差 (m/s²)
+    linear_acceleration_y_stddev: 0.0038 # Y轴线性加速度噪声标准差 (m/s²)
+    linear_acceleration_z_stddev: 0.0038 # Z轴线性加速度噪声标准差 (m/s²)
+    linear_acceleration_x_bias_stddev: 0.01 # X轴线性加速度偏置噪声标准差 (m/s²)
+    linear_acceleration_y_bias_stddev: 0.01 # Y轴线性加速度偏置噪声标准差 (m/s²)
+    linear_acceleration_z_bias_stddev: 0.01 # Z轴线性加速度偏置噪声标准差 (m/s²)
+
+gps:
+  default:
+    update_rate: 10                     # GPS更新频率 (Hz)
+    # Position sensing parameters
+    position_horizontal_stddev: 0.000002    # 水平位置噪声标准差 (m)
+    position_vertical_stddev: 0.000002      # 垂直位置噪声标准差 (m)
+    # Velocity sensing parameters
+    velocity_horizontal_stddev: 0.2   # 水平速度噪声标准差 (m/s)
+    velocity_vertical_stddev: 0.2    # 垂直速度噪声标准差 (m/s)
+    # Additional GPS parameters for completeness
+    position_sway_stddev: 0.01         # 横移位置噪声标准差 (m) - 备用参数
+    position_heave_stddev: 0.01        # 升沉位置噪声标准差 (m) - 备用参数
+    velocity_sway_stddev: 0.01         # 横移速度噪声标准差 (m/s) - 备用参数
+    velocity_heave_stddev: 0.01        # 升沉速度噪声标准差 (m/s) - 备用参数
+
+magnetometer:
+  default:
+    update_rate: 50                    # 磁力计更新频率 (Hz)
+    field_tesla_x: 0.000020            # 默认地磁场 X 分量 (T)
+    field_tesla_y: 0.0                 # 默认地磁场 Y 分量 (T)
+    field_tesla_z: 0.000044            # 默认地磁场 Z 分量 (T)
+    noise_stddev: 0.0000004            # 磁场噪声标准差 (T)
+
+barometer:
+  default:
+    update_rate: 20                    # 气压计更新频率 (Hz)
+    reference_altitude: 0.0            # 参考海拔 (m)
+    pressure_stddev: 1.0               # 气压噪声标准差 (Pa)
+
+radar:
+  maritime:
+    min_range: 5.0                     # 雷达最小检测距离 (m)
+    max_range: 500.0                   # 雷达最大检测距离 (m)
+    angular_resolution: 0.0251327       # 雷达角分辨率 (弧度)
+    rpm: 48.0                          # 雷达天线转速 (转/分钟)
+    linear_resolution: 1.05             # 雷达线性分辨率 (m)
+    min_elevation_angle: -0.08         # 最小仰角 (弧度)
+    # 内部激光雷达参数 (用于雷达模拟)
+    internal_lidar_update_rate: 250    # 更新频率 (Hz)
+    internal_lidar_vertical_samples: 128 # 垂直采样数
+    internal_lidar_min_angle: 0.003    # 最小仰角 (弧度)
+    internal_lidar_max_angle: 0.15     # 最大仰角 (弧度)
+    internal_lidar_min_range: 1.0      # 最小距离 (m)
+    internal_lidar_range_resolution: 0.1 # 距离分辨率 (m)
+    internal_lidar_noise_stddev: 0.05  # 噪声标准差 (m)
+
+# 毫米波：Gazebo gpu_ray（与 VLP16 同款）→ ros_gz_bridge → PointCloud2，再由 usv_mmwave_sim::mmwave_4d_cloud_node 增强为 4D 点云。
+# horizontal_ray_samples / vertical_ray_samples 应与 ceil(FOV/角分辨率) 一致，改 FOV 时请同步更新。
+mmwave:
+  default:
+    horizontal_fov_deg: 120.0 # 水平视场角 (度)
+    vertical_fov_deg: 30.0 # 垂直视场角 (度)
+    azimuth_resolution_deg: 1.0 # 方位角分辨率 (度)
+    elevation_resolution_deg: 1.0 # 仰角分辨率 (度)
+    min_range: 1 # 最小距离 (m)
+    max_range: 100.0 # 最大距离 (m)
+    update_rate_hz: 10.0 # 更新频率 (Hz)
+    base_rcs: 12.0 # 基础RCS (dB)
+    rcs_distance_decay: 0.01 # 距离衰减
+    enable_sea_clutter: false # 启用海杂波（YAML 须为合法布尔/字符串，勿插入空格）
+    sea_clutter_probability: 0.0 # 海杂波概率
+    sea_clutter_amplitude: 0.0 # 海杂波幅度
+    perception_range_limit_m: 300.0 # 感知范围限制 (m)
+    enable_range_measurement_error: false # 启用距离测量误差
+    enable_azimuth_measurement_error: false # 启用方位角测量误差
+    range_error_at_reference_m: 0.66 # 距离误差参考距离 (m)
+    range_error_reference_m: 300.0 # 距离误差参考距离 (m)
+    azimuth_error_std_deg: 0.5 # 方位角误差标准差 (度)
+    # 最终 …/points 发布：true=Reliable（避免 RViz 等默认 Reliable 订阅收不到）；false=典型传感器 Best Effort
+    output_use_reliable_qos: true
+    horizontal_ray_samples: 120 # ceil(horizontal_fov_deg / azimuth_resolution_deg)
+    vertical_ray_samples: 30 # ceil(vertical_fov_deg / elevation_resolution_deg)
+    gpu_ray_max_range: 300.0 # 应 = min(max_range, perception_range_limit_m)
+    gpu_ray_range_resolution: 0.1 # gpu_ray 距离分辨率 (m)
+    gpu_ray_noise_stddev: 0.0 # gpu_ray 高斯测距噪声；精细误差可用下方开关在 ROS 节点中加
+  # mmwave_cluster_node：订阅 4D …/points，DBSCAN 聚类后发布 …/objects（MmwaveTargetArray）
+  cluster:
+    cluster_mode: xyz
+    cluster_eps_m: 4.0
+    cluster_min_points: 3
+    min_rcs: 2.0
+    max_range_m: 300.0
+    enable_doppler_prefilter: false
+    doppler_prefilter_threshold: 0.05
+    min_cluster_rcs_mean: 0.0
+    max_clusters: 0
+    motion_speed_threshold: 0.3
+    min_size_h_m: 0.5
+    output_use_reliable_qos: true

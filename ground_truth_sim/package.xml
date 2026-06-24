@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>ground_truth_sim</name>
+  <version>0.1.0</version>
+  <description>Ground truth generator node with RViz visualization for USV sensor fusion simulations.</description>
+  <maintainer email="usv@example.com">USV Dev</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>python3-numpy</depend>
+  <depend>rclpy</depend>
+  <depend>visualization_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>usv_interfaces</depend>
+  <depend>ros_gz_interfaces</depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ground_truth_sensor_sim</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

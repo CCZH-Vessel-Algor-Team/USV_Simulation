@@ -1,0 +1,93 @@
+# 3× vision (150° symmetric, 60° each) + 1× front mmwave (120° FoV).
+# Node names must match three_sensor_sim.launch.py.
+# Topics align with usv_late_fusion/config/event_fusion_three_sensor_io.yaml.
+# /sim/ground_truth 为 map 坐标；感知 FoV/量测以 body_frame（usv_1/base_link）为原点。
+# frame_id / body_frame 须与 full_config.yaml robot_N.name 前缀一致（默认 usv_1）。
+# nav2_sim_three_vision_mmwave_bringup.launch.py 启动时会按 robot 名动态覆盖。
+
+sim_vision_front:
+  ros__parameters:
+    input_topic: "/sim/ground_truth"
+    detection_topic: "/vision/front/detections"
+    marker_topic: "/vision/front/markers"
+    frame_id: "usv_1/front_cam_link"
+    body_frame: "usv_1/base_link"
+    use_tf_transform: true
+    publish_markers: true
+    camera_id: "front"
+    camera_yaw: 0.0
+    camera_mount_x_m: 0.25
+    camera_mount_y_m: 0.0
+    fov_half_angle: 0.5235987756
+    sigma_angle: 0.01
+    distance_noise_offset: 0.02
+    distance_noise_scale: 0.0002
+    publish_rate_hz: 25.0
+    detection_latency_min_sec: 0.030
+    detection_latency_max_sec: 0.050
+    vision_focal_length_px: 800.0
+
+sim_vision_left:
+  ros__parameters:
+    input_topic: "/sim/ground_truth"
+    detection_topic: "/vision/left/detections"
+    marker_topic: "/vision/left/markers"
+    frame_id: "usv_1/left_cam_link"
+    body_frame: "usv_1/base_link"
+    use_tf_transform: true
+    publish_markers: true
+    camera_id: "left"
+    camera_yaw: 0.7853981634
+    camera_mount_x_m: 0.0
+    camera_mount_y_m: 0.25
+    fov_half_angle: 0.5235987756
+    sigma_angle: 0.01
+    distance_noise_offset: 0.02
+    distance_noise_scale: 0.0002
+    publish_rate_hz: 25.0
+    detection_latency_min_sec: 0.030
+    detection_latency_max_sec: 0.050
+    vision_focal_length_px: 800.0
+
+sim_vision_right:
+  ros__parameters:
+    input_topic: "/sim/ground_truth"
+    detection_topic: "/vision/right/detections"
+    marker_topic: "/vision/right/markers"
+    frame_id: "usv_1/right_cam_link"
+    body_frame: "usv_1/base_link"
+    use_tf_transform: true
+    publish_markers: true
+    camera_id: "right"
+    camera_yaw: -0.7853981634
+    camera_mount_x_m: 0.0
+    camera_mount_y_m: -0.25
+    fov_half_angle: 0.5235987756
+    sigma_angle: 0.01
+    distance_noise_offset: 0.02
+    distance_noise_scale: 0.0002
+    publish_rate_hz: 25.0
+    detection_latency_min_sec: 0.030
+    detection_latency_max_sec: 0.050
+    vision_focal_length_px: 800.0
+
+sim_mmwave_front:
+  ros__parameters:
+    input_topic: "/sim/ground_truth"
+    target_topic: "/mmwave/front/targets"
+    marker_topic: "/mmwave/front/markers"
+    frame_id: "usv_1/mmwave_front_link"
+    body_frame: "usv_1/base_link"
+    use_tf_transform: true
+    publish_markers: true
+    radar_id: "mmwave_front"
+    radar_yaw: 0.0
+    radar_mount_x_m: 0.25
+    radar_mount_y_m: 0.0
+    fov_half_angle: 1.0471975512
+    radial_noise_std: 0.5
+    angle_noise_deg: 0.1
+    velocity_resolution_m_s: 0.1
+    size_jitter: 0.2
+    motion_speed_threshold_m_s: 0.3
+    publish_rate_hz: 15.0

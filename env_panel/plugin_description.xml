@@ -1,0 +1,10 @@
+<library path="env_panel">
+  <class
+      name="env_panel/VrxEnvPanel"
+      type="env_panel::VrxEnvPanel"
+      base_class_type="rviz_common::Panel">
+    <description>
+      VRX environment control panel with safe ramping for wind, waves, and current.
+    </description>
+  </class>
+</library>

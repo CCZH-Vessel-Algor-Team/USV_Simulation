@@ -1,0 +1,72 @@
+# Ground truth 隔离测试配置：仅 Gazebo 世界 + CTRV 真值 + Gazebo 实体镜像。
+# 不含本船 spawn、Nav2、静态/动态障碍、传感器后处理。
+#
+# 启动：
+#   ros2 launch usv_sim_full ground_truth_test.launch.py
+# 或指定配置：
+#   ros2 launch usv_sim_full ground_truth_test.launch.py \
+#     config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/ground_truth_test.yaml
+#
+# 计数监测（另开终端，仿真运行约 1 分钟后）：
+#   python3 $(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/tools/monitor_ground_truth_counts.py
+#
+# waypoint 固定航路模式测试：
+#   ros2 launch usv_sim_full ground_truth_test.launch.py \
+#     config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/ground_truth_waypoint_test.yaml
+#   $(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/tools/verify_ground_truth_waypoint_perf.sh
+
+environment:
+  world_name: sydney_regatta_open_water
+
+obstacles:
+  fixed_list: []
+
+scenario:
+  dynamic_obstacles: []
+  ground_truth_sim:
+    enabled: true
+    gazebo_visual: true
+    spawn_delay_sec: 5.0
+    update_dt: 0.02
+    model_mass_kg: 50.0
+    cmd_vel_omega_limit: 0.12
+    fence_jump_respawn_threshold_m: 25.0
+    attitude_monitor_enabled: true
+    attitude_max_roll_pitch_deg: 10.0
+    attitude_max_z_error_m: 2.0
+    attitude_monitor_interval_sec: 0.1
+    attitude_respawn_cooldown_sec: 2.0
+    world_service_wait_sec: 2.0
+    gazebo_target_geometry: mesh_profile
+    gazebo_mesh_profile: ../description/models/target_ship/10m_mesh_profile.yaml
+    gazebo_model_prefix: gt_ctrv_
+    fence_enabled: true
+    fence_min_x: -180.0
+    fence_max_x: 180.0
+    fence_min_y: -180.0
+    fence_max_y: 180.0
+    fence_maintain_target_count: true
+    # 空字符串：不等待本船 TF，在 map 围栏内直接生成目标
+    reference_robot: ""
+    reference_frame: map
+    reference_tf_timeout_sec: 0.0
+    frame_id: map
+    target_count: 5
+    annulus_radius_min: 40.0
+    annulus_radius_max: 140.0
+    speed_min: 4.0
+    speed_max: 10.0
+    omega_limit: 0.12
+    omega_noise_std: 0.008
+    omega_decay: 0.99
+    size_width_min: 3.6
+    size_width_max: 3.6
+    size_length_min: 10.0
+    size_length_max: 10.0
+    size_height_min: 2.0
+    size_height_max: 2.0
+    rng_seed: 42
+
+visualization:
+  launch_rviz: true
+  enable_telemetry: false

@@ -1,0 +1,25 @@
+scenario_id: C4-006
+description: 危险左舷交叉+危险追越
+own_ship:
+  initial_speed_knots: 10.0
+  initial_heading_deg: 0.0
+timing: simultaneous
+target_ships:
+- id: TS1
+  type: crossing_left
+  is_dangerous: true
+  target_tcpa_seconds: 10.0
+  speed_knots: 14.0
+  encounter_range_max_m: 50.0
+  target_dcpa_meters: 0.0
+  crossing_angle_deg: 90.0
+  lateral_span_m: 90.0
+- id: TS2
+  type: overtaking
+  is_dangerous: true
+  target_tcpa_seconds: 10.0
+  speed_knots: 8.0
+  encounter_range_max_m: 50.0
+  target_dcpa_meters: 0.0
+  encounter_range_m: 50.0
+  sequence_index: 1

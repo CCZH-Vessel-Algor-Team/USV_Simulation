@@ -1,0 +1,35 @@
+# 独立 ros2 run 时的示例参数。usv_sim_full 由 full_config scenario.ground_truth_sim 生成临时 YAML（通常 frame_id: map）。
+ground_truth_node:
+  ros__parameters:
+    update_dt: 0.02
+    frame_id: base_link
+    reference_robot: ""
+    reference_frame: map
+    target_count: 5
+    annulus_radius_min: 50.0
+    annulus_radius_max: 500.0
+    speed_min: 2.0
+    speed_max: 12.0
+    size_width_min: 2.0
+    size_width_max: 10.0
+    size_length_min: 5.0
+    size_length_max: 50.0
+    size_height_min: 2.0
+    size_height_max: 15.0
+    ais_match_probability: 0.4
+    omega_noise_std: 0.005
+    omega_decay: 0.99
+    omega_limit: 0.1
+    prediction_horizon: 5.0
+    prediction_dt: 0.25
+    history_max_points: 500
+    rng_seed: -1
+    tracks_topic: sim/ground_truth
+    markers_topic: sim/ground_truth_markers
+    # 围栏（与 frame_id 平面一致）：越界目标不再发布；可选补生维持 target_count
+    # fence_enabled: false
+    # fence_min_x: -500.0
+    # fence_max_x: 500.0
+    # fence_min_y: -500.0
+    # fence_max_y: 500.0
+    # fence_maintain_target_count: true

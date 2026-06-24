@@ -1,0 +1,36 @@
+# Gazebo Sim 真值桥接节点参数（与独立 ground_truth_node 二选一）。
+# targets_json：主仿真中模型名与 track_id 等；模型须已在 Gazebo 中 spawn，名称一致。
+gazebo_ground_truth_bridge_node:
+  ros__parameters:
+    reference_frame: map
+    message_frame_id: base_link
+    world_name: default
+    set_pose_service: ""
+    delete_entity_service: ""
+    spawn_entity_service: ""
+    update_dt: 0.02
+    rng_seed: -1
+    annulus_radius_min: 50.0
+    annulus_radius_max: 500.0
+    speed_min: 2.0
+    speed_max: 12.0
+    size_width_min: 2.0
+    size_width_max: 10.0
+    size_length_min: 5.0
+    size_length_max: 50.0
+    size_height_min: 2.0
+    size_height_max: 15.0
+    omega_noise_std: 0.005
+    omega_decay: 0.99
+    omega_limit: 0.1
+    prediction_horizon: 5.0
+    prediction_dt: 0.25
+    history_max_points: 500
+    ais_match_probability: 0.4
+    collision_topic: ""
+    collision_string_topic: ""
+    collision_debounce_sec: 0.5
+    respawn_mode: teleport
+    targets_json: >-
+      [{"model_name":"surface_target_1","track_id":1,"z":0.0},
+       {"model_name":"surface_target_2","track_id":2,"z":0.0}]

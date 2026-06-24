@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="mb_marker_buoy">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision_body">
+        <pose>0 -0.02 0.02 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.15</radius>
+            <length>1.15</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="collision_base">
+        <pose>0 0 -0.3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.325</radius>
+            <length>0.1</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy/meshes/mb_marker_buoy.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://mb_marker_buoy/materials/scripts/mb_marker_buoy.material</uri>
+            <name>mb_marker_buoy/Green</name>
+          </script>
+        </material>
+      </visual>
+      <inertial>
+        <pose>0 0 -0.5 0 0 0</pose>
+        <mass>20</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0</iyz>
+          <izz>0.1</izz>
+        </inertia>
+      </inertial>
+    </link>
+  </model>
+</sdf>

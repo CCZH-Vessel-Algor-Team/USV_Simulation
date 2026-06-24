@@ -1,0 +1,24 @@
+# Radar GZ Bridge 配置
+
+radar_gz_bridge:
+  ros__parameters:
+    # Gazebo 输入话题 (gz.msgs.Float_V)
+    gz_topic: "/blueboat/radar/spokes"
+    
+    # ROS2 输出话题 (marine_sensor_msgs/RadarSector)
+    ros_topic: "/sensors/radar/nav/sector"
+    
+    # TF frame ID
+    frame_id: "nav_radar_link"
+    
+    # 距离参数 (米)
+    range_min: 5.0
+    range_max: 500.0
+    
+    # 雷达旋转周期 (秒)
+    # 24 RPM = 2.5 秒/圈
+    # 48 RPM = 1.25 秒/圈
+    rotation_period: 1.25
+
+    # 每 5s 打印一次发布条数与估算 Hz（默认关闭）
+    log_publish_statistics: false

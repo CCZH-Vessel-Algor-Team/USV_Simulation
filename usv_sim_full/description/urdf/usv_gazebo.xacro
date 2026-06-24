@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Include macros for dynamics plugins -->
+  <xacro:include filename="$(arg macros_file)" />
+  <!-- Macro to create a USV with dynamics plugins and a customizeable thruster layout -->
+  <xacro:macro name="usv_gazebo" params="thruster_layout">
+    <!-- Defines the base vehicle -->
+    <xacro:include filename="$(find usv_sim_full)/description/urdf/wamv_base.urdf.xacro" />
+    <!-- Thruster Layout -->
+    <xacro:include filename="${thruster_layout}"/>
+    <!-- Attach hydrodynamics plugin -->
+    <xacro:usv_dynamics_gazebo name="wamv_dynamics_plugin"/>
+  </xacro:macro>
+</robot>
