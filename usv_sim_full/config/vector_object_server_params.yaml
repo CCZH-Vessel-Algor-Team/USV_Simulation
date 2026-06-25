@@ -1,0 +1,38 @@
+# nav2_colregs_vector_object_server 参数（静态禁航区 / 矢量障碍物）。
+# 默认无禁航区（shapes 为空），仅把 server 拉起并持续发布一张全 0 的 mask，
+# 对导航零影响；后续可通过 service /vector_object_server/add_shapes 动态注入
+# 多边形/圆形静态障碍，注入后会自动重发 mask，KeepoutFilter 即时生效，无需重启 Nav2。
+#
+# 注意：shapes 为空时，必须设置固定尺寸（width/height>0 → use_fixed_map），
+# 否则 server 只会发布退化的空栅格，KeepoutFilter 拿不到可用 mask。
+# 形状默认 frame 为 map；本文件由独立 launch 加载，不经 __ROBOT_NS__ 替换，勿写占位符。
+vector_object_server:
+  ros__parameters:
+    use_sim_time: true
+    map_topic: "/keepout_filter_mask"
+    global_frame_id: "map"
+    enforce_global_frame_id: false
+    transform_tolerance: 0.1
+    resolution: 0.3            # 与 global_costmap 分辨率对齐，减小插值误差
+    # 固定 mask 尺寸（米），按场景关注区调整；保证空 shapes 也能发布有效 mask
+    width: 240.0
+    height: 240.0
+    origin_x: -120.0
+    origin_y: -120.0
+    default_value: 0
+    trigger_costmap_clear_on_shape_update: true
+    update_frequency: 1.0
+    # 形状膨胀参数（与 global_costmap inflation_layer 对齐：20m 半径 / 0.3 衰减）
+    inflation_radius: 20.0
+    cost_scaling_factor: 0.3
+    inscribed_radius: 0.0
+
+# costmap filter info：把 mask 暴露为 KeepoutFilter 可消费的 CostmapFilterInfo
+keepout_costmap_filter_info_server:
+  ros__parameters:
+    use_sim_time: true
+    type: 0                   # 0 = keepout
+    filter_info_topic: "/keepout_costmap_filter_info"
+    mask_topic: "/keepout_filter_mask"
+    base: 0.0
+    multiplier: 1.0
