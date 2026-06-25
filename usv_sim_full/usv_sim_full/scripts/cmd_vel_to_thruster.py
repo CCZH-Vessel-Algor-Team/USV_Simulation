@@ -133,12 +133,11 @@ class CmdVelToThruster(Node):
         if cmd_age > cmd_timeout:
             self.desired_v = 0.0
             self.desired_w = 0.0
-            if self._cmd_active:
-                self._publish_zero_thrust()
-                if hasattr(self, '_v_pid'):
-                    self._v_pid.reset()
-                    self._w_pid.reset()
-                self._cmd_active = False
+            self._publish_zero_thrust()
+            if hasattr(self, '_v_pid'):
+                self._v_pid.reset()
+                self._w_pid.reset()
+            self._cmd_active = False
             return
 
         if (now - self._odom_stamp).nanoseconds * 1e-9 > odom_timeout:
