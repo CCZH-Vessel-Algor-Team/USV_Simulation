@@ -68,3 +68,7 @@ desktop.ini
 corrected_bridge_config.yaml
 test_bridge_config.yaml
 
+# PX4：体积过大（~8GB），不纳入本仓；本地按需 clone，见 third_party/README.md
+third_party/PX4-Autopilot/
+third_party/PX4-Autopilot/build/
+

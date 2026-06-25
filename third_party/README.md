@@ -2,6 +2,24 @@
 
 本目录存放**与发行版对齐、从上游拉取的源码**，便于本地修改与固定版本。工作区根目录后续整理发行说明时，可将本节摘要并入主 `README.md`。
 
+## PX4-Autopilot（可选，**不随本仓上传**）
+
+| 项 | 值 |
+|----|-----|
+| 体积 | ~8 GB（含子模块与构建缓存） |
+| 远程 | https://github.com/CCZH-Vessel-Algor-Team/PX4-Autopilot.git |
+| 分支 | `main` |
+| 本仓策略 | 目录已写入 `.gitignore`；clone 本仓后**按需**单独拉取 |
+
+仅在做 PX4+VRX 联调时需要。仿真主线（Gazebo + Nav2）**不依赖** PX4。
+
+**本地获取**：
+
+```bash
+cd src/usv_simulation/third_party
+git clone -b main https://github.com/CCZH-Vessel-Algor-Team/PX4-Autopilot.git
+```
+
 ## marine_msgs（含 `marine_sensor_msgs`）
 
 | 项 | 值 |
