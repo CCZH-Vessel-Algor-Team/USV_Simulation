@@ -264,6 +264,10 @@ def generate_launch_description():
         usv_sim_full_pkg, 'config', 'vector_object_server_params.yaml'
     )
 
+    default_control_params_file = os.path.join(
+        usv_sim_full_pkg, 'config', 'control_params.yaml'
+    )
+
     default_localization_params = os.path.join(
         usv_sim_full_pkg, 'config', 'robot_localization_gps.yaml'
     )
@@ -294,6 +298,7 @@ def generate_launch_description():
     localization_params_file = LaunchConfiguration('localization_params_file')
     use_static_map_odom_tf = LaunchConfiguration('use_static_map_odom_tf')
     enable_tf_namespace_relay = LaunchConfiguration('enable_tf_namespace_relay')
+    control_params_file = LaunchConfiguration('control_params_file')
     disable_fastdds_shm = LaunchConfiguration('disable_fastdds_shm')
     gz_headless = LaunchConfiguration('gz_headless')
     map_yaml = LaunchConfiguration('map_yaml')
@@ -438,6 +443,7 @@ def generate_launch_description():
             launch_arguments={
                 'namespace': resolved_ns,
                 'params_file': params_file.perform(context),
+                'control_params_file': control_params_file.perform(context),
                 'use_sim_time': use_sim_time.perform(context),
                 'verbose_launch': verbose_launch.perform(context),
                 'enable_tf_namespace_relay': 'false',
@@ -630,6 +636,11 @@ def generate_launch_description():
             'params_file',
             default_value=default_nav2_params_file,
             description='Nav2 parameters file path',
+        ),
+        DeclareLaunchArgument(
+            'control_params_file',
+            default_value=default_control_params_file,
+            description='整船控制参数 YAML（ALOS + PID），合并到 Nav2 参数并传给 cmd_vel→推力桥',
         ),
         DeclareLaunchArgument(
             'use_sim_time',
