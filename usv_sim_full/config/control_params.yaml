@@ -24,9 +24,10 @@ controller_server:
       max_robot_pose_search_dist: 10.0
 
 # --- 差动推力 PID (cmd_vel → 左右推进器推力) ---
-cmd_vel_to_thruster:
+# 用 /** 通配符，无论 namespace 是否带 /usv_1/ 前缀均匹配
+/**:
   ros__parameters:
-    control_rate: 20
+    control_rate: 20.0
     max_thrust: 1000.0
     v_kp: 2000.0
     v_ki: 60.0

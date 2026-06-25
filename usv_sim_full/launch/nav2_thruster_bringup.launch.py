@@ -130,13 +130,16 @@ def generate_launch_description():
         except KeyError:
             pass
 
-        # deep-merge control_params（ALOS 覆写等）到 Nav2 完整参数
+        # deep-merge control_params（仅 controller_server 部分）到 Nav2 完整参数
         resolved_control_params_file = control_params_file.perform(context).strip()
         if resolved_control_params_file and os.path.isfile(resolved_control_params_file):
             with open(resolved_control_params_file, 'r') as f:
                 control_params = yaml.safe_load(f) or {}
             control_params = _nav2_params_subst_robot_ns(control_params, resolved_ns)
-            _deep_merge(nav2_params, control_params)
+            # 只合 controller_server 节点参数，跳过 /**（PID 等全局通配，仅 cmd_vel→推力 使用）
+            nav2_part = {k: v for k, v in control_params.items()
+                         if k != '/**'}
+            _deep_merge(nav2_params, nav2_part)
             prefix_logs.append(
                 LogInfo(msg=f'已合并控制参数: {resolved_control_params_file}')
             )
