@@ -40,8 +40,9 @@ velocity_smoother:
     v_kp: 8000.0
     v_ki: 300.0
     v_kd: 0.0
-    w_kp: 6000.0
-    w_ki: 80.0
+    w_kp: 3000.0
+    w_ki: 40.0
     w_kd: 500.0
     odom_timeout: 0.5
     cmd_timeout: 1.0
+    thrust_rate_limit: 500.0
