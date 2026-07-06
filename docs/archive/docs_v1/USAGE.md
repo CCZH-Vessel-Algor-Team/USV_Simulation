@@ -17,7 +17,7 @@
 ## 一、前置条件
 
 - 操作系统：Linux（推荐 Ubuntu 24.04）
-- ROS 发行版：**Humble**（见 [docs_v4/QUICK_START.md](../docs_v4/QUICK_START.md)）
+- ROS 发行版：**Humble**（见 [docs_v4/QUICK_START.md](../../docs_v4/QUICK_START.md)）
 - Gazebo：**Harmonic**（`gz sim`，经 `ros_gz_bridge`）
 - Python：3.8+（用于脚本）
 - 推荐工具：colcon、rviz2、gz 命令行工具

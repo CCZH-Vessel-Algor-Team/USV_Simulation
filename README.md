@@ -14,12 +14,15 @@
 | 读者 | 文档 |
 |------|------|
 | **日常使用者（推荐）** | [docs/docs_v4/QUICK_START.md](docs/docs_v4/QUICK_START.md) |
+| **Launch / 配置** | [docs/docs_v4/main_launch.md](docs/docs_v4/main_launch.md)、[custom_config.md](docs/docs_v4/custom_config.md) |
 | **构建细节** | [docs/docs_v4/BUILD.md](docs/docs_v4/BUILD.md) |
 | **Demo 参数** | [docs/docs_v4/DEMO_RUN.md](docs/docs_v4/DEMO_RUN.md) |
-| **架构与目录** | [docs/docs_v3/仿真仓库结构说明.md](docs/docs_v3/仿真仓库结构说明.md) |
+| **认证会遇** | [docs/docs_v4/certifi_launch.md](docs/docs_v4/certifi_launch.md) |
+| **文档索引** | [docs/docs_v4/README.md](docs/docs_v4/README.md) |
+| **架构与目录** | [docs/archive/docs_v3/仿真仓库结构说明.md](docs/archive/docs_v3/仿真仓库结构说明.md) |
 | **全栈架构** | [usv_sim_full/docs/nav2_sim_three_vision_mmwave_architecture.md](usv_sim_full/docs/nav2_sim_three_vision_mmwave_architecture.md) |
 
-历史文档（v1/v2/v3，可能含旧版 Docker 表述）：[docs/docs_v1](docs/docs_v1/)、[docs/docs_v2](docs/docs_v2/)、[docs/docs_v3](docs/docs_v3/)。
+历史文档（v1/v2/v3，可能含旧版 Docker 表述）：[docs/archive/](docs/archive/)。
 
 ## 🚀 快速开始
 

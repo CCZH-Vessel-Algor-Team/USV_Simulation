@@ -1,8 +1,8 @@
 # Quick Start (User-Facing, Minimal)
 
-> **已过时**：正式发版矩阵为 **Humble + Harmonic + `usv_nav`**。请使用 **[docs_v4/QUICK_START.md](../docs_v4/QUICK_START.md)**。下文保留作历史参考。
+> **已过时**：正式发版矩阵为 **Humble + Harmonic + `usv_nav`**。请使用 **[docs_v4/QUICK_START.md](../../docs_v4/QUICK_START.md)**。下文保留作历史参考。
 
-**定位**：docs_v3 下的 Quick Start（与 docs_v2 内容对齐时可择一为主）。历史分册见 [`docs_v1/README.md`](../docs_v1/README.md)；目录与包职责见 [`仿真仓库结构说明.md`](./仿真仓库结构说明.md)。工作区根入口：[`README.md`](../../../../README.md)。
+**定位**：docs_v3 下的 Quick Start（与 docs_v2 内容对齐时可择一为主）。历史分册见 [`docs_v1/README.md`](../docs_v1/README.md)；目录与包职责见 [`仿真仓库结构说明.md`](./仿真仓库结构说明.md)。工作区根入口：[`README.md`](../../../../../README.md)。
 
 **阅读顺序**：先完成 **§0 环境（Docker 或本机）** 与 **首次编译**，再 **§1 启动仿真（怎么跑）**，需要改场景时看 **§2 配置（怎么配）**，对接算法时看 **§3 话题（怎么接数据）**。
 

@@ -149,7 +149,7 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('usv_sim_full')
-    default_config = os.path.join(pkg_share, 'config', 'ground_truth_test.yaml')
+    default_config = os.path.join(pkg_share, 'config', 'full_config.yaml')
     gt_pkg = get_package_share_directory('ground_truth_sim')
     default_rviz = os.path.join(gt_pkg, 'rviz', 'ground_truth_view.rviz')
 
@@ -158,7 +158,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'config_path',
                 default_value=default_config,
-                description='ground_truth_test.yaml 路径',
+                description='含 scenario.ground_truth_sim.enabled 的 full_config 路径（默认 full_config.yaml）',
             ),
             DeclareLaunchArgument(
                 'use_rviz',

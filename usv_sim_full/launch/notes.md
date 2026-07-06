@@ -1,6 +1,6 @@
 # `usv_sim_full/launch` 说明笔记
 
-**用户向速览**（环境 → 怎么跑 → 怎么配 → 话题）：[`docs/docs_v3/QUICK_START.md`](../../docs/docs_v3/QUICK_START.md)。
+**用户向速览**（环境 → 怎么跑 → 怎么配 → 话题）：[`docs/docs_v4/QUICK_START.md`](../../docs/docs_v4/QUICK_START.md)。
 
 本目录为 **`usv_sim_full` 包内仿真与导航相关的启动入口**；部分文件会 `Include` `components/` 下的组装件，或再 `Include` 其他包（如 `ros_gz_sim`、`gy_radar_driver`、`nav2_bringup`、`usv_mmwave_sim`）。
 

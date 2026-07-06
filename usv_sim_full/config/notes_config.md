@@ -1,6 +1,6 @@
 # `usv_sim_full/config` 配置说明
 
-**用户向速览**（环境 → 怎么跑 → 怎么配 → 话题）：[`docs/docs_v3/QUICK_START.md`](../../docs/docs_v3/QUICK_START.md)。
+**用户向速览**（环境 → 怎么跑 → 怎么配 → 话题）：[`docs/docs_v4/QUICK_START.md`](../../docs/docs_v4/QUICK_START.md)。
 
 本目录为 **`usv_sim_full` 包内随包安装的资源**（`setup.py` 中 `data_files` 安装 `config/*`）。  
 部分 YAML 由 **固定 launch** 直接读取；**整机仿真**路径下，更多产物由 **`session_manager`** 按 `full_config` 在**会话目录**（如 `/tmp/usv_sim_sessions/...`）生成，不在本目录重复列出，见文末「会话产物」。
@@ -22,6 +22,8 @@
 | **`radar_nav2_param.yaml`** | **Nav2 栈参数**：代价地图、规划器、`static_layer` 等；运行中常被改写 `map_topic`。 | **`nav2_sim_full_bringup.launch.py`**：`params_file` 默认值（源码树 `gy_radar_driver-main/config/...` 优先，否则本文件，再退回 `gy_radar_driver` 包）。**`nav2_thruster_bringup.launch.py`**：自身默认解析链同上；**OpaqueFunction** 内读入并写入 `/{namespace}/map/navradar/occupancy_grid` 后再 **Include `nav2_bringup/navigation_launch.py`**。 |
 | **`global_bridge.yaml`** | **全局 Gz↔ROS 桥**：当前主要为 **`/clock`**（`GZ_TO_ROS`）。 | **`launch/components/infra_sim.launch.py`**：`ros_gz_bridge/parameter_bridge` 的 `config_file`（硬编码 `share/usv_sim_full/config/global_bridge.yaml`）。 |
 | **`tf_tune.rviz`** | **RViz2 布局**：无 Gazebo 时查看 URDF/TF/关节。 | **`sensor_tune.launch.py`**：`rviz2 -d` 固定指向本文件。 |
+
+**已移除（勿再引用）**：`ground_truth_*_test.yaml` 等专用真值整机 YAML；请使用 `full_config.yaml` / `three_vision_one_mmwave/full_config.yaml` 配合 `ground_truth_test.launch.py` 或 `main.launch.py`。
 
 ---
 

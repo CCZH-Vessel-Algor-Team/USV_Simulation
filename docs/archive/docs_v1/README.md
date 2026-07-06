@@ -1,13 +1,15 @@
-
 # USV_Simulation — 文档索引（docs_v1）
+
+> **存档文档**：本目录位于 `docs/archive/docs_v1/`。当前入口见 **[docs_v4](../../docs_v4/)**。
 
 本目录包含基于 `usv_sim_full` 功能包的分模块使用指南，目标读者是对 ROS 2 / Gazebo 有一定基础的同事，能够快速在本仓库上复现仿真环境并运行示例。
 
 **其他文档层级**：
 
-- **用户向（推荐优先）**：[`docs_v2/QUICK_START.md`](../docs_v2/QUICK_START.md)
+- **用户向（当前）**：[`docs_v4/QUICK_START.md`](../../docs_v4/QUICK_START.md)
+- **用户向（存档）**：[`docs_v2/QUICK_START.md`](../docs_v2/QUICK_START.md)
 - **架构与包职责**：[`docs_v3/仿真仓库结构说明.md`](../docs_v3/仿真仓库结构说明.md)
-- **工作区总览**：仓库根 [`README.md`](../../../../README.md)、[`src/usv_simulation/README.md`](../../README.md)
+- **工作区总览**：仓库根 [`README.md`](../../../../../README.md)、[`src/usv_simulation/README.md`](../../../README.md)
 
 推荐阅读顺序（本目录内）：
 1. [QUICK_START.md](./QUICK_START.md) — 5 分钟快速体验（最小上手流程）

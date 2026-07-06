@@ -1,11 +1,9 @@
 # ground_truth_sim 文档导航
 
-该目录当前包含 `ground_truth_sim` 包本体，以及与其强相关的联调说明与脚本。为避免重复，文档职责收敛如下：
+该目录包含 `ground_truth_sim` ROS 2 包本体及联调脚本。文档职责收敛如下：
 
-- `PACKAGE_README.md`：包级单一事实源（节点、参数、话题、launch、运行方式）。
-- `docs/sim_validation_guide.md`：仿真与融合联调的验证流程。
-- `docs/usv_fusion_new_guide.md`：`usv_fusion_new` 流程说明。
-- `docs/fusion_test_guide.md`：历史融合测试说明（保留作兼容参考）。
+- **`PACKAGE_README.md`**：包级单一事实源（节点、参数、话题、launch、运行方式）。
+- **`scripts/verify_sim_health.sh`**：真值与传感器模拟话题的健康检查（需先启动相关节点）。
 
 ## 快速入口
 
@@ -13,9 +11,12 @@
 - 关键启动文件：
   - `launch/ground_truth_sim.launch.py`（独立真值模式）
   - `launch/gazebo_ground_truth.launch.py`（Gazebo 桥接模式）
+  - `usv_sim_full/launch/ground_truth_test.launch.py`（仅 Gazebo + 真值 + RViz 隔离测试）
 - 关键参数：
   - `config/ground_truth_params.yaml`
   - `config/gazebo_ground_truth_bridge.yaml`
+
+整机场景中的 `scenario.ground_truth_sim` 字段见 [`docs/docs_v4/main_launch.md`](../docs/docs_v4/main_launch.md) 附录。
 
 ## 工作区相关包
 
@@ -34,3 +35,4 @@ colcon build --packages-select usv_interfaces ground_truth_sim ground_truth_sens
 
 - 历史文档中出现的 `src/sim/...` 路径已不再使用；请以当前目录结构为准（`src/usv_simulation/ground_truth_sim/...`）。
 - 为避免同话题重复发布，`ground_truth_node` 与 `gazebo_ground_truth_bridge_node` 不应同时发布同一个 `/sim/ground_truth`。
+- 原 `docs/` 下融合联调分册已移除；验证流程以 `PACKAGE_README.md` 与 `scripts/verify_sim_health.sh` 为准。

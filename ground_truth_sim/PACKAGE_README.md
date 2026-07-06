@@ -160,12 +160,17 @@ ground_truth_sim:
         - [10.0, 50.0]
 ```
 
-Open water 隔离性能门禁：
+隔离测试（`ground_truth_test.launch.py`，仅 Gazebo + 真值 + RViz）：
 
 ```bash
 ros2 launch usv_sim_full ground_truth_test.launch.py \
-  config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/ground_truth_waypoint_test.yaml
-bash $(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/tools/verify_ground_truth_waypoint_perf.sh
+  config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/full_config.yaml
+```
+
+航路点 waypoint 模式可改用 `config/three_vision_one_mmwave/full_config.yaml`。话题健康检查：
+
+```bash
+bash $(ros2 pkg prefix ground_truth_sim)/share/ground_truth_sim/scripts/verify_sim_health.sh
 ```
 
 示例：一次性调整目标数量和速度范围：
