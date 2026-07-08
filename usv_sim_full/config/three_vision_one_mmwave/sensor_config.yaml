@@ -22,8 +22,8 @@ camera:
     horizontal_fov: 1.0471975512       # 水平视场角 (弧度)，2×0.5235987756，与 sim_vision_* fov_half_angle 一致
     width: 640                        # 图像宽度 (像素)
     height: 480                       # 图像高度 (像素)
-    near_clip: 5.1                     # 近裁剪面距离 (m)
-    far_clip: 230                      # 远裁剪面距离 (m)
+    near_clip: 0.1                     # 近裁剪面距离 (m)
+    far_clip: 3000                    # 远裁剪面距离 (m)
     noise_stddev: 0.02                 # 图像噪声标准差
     distortion_k1: -0.1                # 径向畸变系数k1
     distortion_k2: 0.01                # 径向畸变系数k2

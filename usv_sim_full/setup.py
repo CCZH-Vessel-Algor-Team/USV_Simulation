@@ -28,9 +28,11 @@ setup(
             glob('config/three_vision_one_mmwave/*'),
         ),
         (os.path.join('share', package_name, 'tools'), glob('tools/*.py') + glob('tools/*.sh')),
-        (os.path.join('share', package_name, 'rviz'), glob('rviz/*')),
+        (
+            os.path.join('share', package_name, 'rviz'),
+            [f for f in glob('rviz/*') if os.path.isfile(f)],
+        ),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py') + ['launch/notes.md']),
-        (os.path.join('share', package_name, 'test_env'), glob('test_env/*')),
         (os.path.join('share', package_name, 'launch/components'), glob('launch/components/*.py')),
         (os.path.join('share', package_name, 'sh'), glob('sh/*.sh')),
         (

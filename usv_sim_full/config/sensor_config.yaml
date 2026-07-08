@@ -58,8 +58,8 @@ gps:
     position_horizontal_stddev: 0.000002    # 水平位置噪声标准差 (m)
     position_vertical_stddev: 0.000002      # 垂直位置噪声标准差 (m)
     # Velocity sensing parameters
-    velocity_horizontal_stddev: 0.2   # 水平速度噪声标准差 (m/s)
-    velocity_vertical_stddev: 0.2    # 垂直速度噪声标准差 (m/s)
+    velocity_horizontal_stddev: 0.000002   # 水平速度噪声标准差 (m/s)
+    velocity_vertical_stddev: 0.000002  # 垂直速度噪声标准差 (m/s)
     # Additional GPS parameters for completeness
     position_sway_stddev: 0.01         # 横移位置噪声标准差 (m) - 备用参数
     position_heave_stddev: 0.01        # 升沉位置噪声标准差 (m) - 备用参数
