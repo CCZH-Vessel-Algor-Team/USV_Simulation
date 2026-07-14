@@ -4,7 +4,6 @@ import math
 import os
 import subprocess
 import tempfile
-import time
 import uuid
 import yaml
 
@@ -129,24 +128,17 @@ class DynamicShip:
         return self.world_twist_to_body(vx, vy)
 
     def get_current_pose(self):
-        actual_yaw = self.spawn_yaw
-        target = self.waypoint_b if self.direction > 0 else self.waypoint_a
-        dx = target[0] - self.current_x
-        dy = target[1] - self.current_y
-        if math.hypot(dx, dy) > 0.01:
-            actual_yaw = math.atan2(dy, dx)
-
         pose = Pose()
         pose.position.x = self.current_x
         pose.position.y = self.current_y
         pose.position.z = 0.0
-        pose.orientation.w = math.cos(actual_yaw / 2.0)
+        pose.orientation.w = math.cos(self.spawn_yaw / 2.0)
         pose.orientation.x = 0.0
         pose.orientation.y = 0.0
-        pose.orientation.z = math.sin(actual_yaw / 2.0)
+        pose.orientation.z = math.sin(self.spawn_yaw / 2.0)
         return pose
 
-    def get_current_twist(self, dt):
+    def get_current_twist(self):
         target = self.waypoint_b if self.direction > 0 else self.waypoint_a
         dx = target[0] - self.current_x
         dy = target[1] - self.current_y
@@ -192,6 +184,7 @@ class DynamicShipManager(Node):
         self._ship_counter = 0
 
     def on_spawn(self, request, response):
+        ship = None
         try:
             if not request.name.strip():
                 self._ship_counter += 1
@@ -240,6 +233,8 @@ class DynamicShipManager(Node):
             response.model_name = name
             response.message = f"Ship '{name}' spawned successfully"
         except Exception as e:
+            if ship is not None:
+                ship.cleanup()
             response.success = False
             response.message = f"Spawn failed: {e}"
             self.get_logger().error(f"Spawn failed: {e}")
@@ -520,7 +515,7 @@ class DynamicShipManager(Node):
             ts = TrackedShip()
             ts.target_id.uuid = list(bytes.fromhex(ship.target_id.replace('-', '')))
             ts.pose = ship.get_current_pose()
-            ts.twist = ship.get_current_twist(self.dt)
+            ts.twist = ship.get_current_twist()
             ts.radius = 5.0
             msg.ships.append(ts)
 
