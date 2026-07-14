@@ -17,7 +17,7 @@ obstacles:
 scenario:
   dynamic_obstacles: []
   ground_truth_sim:
-    enabled: true
+    enabled: false
     gazebo_visual: true
     motion_mode: waypoint
     # gazebo_visual=true → ground_truth_gazebo_entity_node；spawn 完成后从实体 pose 发布真值
