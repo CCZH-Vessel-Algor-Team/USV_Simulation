@@ -48,7 +48,7 @@ class CmdVelToThruster(Node):
         ns = self.get_parameter('namespace').get_parameter_value().string_value.strip('/')
         self.namespace = ns if ns else 'usv_1'
 
-        cmd_vel_topic = f'/{self.namespace}/cmd_vel_smoothed'
+        cmd_vel_topic = f'/{self.namespace}/cmd_vel'
         cmd_vel_fallback_topic = '/cmd_vel'
         odom_topic = f'/{self.namespace}/odom'
         left_thrust_topic = f'/{self.namespace}/thrusters/left/thrust'

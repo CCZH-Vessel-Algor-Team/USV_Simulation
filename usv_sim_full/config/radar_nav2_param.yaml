@@ -188,7 +188,7 @@ planner_server:
       - GridBased
 
     GridBased:
-      plugin: "nav2_navfn_planner::NavfnPlanner"  # 经典A*
+      plugin: "nav2_navfn_planner/NavfnPlanner"  # 经典A*
       tolerance: 0.5
       use_astar: true                        # false即为dijstra
       allow_unknown: false                    # 可以让未知区域可通行
