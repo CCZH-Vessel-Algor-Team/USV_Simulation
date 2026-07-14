@@ -760,6 +760,20 @@ def generate_launch_description():
         OpaqueFunction(function=_convert_to_trackship_node),
         map_server,
         map_lifecycle_manager,
+        Node(
+            package='usv_sim_full',
+            executable='dynamic_ship_manager_node',
+            name='dynamic_ship_manager',
+            output='screen',
+            parameters=[{
+                'use_sim_time': use_sim_time,
+                'world_name': 'sydney_regatta',
+                'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
+                'default_mesh_profile': os.path.join(
+                    usv_sim_full_pkg, 'description', 'models',
+                    'target_ship', '10m_mesh_profile.yaml'),
+            }],
+        ),
         OpaqueFunction(function=vector_object_server_launch),
         OpaqueFunction(function=nav2_readiness_and_deferred_launch),
     ])
