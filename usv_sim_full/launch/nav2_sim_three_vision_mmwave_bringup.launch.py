@@ -67,6 +67,14 @@ def _nav2_bringup_available() -> bool:
         return False
 
 
+def _colregs_bringup_available() -> bool:
+    try:
+        get_package_share_directory('nav2_colregs_bringup')
+        return True
+    except PackageNotFoundError:
+        return False
+
+
 _NAV2_INSTALL_HINT = (
     '未找到 nav2_bringup（Nav2 导航栈）。仿真将继续运行，但不会启动 Nav2。'
     '请先在 usv_ws 内构建 usv_nav：'
@@ -242,6 +250,12 @@ def generate_launch_description():
     nav2_thruster_launch_file = os.path.join(
         usv_sim_full_pkg, 'launch', 'nav2_thruster_bringup.launch.py'
     )
+    ts_subsystem_launch_file = None
+    if _colregs_bringup_available():
+        ts_subsystem_launch_file = os.path.join(
+            get_package_share_directory('nav2_colregs_bringup'),
+            'launch', 'ts_subsystem_launch.py',
+        )
 
     launch_dir = os.path.dirname(os.path.abspath(__file__))
     default_nav2_params_file = default_radar_nav2_param_yaml(launch_dir)
@@ -450,6 +464,18 @@ def generate_launch_description():
             }.items(),
         )
 
+        ts_subsystem_launch = None
+        if ts_subsystem_launch_file is not None:
+            ts_subsystem_launch = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(ts_subsystem_launch_file),
+                launch_arguments={
+                    'tracked_ship_topic': '/dynamic_ship/tracked_ships',
+                    'robot_base_frame': f'{resolved_ns}/base_link',
+                    'odom_topic': f'/{resolved_ns}/odom',
+                    'use_sim_time': use_sim_time.perform(context),
+                }.items(),
+            )
+
         def on_readiness_gate_exit(event, _context):
             if event.returncode != 0:
                 if nav2_start_on_gate_failure.perform(_context).lower() == 'true':
@@ -457,6 +483,7 @@ def generate_launch_description():
                         return [
                             LogInfo(msg='[ERROR] ' + _NAV2_INSTALL_HINT),
                         ]
+                    extra = [ts_subsystem_launch] if ts_subsystem_launch is not None else []
                     return [
                         LogInfo(
                             msg=(
@@ -466,7 +493,7 @@ def generate_launch_description():
                             )
                         ),
                         nav2_thruster_launch,
-                    ]
+                    ] + extra
                 return [
                     LogInfo(
                         msg=(
@@ -488,6 +515,7 @@ def generate_launch_description():
                     ),
                 ]
 
+            extra = [ts_subsystem_launch] if ts_subsystem_launch is not None else []
             return [
                 LogInfo(
                     msg=(
@@ -497,7 +525,7 @@ def generate_launch_description():
                     )
                 ),
                 nav2_thruster_launch,
-            ]
+            ] + extra
 
         gate_exit_handler = RegisterEventHandler(
             OnProcessExit(
