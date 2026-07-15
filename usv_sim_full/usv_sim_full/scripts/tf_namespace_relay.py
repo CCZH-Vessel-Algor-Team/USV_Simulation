@@ -35,7 +35,7 @@ class TfNamespaceRelay(Node):
         # Match typical /tf_static QoS: transient local + reliable
         tf_static_qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
-            depth=1,
+            depth=100,
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
         )
