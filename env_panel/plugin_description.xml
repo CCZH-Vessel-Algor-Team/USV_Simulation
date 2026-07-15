@@ -7,4 +7,13 @@
       VRX environment control panel with safe ramping for wind, waves, and current.
     </description>
   </class>
+
+  <class
+      name="env_panel/DynamicShipConfig"
+      type="env_panel::DynamicShipPanel"
+      base_class_type="rviz_common::Panel">
+    <description>
+      Dynamic target ship spawn config panel (heading, speed, shape, half-distance).
+    </description>
+  </class>
 </library>

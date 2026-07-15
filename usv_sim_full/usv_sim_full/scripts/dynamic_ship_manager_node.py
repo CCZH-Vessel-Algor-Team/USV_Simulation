@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import math
 import os
 import subprocess
@@ -8,10 +9,14 @@ import uuid
 import yaml
 
 import rclpy
-from geometry_msgs.msg import Pose, Twist
+from geometry_msgs.msg import PointStamped, Pose, Twist
 from rclpy.node import Node
+from std_msgs.msg import String
 from usv_interfaces.msg import TrackedShip, TrackedShipList
-from usv_interfaces.srv import SpawnDynamicShip, DeleteDynamicShip, ClearDynamicShips
+from usv_interfaces.srv import (
+    SpawnDynamicShip, DeleteDynamicShip, ClearDynamicShips,
+    SetDynamicShipConfig,
+)
 
 
 def _fmt_pose_xyzrpy(xyz, rpy):
@@ -77,13 +82,17 @@ class DynamicShip:
         self.current_y = y
         self.direction = 1
 
-        self.cmd_vel_pub = node.create_publisher(Twist, f'/model/{model_name}/cmd_vel', 10)
+        self.cmd_vel_pub = node.create_publisher(
+            Twist, f'/model/{model_name}/cmd_vel', 10)
 
+    def start_bridge(self):
         cmd = [
             'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
-            f'/model/{model_name}/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist'
+            f'/model/{self.model_name}/cmd_vel'
+            f'@geometry_msgs/msg/Twist]gz.msgs.Twist',
         ]
-        self.bridge_process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.bridge_process = subprocess.Popen(
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def cleanup(self):
         if hasattr(self, 'bridge_process') and self.bridge_process:
@@ -166,6 +175,11 @@ class DynamicShipManager(Node):
         if not self.config_base_dir:
             self.config_base_dir = os.path.dirname(os.path.abspath(__file__))
 
+        self.declare_parameter('heading_deg', 0.0)
+        self.declare_parameter('speed', 3.0)
+        self.declare_parameter('shape', 'mesh_profile')
+        self.declare_parameter('half_distance', 50.0)
+
         self.ships = {}
         self.dt = 0.1
 
@@ -183,8 +197,88 @@ class DynamicShipManager(Node):
 
         self._ship_counter = 0
 
+        self.click_sub = self.create_subscription(
+            PointStamped, '/clicked_point', self.on_clicked_point, 10)
+
+        self.config_srv = self.create_service(
+            SetDynamicShipConfig, '/dynamic_ship/set_config',
+            self.on_set_config)
+
+        self.names_pub = self.create_publisher(
+            String, '/dynamic_ship/names', 10)
+
+    def _read_config(self):
+        return (
+            self.get_parameter('heading_deg').get_parameter_value().double_value,
+            self.get_parameter('speed').get_parameter_value().double_value,
+            self.get_parameter('shape').get_parameter_value().string_value,
+            self.get_parameter('half_distance').get_parameter_value().double_value,
+        )
+
+    def on_set_config(self, request, response):
+        try:
+            self.set_parameters([
+                rclpy.parameter.Parameter(
+                    'heading_deg', value=request.heading_deg),
+                rclpy.parameter.Parameter(
+                    'speed', value=request.speed),
+                rclpy.parameter.Parameter(
+                    'shape', value=request.shape),
+                rclpy.parameter.Parameter(
+                    'half_distance', value=request.half_distance),
+            ])
+            response.success = True
+            response.message = 'config updated'
+        except Exception as e:
+            response.success = False
+            response.message = str(e)
+        return response
+
+    def on_clicked_point(self, msg):
+        heading_deg, speed, shape, half_dist = self._read_config()
+        heading = math.radians(heading_deg)
+
+        self._ship_counter += 1
+        name = f'dyn_target_{self._ship_counter}'
+
+        self._spawn_ship_at(name, msg.point.x, msg.point.y, heading,
+                            half_dist, shape, speed)
+
+    def _spawn_ship_at(self, name, x, y, yaw, half_dist, shape, speed):
+        target_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, name))
+        pose = Pose()
+        pose.position.x = x
+        pose.position.y = y
+        pose.position.z = 0.0
+        pose.orientation.w = math.cos(yaw / 2.0)
+        pose.orientation.z = math.sin(yaw / 2.0)
+
+        color = (1.0, 0.2, 0.2)
+
+        ship = DynamicShip(
+            model_name=name, target_id=target_id, pose=pose,
+            half_distance=half_dist, shape=shape, speed=speed,
+            color=color,
+            mesh_profile=self.default_mesh_profile,
+            node=self, config_base_dir=self.config_base_dir,
+            world_name=self.world_name,
+        )
+
+        sdf_str = self._generate_sdf(ship)
+        try:
+            self._spawn_gazebo(ship, sdf_str)
+            ship.start_bridge()
+        except Exception as e:
+            ship.cleanup()
+            self.get_logger().error(f'spawn failed: {e}')
+            return
+
+        self.ships[name] = ship
+        self.get_logger().info(
+            f'clicked at ({x:.2f},{y:.2f}) heading={math.degrees(yaw):.0f}deg '
+            f'-> spawned {name} speed={speed}m/s')
+
     def on_spawn(self, request, response):
-        ship = None
         try:
             if not request.name.strip():
                 self._ship_counter += 1
@@ -197,44 +291,23 @@ class DynamicShipManager(Node):
                 response.message = f"Ship '{name}' already exists"
                 return response
 
-            target_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, name))
+            yaw = math.atan2(
+                2.0 * (request.pose.orientation.w * request.pose.orientation.z
+                       + request.pose.orientation.x * request.pose.orientation.y),
+                1.0 - 2.0 * (request.pose.orientation.y * request.pose.orientation.y
+                             + request.pose.orientation.z * request.pose.orientation.z))
 
-            shape = request.shape.strip() or 'mesh_profile'
-            mesh_profile = request.mesh_profile.strip() or self.default_mesh_profile
+            half_dist = request.half_distance if request.half_distance > 0 else 50.0
             speed = request.speed if request.speed > 0.0 else 3.0
+            shape = request.shape.strip() or 'mesh_profile'
 
-            color = tuple(request.color[:3]) if len(request.color) >= 3 else (1.0, 0.2, 0.2)
-
-            ship = DynamicShip(
-                model_name=name,
-                target_id=target_id,
-                pose=request.pose,
-                half_distance=request.half_distance if request.half_distance > 0 else 50.0,
-                shape=shape,
-                speed=speed,
-                color=color,
-                mesh_profile=mesh_profile,
-                node=self,
-                config_base_dir=self.config_base_dir,
-                world_name=self.world_name,
-            )
-
-            sdf_str = self._generate_sdf(ship)
-            self._spawn_gazebo(ship, sdf_str)
-
-            self.ships[name] = ship
-
-            self.get_logger().info(
-                f"Spawned dynamic ship '{name}' at ({request.pose.position.x:.2f}, "
-                f"{request.pose.position.y:.2f}), speed={speed}m/s, half_dist={ship.half_distance}m"
-            )
-
+            self._spawn_ship_at(name, request.pose.position.x,
+                               request.pose.position.y, yaw,
+                               half_dist, shape, speed)
             response.success = True
             response.model_name = name
             response.message = f"Ship '{name}' spawned successfully"
         except Exception as e:
-            if ship is not None:
-                ship.cleanup()
             response.success = False
             response.message = f"Spawn failed: {e}"
             self.get_logger().error(f"Spawn failed: {e}")
@@ -508,6 +581,7 @@ class DynamicShipManager(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = 'map'
 
+        names = []
         for ship in self.ships.values():
             twist = ship.compute_cmd_vel(self.dt)
             ship.cmd_vel_pub.publish(twist)
@@ -518,8 +592,11 @@ class DynamicShipManager(Node):
             ts.twist = ship.get_current_twist()
             ts.radius = 5.0
             msg.ships.append(ts)
+            names.append(ship.model_name)
 
         self.tracked_pub.publish(msg)
+        if names:
+            self.names_pub.publish(String(data=json.dumps(names)))
 
 
 def main(args=None):
