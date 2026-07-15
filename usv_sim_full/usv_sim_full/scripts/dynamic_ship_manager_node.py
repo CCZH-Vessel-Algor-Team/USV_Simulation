@@ -12,7 +12,7 @@ import rclpy
 from geometry_msgs.msg import PointStamped, Pose, Twist
 from rclpy.node import Node
 from std_msgs.msg import String
-from usv_interfaces.msg import TrackedShip, TrackedShipList
+from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
 from usv_interfaces.srv import (
     SpawnDynamicShip, DeleteDynamicShip, ClearDynamicShips,
     SetDynamicShipConfig,
