@@ -71,6 +71,7 @@ global_costmap:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
         track_timeout: 5.0
+        tracked_ship_topic: "/dynamic_ship/tracked_ships"
 
       static_layer:
         # plugin: "nav2_costmap_2d::StaticLayer"
@@ -168,6 +169,7 @@ local_costmap:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
         track_timeout: 5.0
+        tracked_ship_topic: "/dynamic_ship/tracked_ships"
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -188,10 +190,17 @@ planner_server:
       - GridBased
 
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"  # 经典A*
+      plugin: "nav2_rrt_star_planner::RRTStarPlanner"
       tolerance: 0.5
-      use_astar: true                        # false即为dijstra
-      allow_unknown: false                    # 可以让未知区域可通行
+      step_size: 2.0
+      max_iterations: 5000
+      goal_bias: 0.1
+      goal_threshold: 2.0
+      safety_dist: 1.5
+      cost_weight: 0.3
+      max_optimize_iters: 100
+      eta: 3.0
+      prune_path: true
 #控制器配置，很难调，我勉强让他跑的可以了
 controller_server:
   ros__parameters:
