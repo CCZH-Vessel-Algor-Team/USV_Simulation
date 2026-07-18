@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <QComboBox>
@@ -29,7 +30,7 @@ class DynamicShipPanel : public rviz_common::Panel
 
 public:
   explicit DynamicShipPanel(QWidget * parent = nullptr);
-  ~DynamicShipPanel() override = default;
+  ~DynamicShipPanel() override;
 
   void onInitialize() override;
 
@@ -48,6 +49,8 @@ private:
   void onNamesReceived(const std_msgs::msg::String::SharedPtr msg);
 
   rclcpp::Node::SharedPtr client_node_;
+  rclcpp::executors::SingleThreadedExecutor::SharedPtr executor_;
+  std::thread spin_thread_;
 
   rclcpp::Client<usv_interfaces::srv::DeleteDynamicShip>::SharedPtr
       delete_client_;

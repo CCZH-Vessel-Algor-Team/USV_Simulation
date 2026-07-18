@@ -3,6 +3,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QMetaObject>
 #include <QVBoxLayout>
 
 #include <pluginlib/class_list_macros.hpp>
@@ -138,6 +139,20 @@ void DynamicShipPanel::onInitialize()
 
   (void)raw_node;
   config_timer_->start();
+
+  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor_->add_node(client_node_);
+  spin_thread_ = std::thread([this]() { executor_->spin(); });
+}
+
+DynamicShipPanel::~DynamicShipPanel()
+{
+  if (executor_) {
+    executor_->cancel();
+  }
+  if (spin_thread_.joinable()) {
+    spin_thread_.join();
+  }
 }
 
 void DynamicShipPanel::onHeadingChanged(int value)
@@ -237,10 +252,16 @@ void DynamicShipPanel::onNamesReceived(
 
   if (new_names != ship_names_) {
     ship_names_ = new_names;
-    ship_list_->clear();
-    for (const auto & name : ship_names_) {
-      ship_list_->addItem(QString::fromStdString(name));
-    }
+    auto names_copy = new_names;
+    QMetaObject::invokeMethod(
+        this,
+        [this, names_copy]() {
+          ship_list_->clear();
+          for (const auto & name : names_copy) {
+            ship_list_->addItem(QString::fromStdString(name));
+          }
+        },
+        Qt::QueuedConnection);
   }
 }
 
