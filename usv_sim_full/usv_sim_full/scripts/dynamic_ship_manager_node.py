@@ -81,6 +81,7 @@ class DynamicShip:
         self.current_x = x
         self.current_y = y
         self.direction = 1
+        self._turning_remaining = 0.0
 
         self.cmd_vel_pub = node.create_publisher(
             Twist, f'/model/{model_name}/cmd_vel', 10)
@@ -103,9 +104,11 @@ class DynamicShip:
             except Exception:
                 pass
 
-    def world_twist_to_body(self, vx_world, vy_world):
-        c = math.cos(self.spawn_yaw)
-        s = math.sin(self.spawn_yaw)
+    def world_twist_to_body(self, vx_world, vy_world, yaw=None):
+        if yaw is None:
+            yaw = self.spawn_yaw
+        c = math.cos(yaw)
+        s = math.sin(yaw)
         twist = Twist()
         twist.linear.x = c * vx_world + s * vy_world
         twist.linear.y = -s * vx_world + c * vy_world
@@ -113,6 +116,13 @@ class DynamicShip:
         return twist
 
     def compute_cmd_vel(self, dt):
+        if self._turning_remaining > 0.0:
+            self._turning_remaining -= dt
+            twist = Twist()
+            twist.linear.x = 0.0
+            twist.angular.z = self._turn_omega
+            return twist
+
         target = self.waypoint_b if self.direction > 0 else self.waypoint_a
         dx = target[0] - self.current_x
         dy = target[1] - self.current_y
@@ -124,6 +134,13 @@ class DynamicShip:
             dx = target[0] - self.current_x
             dy = target[1] - self.current_y
             dist = math.hypot(dx, dy)
+            if dist > 0.0:
+                new_heading = math.atan2(dy, dx)
+                heading_error = new_heading - self.spawn_yaw
+                heading_error = math.atan2(math.sin(heading_error), math.cos(heading_error))
+                self.spawn_yaw = new_heading
+                self._turning_remaining = max(0.3, abs(heading_error) / 2.0)
+                self._turn_omega = math.copysign(2.0, heading_error)
 
         if dist > 0:
             vx = (dx / dist) * self.speed
@@ -152,11 +169,11 @@ class DynamicShip:
         dx = target[0] - self.current_x
         dy = target[1] - self.current_y
         dist = math.hypot(dx, dy)
-        twist = Twist()
         if dist > 0:
-            twist.linear.x = (dx / dist) * self.speed
-            twist.linear.y = (dy / dist) * self.speed
-        return twist
+            vx = (dx / dist) * self.speed
+            vy = (dy / dist) * self.speed
+            return self.world_twist_to_body(vx, vy, yaw=self.spawn_yaw)
+        return Twist()
 
 
 class DynamicShipManager(Node):
@@ -236,7 +253,7 @@ class DynamicShipManager(Node):
 
     def on_clicked_point(self, msg):
         heading_deg, speed, shape, half_dist = self._read_config()
-        heading = math.radians(heading_deg)
+        heading = math.pi / 2.0 - math.radians(heading_deg)
 
         self._ship_counter += 1
         name = f'dyn_target_{self._ship_counter}'
