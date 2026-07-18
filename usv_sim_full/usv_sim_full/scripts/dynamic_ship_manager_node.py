@@ -595,8 +595,7 @@ class DynamicShipManager(Node):
             names.append(ship.model_name)
 
         self.tracked_pub.publish(msg)
-        if names:
-            self.names_pub.publish(String(data=json.dumps(names)))
+        self.names_pub.publish(String(data=json.dumps(names)))
 
 
 def main(args=None):
