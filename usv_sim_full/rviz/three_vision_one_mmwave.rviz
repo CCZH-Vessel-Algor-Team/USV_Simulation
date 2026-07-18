@@ -21,6 +21,8 @@ Panels:
     Splitter Ratio: 0.5
   - Class: nav2_rviz_plugins/Navigation 2
     Name: Navigation 2
+  - Class: env_panel/DynamicShipConfig
+    Name: DynamicShipConfig
 Visualization Manager:
   Class: ""
   Displays:
@@ -481,6 +483,8 @@ Window Geometry:
   "Camera: right_cam":
     collapsed: false
   Displays:
+    collapsed: false
+  DynamicShipConfig:
     collapsed: false
   Height: 1371
   Hide Left Dock: false
