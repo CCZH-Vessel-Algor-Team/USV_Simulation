@@ -172,7 +172,10 @@ class DynamicShip:
         if dist > 0:
             vx = (dx / dist) * self.speed
             vy = (dy / dist) * self.speed
-            return self.world_twist_to_body(vx, vy, yaw=self.spawn_yaw)
+            twist = Twist()
+            twist.linear.x = vx
+            twist.linear.y = vy
+            return twist
         return Twist()
 
 
