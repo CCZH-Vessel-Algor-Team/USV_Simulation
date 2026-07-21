@@ -188,9 +188,23 @@ planner_server:
 
     planner_plugins:
       - GridBased
+      - VORRTStar
 
     GridBased:
       plugin: "nav2_rrt_star_planner::RRTStarPlanner"
+      tolerance: 0.5
+      step_size: 2.0
+      max_iterations: 5000
+      goal_bias: 0.1
+      goal_threshold: 2.0
+      safety_dist: 1.5
+      cost_weight: 0.3
+      max_optimize_iters: 100
+      eta: 3.0
+      prune_path: true
+
+    VORRTStar:
+      plugin: "nav2_colregs_vo_rrt_star_planner::VORRTStarPlanner"
       tolerance: 0.5
       step_size: 2.0
       max_iterations: 5000
