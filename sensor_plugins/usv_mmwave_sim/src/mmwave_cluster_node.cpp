@@ -271,8 +271,10 @@ private:
     out.header = msg->header;
     out.targets.reserve(valid.size());
 
+    uint32_t track_seq = 1U;
     for (const auto &c : valid) {
       usv_interfaces::msg::MmwaveTarget t;
+      t.radar_id = radar_id_;
       t.x = c.cx;
       t.y = c.cy;
       t.v_x = c.sum_vx / static_cast<double>(c.count);
@@ -280,7 +282,9 @@ private:
       t.size_w = std::max(0.5, c.max_y - c.min_y);
       t.size_l = std::max(0.5, c.max_x - c.min_x);
       t.size_h = std::max(min_size_h_m_, c.max_z - c.min_z);
-      t.snr = c.sum_rcs / static_cast<double>(c.count);
+      const double speed = std::hypot(t.v_x, t.v_y);
+      t.objmotion_status = (speed < 0.3) ? static_cast<uint8_t>(0) : static_cast<uint8_t>(1);
+      t.track_id = track_seq++;
       out.targets.push_back(t);
     }
 
