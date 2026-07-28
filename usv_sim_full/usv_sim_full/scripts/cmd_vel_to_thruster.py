@@ -75,6 +75,7 @@ class CmdVelToThruster(Node):
         self.declare_parameter('w_kd', 0.0)
         self.declare_parameter('odom_timeout', 0.5)
         self.declare_parameter('cmd_timeout', 1.0)
+        self.declare_parameter('thrust_rate_limit', 0.0)
 
         self.desired_v = 0.0
         self.desired_w = 0.0
@@ -87,6 +88,9 @@ class CmdVelToThruster(Node):
 
         rate = self.get_parameter('control_rate').value
         self.timer = self.create_timer(1.0 / rate, self.control_loop)
+
+        self._last_left = 0.0
+        self._last_right = 0.0
 
         self.get_logger().info(
             f'PID cmd_vel->thruster started for {self.namespace}: '
@@ -133,12 +137,11 @@ class CmdVelToThruster(Node):
         if cmd_age > cmd_timeout:
             self.desired_v = 0.0
             self.desired_w = 0.0
-            if self._cmd_active:
-                self._publish_zero_thrust()
-                if hasattr(self, '_v_pid'):
-                    self._v_pid.reset()
-                    self._w_pid.reset()
-                self._cmd_active = False
+            self._publish_zero_thrust()
+            if hasattr(self, '_v_pid'):
+                self._v_pid.reset()
+                self._w_pid.reset()
+            self._cmd_active = False
             return
 
         if (now - self._odom_stamp).nanoseconds * 1e-9 > odom_timeout:
@@ -172,6 +175,13 @@ class CmdVelToThruster(Node):
             right = -max_t
         left = max(-max_t, min(max_t, left))
         right = max(-max_t, min(max_t, right))
+
+        rate_limit = self.get_parameter('thrust_rate_limit').value
+        if rate_limit > 0.0:
+            left = max(self._last_left - rate_limit, min(self._last_left + rate_limit, left))
+            right = max(self._last_right - rate_limit, min(self._last_right + rate_limit, right))
+        self._last_left = left
+        self._last_right = right
 
         lt_msg = Float64(data=float(left))
         rt_msg = Float64(data=float(right))

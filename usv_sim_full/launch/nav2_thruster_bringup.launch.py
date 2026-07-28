@@ -33,6 +33,16 @@ def _nav2_params_subst_robot_ns(obj, ns: str):
     return obj
 
 
+def _deep_merge(base, override):
+    """递归合并 override dict 到 base dict，返回 base（原地修改）。"""
+    for k, v in override.items():
+        if k in base and isinstance(base[k], dict) and isinstance(v, dict):
+            _deep_merge(base[k], v)
+        else:
+            base[k] = v
+    return base
+
+
 def generate_launch_description():
     # 获取 nav2_bringup 引擎的启动文件路径
     nav2_bringup_pkg = get_package_share_directory('nav2_bringup')
@@ -41,8 +51,14 @@ def generate_launch_description():
     launch_dir = os.path.dirname(os.path.abspath(__file__))
     default_nav2_params_file = default_radar_nav2_param_yaml(launch_dir)
 
+    usv_sim_full_pkg = get_package_share_directory('usv_sim_full')
+    default_control_params_file = os.path.join(
+        usv_sim_full_pkg, 'config', 'control_params.yaml'
+    )
+
     namespace = LaunchConfiguration('namespace')
     params_file = LaunchConfiguration('params_file')
+    control_params_file = LaunchConfiguration('control_params_file')
     use_sim_time = LaunchConfiguration('use_sim_time')
     verbose_launch = LaunchConfiguration('verbose_launch')
     enable_tf_namespace_relay = LaunchConfiguration('enable_tf_namespace_relay')
@@ -114,6 +130,20 @@ def generate_launch_description():
         except KeyError:
             pass
 
+        # deep-merge control_params（仅 controller_server 部分）到 Nav2 完整参数
+        resolved_control_params_file = control_params_file.perform(context).strip()
+        if resolved_control_params_file and os.path.isfile(resolved_control_params_file):
+            with open(resolved_control_params_file, 'r') as f:
+                control_params = yaml.safe_load(f) or {}
+            control_params = _nav2_params_subst_robot_ns(control_params, resolved_ns)
+            # 只合 controller_server 节点参数，跳过 /**（PID 等全局通配，仅 cmd_vel→推力 使用）
+            nav2_part = {k: v for k, v in control_params.items()
+                         if k != '/**'}
+            _deep_merge(nav2_params, nav2_part)
+            prefix_logs.append(
+                LogInfo(msg=f'已合并控制参数: {resolved_control_params_file}')
+            )
+
         gcp = nav2_params.get('global_costmap', {}).get('global_costmap', {}).get('ros__parameters', {})
         lcp = nav2_params.get('local_costmap', {}).get('local_costmap', {}).get('ros__parameters', {})
         robot_bf = str(gcp.get('robot_base_frame', '?'))
@@ -173,21 +203,23 @@ def generate_launch_description():
         ns = namespace.perform(context).strip().strip('/')
         v = verbose_launch.perform(context)
         out = 'screen' if launch_verbose_enabled(v) else 'log'
+        cmd = [
+            'ros2',
+            'run',
+            'usv_sim_full',
+            'cmd_vel_to_thruster',
+            '--ros-args',
+            '-r',
+            f'__ns:=/{ns}',
+            '-p',
+            f'namespace:={ns}',
+        ]
+        resolved_control_params_file = control_params_file.perform(context).strip()
+        if resolved_control_params_file and os.path.isfile(resolved_control_params_file):
+            cmd += ['--params-file', resolved_control_params_file]
         return [
             ExecuteProcess(
-                cmd=[
-                    'ros2',
-                    'run',
-                    'usv_sim_full',
-                    'cmd_vel_to_thruster',
-                    '--ros-args',
-                    '-r',
-                    f'__ns:=/{ns}',
-                    # '-r',
-                    # 'cmd_vel:=cmd_vel_smoothed',
-                    '-p',
-                    f'namespace:={ns}',
-                ],
+                cmd=cmd,
                 name='cmd_vel_to_thruster',
                 output=out,
             )
@@ -224,6 +256,11 @@ def generate_launch_description():
                 'true：本 launch 内启动 tf_namespace_relay。'
                 '经 nav2_sim_full_bringup 启动时应为 false（relay 已在 main.launch 随仿真常驻）'
             ),
+        ),
+        DeclareLaunchArgument(
+            'control_params_file',
+            default_value=default_control_params_file,
+            description='整船控制参数 YAML（ALOS + PID），合并到 Nav2 参数并传给 cmd_vel→推力桥',
         ),
         OpaqueFunction(function=launch_tf_relay_node),
         LogInfo(msg=['Starting Nav2 navigation stack for ', namespace, '...']),
