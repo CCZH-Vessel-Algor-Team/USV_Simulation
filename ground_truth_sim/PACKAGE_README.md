@@ -164,7 +164,7 @@ Open water 隔离性能门禁：
 
 ```bash
 ros2 launch usv_sim_full ground_truth_test.launch.py \
-  config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/ground_truth_waypoint_test.yaml
+  config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/ground_truth_test.yaml
 bash $(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/tools/verify_ground_truth_waypoint_perf.sh
 ```
 

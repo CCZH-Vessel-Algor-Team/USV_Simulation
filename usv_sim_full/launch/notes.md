@@ -18,8 +18,7 @@
 
 **毫米波相关（原独立 launch 已移除）**
 
-- **悉尼毫米波最小场景**：与原先 `mmwave_sydney_minimal.launch.py` 等价，请直接 **`main.launch.py`** 并指定配置，例如（需已 `source install/setup.bash`）：  
-  `ros2 launch usv_sim_full main.launch.py config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/mmwave_sydney_minimal.yaml`
+- **整机仿真中启用毫米波**：在 `full_config.yaml`（或自定义 `config_path`）的 `robot_N.sensors` 中配置 `type: mmwave_radar`，由 **`main.launch.py`** 自动拉起毫米波后处理节点。
 - **在已运行仿真中 spawn 毫米波验证体**：请直接调用 **`usv_mmwave_sim`** 包内 **`spawn_ego_mmwave_validation.launch.py`**（参数见该文件内 `DeclareLaunchArgument`），不再经本目录封装。
 
 ---
@@ -256,8 +255,8 @@ flowchart TB
 source install/setup.bash
 ros2 launch usv_sim_full main.launch.py
 ros2 launch usv_sim_full nav2_sim_full_bringup.launch.py
-# 毫米波最小场景示例：
-# ros2 launch usv_sim_full main.launch.py config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/mmwave_sydney_minimal.yaml
+# 自定义配置示例：
+# ros2 launch usv_sim_full main.launch.py config_path:=/path/to/my.yaml
 ```
 
 参数以各文件内 `DeclareLaunchArgument` 为准；`config_path` 多为核心开关。

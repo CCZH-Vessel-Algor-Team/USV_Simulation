@@ -50,7 +50,6 @@ robot_1:
 参考文件：
 
 - 完整多船示例：[`usv_sim_full/config/full_config.yaml`](../../../usv_sim_full/config/full_config.yaml)
-- 最小验证场景：[`usv_sim_full/config/mmwave_sydney_minimal.yaml`](../../../usv_sim_full/config/mmwave_sydney_minimal.yaml)
 
 ### 1.2 传感器内参（`sensor_config.yaml`）
 
@@ -302,7 +301,7 @@ source install/setup.bash
 
 # 1) 启动仿真（已自动起 mmwave_4d_cloud_node + mmwave_cluster_node）
 ros2 launch usv_sim_full main.launch.py \
-  config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/mmwave_sydney_minimal.yaml
+  config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/full_config.yaml
 
 # 2) 确认点云与聚类目标
 ros2 topic hz /usv_1/sensors/mmwave/mmwave_front/points_gz
