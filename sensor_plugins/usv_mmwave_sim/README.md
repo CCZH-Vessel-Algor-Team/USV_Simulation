@@ -73,7 +73,7 @@ source install/setup.bash
 
 ## 与 usv_sim_full 集成（摘要）
 
-1. 在 [`full_config.yaml`](../../usv_sim_full/config/full_config.yaml)（或 [`mmwave_sydney_minimal.yaml`](../../usv_sim_full/config/mmwave_sydney_minimal.yaml)）的 `robot_N.sensors` 中配置 `type: mmwave_radar`。
+1. 在 [`full_config.yaml`](../../usv_sim_full/config/full_config.yaml) 的 `robot_N.sensors` 中配置 `type: mmwave_radar`。
 2. 内参在 [`sensor_config.yaml`](../../usv_sim_full/config/sensor_config.yaml) 的 `mmwave.default`。
 3. `session_manager` 生成 URDF（`gpu_ray`）与 bridge YAML（`…/points_gz`）。
 4. `main.launch.py` 在配置含毫米波传感器时自动启动 **`mmwave_4d_cloud_node`** 与 **`mmwave_cluster_node`**，发布 `…/points` 与 `…/objects`。详见集成文档。
@@ -87,7 +87,7 @@ source install/setup.bash
 ```bash
 source install/setup.bash
 ros2 launch usv_sim_full main.launch.py \
-  config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/mmwave_sydney_minimal.yaml
+  config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/full_config.yaml
 
 # 另终端确认毫米波链路（main.launch 已自动启动 4d_cloud + cluster）
 ros2 node list | grep mmwave

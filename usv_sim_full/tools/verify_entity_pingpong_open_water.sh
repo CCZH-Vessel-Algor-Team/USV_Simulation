@@ -14,7 +14,7 @@ else
 fi
 
 PKG_SHARE="$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full"
-CONFIG="${PKG_SHARE}/config/ground_truth_pingpong_open_water.yaml"
+CONFIG="${PKG_SHARE}/config/ground_truth_test.yaml"
 ANALYZE="${PKG_SHARE}/tools/analyze_entity_trajectory.py"
 LAUNCH_LOG="$(mktemp /tmp/gt_pingpong_launch_XXXX.log)"
 

@@ -9,11 +9,6 @@
 #
 # 计数监测（另开终端，仿真运行约 1 分钟后）：
 #   python3 $(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/tools/monitor_ground_truth_counts.py
-#
-# waypoint 固定航路模式测试：
-#   ros2 launch usv_sim_full ground_truth_test.launch.py \
-#     config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/ground_truth_waypoint_test.yaml
-#   $(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/tools/verify_ground_truth_waypoint_perf.sh
 
 environment:
   world_name: sydney_regatta_open_water

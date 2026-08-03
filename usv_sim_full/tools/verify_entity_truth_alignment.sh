@@ -22,7 +22,7 @@ else
 fi
 
 PKG_SHARE="$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full"
-CONFIG="${PKG_SHARE}/config/ground_truth_waypoint_test.yaml"
+CONFIG="${PKG_SHARE}/config/ground_truth_test.yaml"
 COMPARE="${PKG_SHARE}/tools/compare_gt_gz_entity_truth.py"
 LAUNCH_LOG="$(mktemp /tmp/gt_entity_launch_XXXX.log)"
 
@@ -54,7 +54,7 @@ WORLD="$(python3 - <<'PY'
 import yaml
 from ament_index_python.packages import get_package_share_directory
 import os
-cfg = os.path.join(get_package_share_directory('usv_sim_full'), 'config', 'ground_truth_waypoint_test.yaml')
+cfg = os.path.join(get_package_share_directory('usv_sim_full'), 'config', 'ground_truth_test.yaml')
 with open(cfg, 'r', encoding='utf-8') as f:
     print(yaml.safe_load(f)['environment']['world_name'])
 PY

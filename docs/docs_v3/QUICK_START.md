@@ -147,14 +147,14 @@ source install/setup.bash
 ros2 launch usv_sim_full sensor_tune.launch.py
 ```
 
-### 1.4 毫米波最小验证（`sydney_regatta`，少传感器）
+### 1.4 毫米波验证（走默认 `full_config.yaml`）
 
-仅用 `config/mmwave_sydney_minimal.yaml` 跑与 `main.launch.py` 相同组装逻辑：船位朝向 `sydney_regatta.sdf` 中的 `mb_marker_buoy_red`，并带毫米波与同水平轴、略高 0.1 m 的激光雷达以便对照视野内目标。默认关闭 RViz、无自定义障碍与动态场景。
+用默认 `config/full_config.yaml` 启动整机仿真（含毫米波传感器时由 `main.launch.py` 自动拉起后处理节点）。也可传入自定义 `config_path`。
 
 ```bash
 cd /path/to/USV_ROS
 source install/setup.bash
-ros2 launch usv_sim_full main.launch.py config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/mmwave_sydney_minimal.yaml
+ros2 launch usv_sim_full main.launch.py
 ```
 
 验证点云（船名默认为 `usv_1` 时）：

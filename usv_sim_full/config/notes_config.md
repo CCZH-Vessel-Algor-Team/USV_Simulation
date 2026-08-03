@@ -11,10 +11,9 @@
 
 | 文件 | 内容摘要 | 谁读 / 谁传 |
 |------|----------|-------------|
-| **`full_config.yaml`** | **整机主配置**：`environment`、`robot_1`/`robot_2`/…、`sensors`、`obstacles`、`scenario`、`visualization`；可选每船 `enable_env_dynamics` / `env_dynamics`；`sensor_config_path` 指向传感器内参 YAML。 | **入口**：`main.launch.py` 默认 `config_path`；`sensor_tune.launch.py`、`nav2_sim_full_bringup.launch.py`、`test_hull.launch.py` 等以默认或 `config_path:=` 引用；毫米波最小场景对 `main.launch.py` 传 `config_path:=.../mmwave_sydney_minimal.yaml`。**核心消费者**：`ros2 run usv_sim_full session_manager --config-path`（子进程，由上述 launch 触发）；`scenario_manager_node`（参数 `config_path`）；`launch_config_helpers.primary_robot_name` 等。 |
+| **`full_config.yaml`** | **整机主配置**：`environment`、`robot_1`/`robot_2`/…、`sensors`、`obstacles`、`scenario`、`visualization`；可选每船 `enable_env_dynamics` / `env_dynamics`；`sensor_config_path` 指向传感器内参 YAML。 | **入口**：`main.launch.py` 默认 `config_path`；`sensor_tune.launch.py`、`nav2_sim_full_bringup.launch.py`、`test_hull.launch.py` 等以默认或 `config_path:=` 引用。**核心消费者**：`ros2 run usv_sim_full session_manager --config-path`（子进程，由上述 launch 触发）；`scenario_manager_node`（参数 `config_path`）；`launch_config_helpers.primary_robot_name` 等。 |
 | **`full_config.reference.yaml`** | **同结构的带注释参考**：逐块说明各键含义与消费者；**默认不被 launch 加载**。 | 人工查阅；修改默认行为请编辑 `full_config.yaml`（或自定义 `config_path`）。若与代码不一致以 `session_manager` / `main.launch.py` 为准。 |
 | **`sensor_config.yaml`** | **传感器内参/默认值**：`lidar`/`camera`/`imu`/`gps`/`mmwave` 等数值，供 xacro 与 `mmwave_4d_cloud_node` 默认参数使用。 | **`session_manager.py`**：按 `full_config` 顶栏 `sensor_config_path` 解析路径，拷贝到会话目录 `sensor_config.yaml` 并参与 URDF/桥接生成。**`main.launch.py`**：`launch_config_helpers.load_mmwave_sensor_defaults()` 读 `mmwave.default`。**`description/urdf/sensor_params.xacro`**：`load_yaml('$(find usv_sim_full)/config/sensor_config.yaml')`（开发时直连包内文件；完整会话以 session 内副本为准）。 |
-| **`mmwave_sydney_minimal.yaml`** | **毫米波最小场景**：`sydney_regatta`、精简障碍/场景、特定 `spawn_pose`、默认关 RViz；结构与 `full_config` 兼容。 | **`main.launch.py`**：`config_path:=$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full/config/mmwave_sydney_minimal.yaml`（或源码树等价路径）。 |
 | **`certi_senario.yaml`** | **认证仿真基底**：单船 `robot_1`、全传感器、`sydney_regatta_open_water`、默认开 RViz；无 `ground_truth_sim`。 | 由 **`certifi_launch.launch.py`** 作 `base_config`；与 **`certificate_case/*.yaml`** 经 **`tools/merge_certi_config.py`** 合并为 `config/generated/*.merged.yaml` 再喂给 `main.launch.py`。 |
 | **`certificate_case/*.yaml`** | **会遇语义**（`encounter`）：局面类型、DCPA、本船/目标速度航向。 | **`merge_certi_config.py`**；launch 参数 `case_config:=`。 |
 | **`generated/*.merged.yaml`** | 合并产物（勿手改）；含 `scenario.dynamic_obstacles` 与 `certificate_runtime`。 | **`certifi_launch.launch.py`** → `main.launch.py` 的 `config_path`。 |
@@ -28,13 +27,13 @@
 ## 与 launch 的对应关系（简图）
 
 ```text
-full_config.yaml (或 mmwave_sydney_minimal.yaml 等)
+full_config.yaml（或自定义 config_path）
         │
         ▼
 session_manager ──► 会话目录：URDF、bridge_config*.yaml、session.rviz、obstacle_layout.json、sensor_config 副本 …
         ▲
         │ config_path
-main.launch.py ◄──── nav2_sim_full_bringup / sensor_tune（仅 session+URDF）/ test_hull（另逻辑）；毫米波最小场景为 main + `config_path:=.../mmwave_sydney_minimal.yaml`
+main.launch.py ◄──── nav2_sim_full_bringup / sensor_tune（仅 session+URDF）/ test_hull（另逻辑）
 
 infra_sim.launch.py ──► global_bridge.yaml（与 main 并行，不读 full_config）
 

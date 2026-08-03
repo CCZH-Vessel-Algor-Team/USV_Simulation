@@ -14,7 +14,7 @@ else
 fi
 
 PKG_SHARE="$(ros2 pkg prefix usv_sim_full)/share/usv_sim_full"
-CONFIG="${PKG_SHARE}/config/ground_truth_straight_test.yaml"
+CONFIG="${PKG_SHARE}/config/ground_truth_test.yaml"
 ANALYZE="${PKG_SHARE}/tools/analyze_entity_trajectory.py"
 LAUNCH_LOG="$(mktemp /tmp/gt_straight_launch_XXXX.log)"
 
@@ -29,7 +29,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "==> 启动直线航路隔离测试 (ground_truth_straight_test.yaml) ..."
+echo "==> 启动GT 隔离测试 (ground_truth_test.yaml) ..."
 ros2 launch usv_sim_full ground_truth_test.launch.py \
   config_path:="${CONFIG}" \
   gz_headless:=true \
