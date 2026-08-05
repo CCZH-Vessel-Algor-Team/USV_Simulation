@@ -8,7 +8,6 @@
     <xacro:include filename="$(find usv_sim_full)/description/urdf/wamv_base.urdf.xacro" />
     <!-- Thruster Layout -->
     <xacro:include filename="${thruster_layout}"/>
-    <!-- Attach hydrodynamics plugin -->
-    <xacro:usv_dynamics_gazebo name="wamv_dynamics_plugin"/>
+    <!-- Dynamics are attached once in the top-level robot xacro. -->
   </xacro:macro>
 </robot>

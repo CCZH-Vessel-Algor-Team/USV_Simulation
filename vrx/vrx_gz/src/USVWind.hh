@@ -59,6 +59,9 @@ namespace vrx
     ///
     /// <topic_wind_direction>: The debug topic to advertise the wind direction.
     ///
+    /// <topic_wind_velocity_cmd>: Gazebo Transport Vector3d topic used to set
+    /// the mean wind velocity in world ENU coordinates [m/s].
+    ///
     /// TODO: Example sdf
 
     class USVWind

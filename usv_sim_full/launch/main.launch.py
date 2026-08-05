@@ -30,8 +30,6 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 from usv_sim_full.launch_config_helpers import (
-    block_enable_env_dynamics,
-    block_env_dynamics_k_gains,
     block_first_maritime_radar,
     block_has_maritime_radar,
     build_mmwave_4d_cloud_parameters,
@@ -494,27 +492,6 @@ def launch_setup(context, *args, **kwargs):
             **quiet_ros_node_kwargs(verbose_s),
         )
         launch_items.append(wrapper_node)
-
-    for idx, ship in enumerate(session_robots):
-        block = ship_blocks[idx] if idx < len(ship_blocks) else {}
-        if not block_enable_env_dynamics(block):
-            continue
-        rname = ship['name']
-        sanitized = re.sub(r"[^A-Za-z0-9_\-]", '_', str(rname))
-        k_wind, k_current = block_env_dynamics_k_gains(block)
-        launch_items.append(
-            Node(
-                package='usv_sim_full',
-                executable='usv_env_dynamics',
-                name=f'usv_env_dynamics_{sanitized}',
-                parameters=[{
-                    'model_name': rname,
-                    'k_wind': k_wind,
-                    'k_current': k_current,
-                }],
-                **quiet_ros_node_kwargs(verbose_s),
-            )
-        )
 
     if radar_processing_enabled:
         for idx, ship in enumerate(session_robots):

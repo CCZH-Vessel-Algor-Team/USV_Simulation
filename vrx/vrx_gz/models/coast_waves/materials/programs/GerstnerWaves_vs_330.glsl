@@ -50,6 +50,7 @@ uniform float t;
 uniform vec3 amplitude;
 uniform vec3 wavenumber;
 uniform vec3 omega;
+uniform vec3 phase;
 uniform vec3 steepness;
 uniform vec2 dir0;
 uniform vec2 dir1;
@@ -73,6 +74,7 @@ struct WaveParameters {
   float k;      // wavenumber
   float a;      // amplitude
   float omega;  // phase constant of speed
+  float phase;  // initial phase
   vec2 d;       // horizontal direction of wave
   float q;      // steepness for Gerstner wave (q=0: rolling sine waves)
 };
@@ -91,9 +93,9 @@ void main()
 
   WaveParameters waves[3];
 
-  waves[0] = WaveParameters(wavenumber.x, amplitude.x, omega.x, dir0.xy, steepness.x);
-  waves[1] = WaveParameters(wavenumber.y, amplitude.y, omega.y, dir1.xy, steepness.y);
-  waves[2] = WaveParameters(wavenumber.z, amplitude.z, omega.z, dir2.xy, steepness.z);
+  waves[0] = WaveParameters(wavenumber.x, amplitude.x, omega.x, phase.x, dir0.xy, steepness.x);
+  waves[1] = WaveParameters(wavenumber.y, amplitude.y, omega.y, phase.y, dir1.xy, steepness.y);
+  waves[2] = WaveParameters(wavenumber.z, amplitude.z, omega.z, phase.z, dir2.xy, steepness.z);
 
   vec4 P = vertex;
 
@@ -111,13 +113,13 @@ void main()
     float q = waves[i].q;
     float dx = waves[i].d.x;
     float dy = waves[i].d.y;
-    float theta = dot(waves[i].d, P.xy)*k - t*waves[i].omega;
+    float theta = dot(waves[i].d, P.xy)*k - t*waves[i].omega + waves[i].phase;
     float c = cos(theta);
     float s = sin(theta);
 
     // Displacement of point due to wave (Eq. 9)
     P.x -= q*a*dx*s;
-    P.y -= q*a*dx*s;
+    P.y -= q*a*dy*s;
     P.z += a*c;
 
     // Modify normals due to wave displacement (Eq. 10-12)

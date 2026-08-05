@@ -112,7 +112,8 @@ class DynamicShip:
         twist = Twist()
         twist.linear.x = c * vx_world + s * vy_world
         twist.linear.y = -s * vx_world + c * vy_world
-        twist.angular.z = 0.0
+        twist.angular.x = 1.0
+        twist.angular.y = self.spawn_yaw
         return twist
 
     def compute_cmd_vel(self, dt):
@@ -120,7 +121,8 @@ class DynamicShip:
             self._turning_remaining -= dt
             twist = Twist()
             twist.linear.x = 0.0
-            twist.angular.z = self._turn_omega
+            twist.angular.x = 1.0
+            twist.angular.y = self.spawn_yaw
             return twist
 
         target = self.waypoint_b if self.direction > 0 else self.waypoint_a
@@ -139,8 +141,9 @@ class DynamicShip:
                 heading_error = new_heading - self.spawn_yaw
                 heading_error = math.atan2(math.sin(heading_error), math.cos(heading_error))
                 self.spawn_yaw = new_heading
-                self._turning_remaining = max(0.3, abs(heading_error) / 2.0)
-                self._turn_omega = math.copysign(2.0, heading_error)
+                turn_rate = 0.8
+                self._turning_remaining = max(
+                    1.0, abs(heading_error) / turn_rate)
 
         if dist > 0:
             vx = (dx / dist) * self.speed
@@ -373,6 +376,72 @@ class DynamicShipManager(Node):
         else:
             return self._generate_cylinder_sdf(ship)
 
+    @staticmethod
+    def _environment_plugins(ship):
+        return f"""
+                <plugin filename="libSurface.so" name="vrx::Surface">
+                    <link_name>base_link</link_name>
+                    <hull_length>10.0</hull_length>
+                    <hull_radius>0.55</hull_radius>
+                    <fluid_level>0.0</fluid_level>
+                    <points>
+                        <point>2.5 1.2 0</point>
+                        <point>-2.5 1.2 0</point>
+                        <point>2.5 -1.2 0</point>
+                        <point>-2.5 -1.2 0</point>
+                    </points>
+                    <wavefield>
+                        <topic>/vrx/wavefield/parameters</topic>
+                        <wave>
+                            <model>PMS</model>
+                            <period>5.0</period>
+                            <direction>0.0</direction>
+                            <gain>0.3</gain>
+                            <steepness>0.0</steepness>
+                        </wave>
+                    </wavefield>
+                </plugin>
+                <plugin filename="gz-sim-hydrodynamics-system"
+                        name="gz::sim::systems::Hydrodynamics">
+                    <link_name>base_link</link_name>
+                    <xU>-100</xU>
+                    <xUabsU>-150</xUabsU>
+                    <yV>-1200</yV>
+                    <yVabsV>-1800</yVabsV>
+                    <zW>-1800</zW>
+                    <kP>-2500</kP>
+                    <mQ>-3500</mQ>
+                    <nR>-3000</nR>
+                    <nRabsR>-4500</nRabsR>
+                    <disable_added_mass>true</disable_added_mass>
+                    <disable_coriolis>true</disable_coriolis>
+                    <default_current>0 0 0</default_current>
+                </plugin>
+                <plugin filename="libUSVWind.so" name="vrx::USVWind">
+                    <wind_obj>
+                        <name>{ship.model_name}</name>
+                        <link_name>base_link</link_name>
+                        <coeff_vector>4.0 8.0 6.0</coeff_vector>
+                    </wind_obj>
+                    <wind_direction>0</wind_direction>
+                    <wind_mean_velocity>0.0</wind_mean_velocity>
+                    <var_wind_gain_constants>0</var_wind_gain_constants>
+                    <var_wind_time_constants>2</var_wind_time_constants>
+                    <update_rate>10</update_rate>
+                    <topic_wind_velocity_cmd>/vrx/wind/velocity_cmd</topic_wind_velocity_cmd>
+                    <topic_wind_speed>/model/{ship.model_name}/debug/wind/speed</topic_wind_speed>
+                    <topic_wind_direction>/model/{ship.model_name}/debug/wind/direction</topic_wind_direction>
+                </plugin>
+                <plugin filename="libTargetShipController.so" name="vrx::TargetShipController">
+                    <link_name>base_link</link_name>
+                    <topic>/model/{ship.model_name}/cmd_vel</topic>
+                    <kp_linear>5000</kp_linear>
+                    <kp_heading>60000</kp_heading>
+                    <kd_yaw>25000</kd_yaw>
+                    <max_force>15000</max_force>
+                    <max_torque>120000</max_torque>
+                </plugin>"""
+
     def _generate_mesh_profile_sdf(self, ship):
         profile_path = _resolve_profile_path(ship.mesh_profile, self.config_base_dir)
         if not profile_path or not os.path.isfile(profile_path):
@@ -421,6 +490,7 @@ class DynamicShipManager(Node):
             )
 
         spawn_z = float(data.get('spawn_z', 0.0))
+        environment_plugins = self._environment_plugins(ship)
 
         r, g, b = ship.color
         a = 1.0
@@ -430,7 +500,7 @@ class DynamicShipManager(Node):
             <model name="{ship.model_name}">
                 <static>false</static>
                 <link name="base_link">
-                    <gravity>false</gravity>
+                    <gravity>true</gravity>
                     <visual name="visual">
                         <pose>{_fmt_pose_xyzrpy(mesh_xyz, mesh_rpy)}</pose>
                         <geometry>
@@ -447,17 +517,15 @@ class DynamicShipManager(Node):
                     </visual>
                     {''.join(collision_xml)}
                     <inertial>
-                        <mass>50.0</mass>
+                        <mass>3500.0</mass>
                         <inertia>
-                            <ixx>4.0</ixx>
-                            <iyy>4.0</iyy>
-                            <izz>6.0</izz>
+                            <ixx>5000.0</ixx>
+                            <iyy>30000.0</iyy>
+                            <izz>30000.0</izz>
                         </inertia>
                     </inertial>
                 </link>
-                <plugin filename="gz-sim-velocity-control-system" name="gz::sim::systems::VelocityControl">
-                    <topic>/model/{ship.model_name}/cmd_vel</topic>
-                </plugin>
+                {environment_plugins}
             </model>
         </sdf>
         """
@@ -467,12 +535,13 @@ class DynamicShipManager(Node):
         name = ship.model_name
         r, g, b = ship.color
         geom = "<box><size>3.6 10.0 2.0</size></box>"
+        environment_plugins = self._environment_plugins(ship)
         sdf = f"""<?xml version="1.0" ?>
         <sdf version="1.6">
             <model name="{name}">
                 <static>false</static>
                 <link name="base_link">
-                    <gravity>false</gravity>
+                    <gravity>true</gravity>
                     <visual name="visual">
                         <geometry>{geom}</geometry>
                         <material>
@@ -485,17 +554,15 @@ class DynamicShipManager(Node):
                         <geometry>{geom}</geometry>
                     </collision>
                     <inertial>
-                        <mass>50.0</mass>
+                        <mass>3500.0</mass>
                         <inertia>
-                            <ixx>4.0</ixx>
-                            <iyy>4.0</iyy>
-                            <izz>6.0</izz>
+                            <ixx>5000.0</ixx>
+                            <iyy>30000.0</iyy>
+                            <izz>30000.0</izz>
                         </inertia>
                     </inertial>
                 </link>
-                <plugin filename="gz-sim-velocity-control-system" name="gz::sim::systems::VelocityControl">
-                    <topic>/model/{name}/cmd_vel</topic>
-                </plugin>
+                {environment_plugins}
             </model>
         </sdf>
         """
@@ -505,12 +572,13 @@ class DynamicShipManager(Node):
         name = ship.model_name
         r, g, b = ship.color
         geom = "<cylinder><radius>4.0</radius><length>5.0</length></cylinder>"
+        environment_plugins = self._environment_plugins(ship)
         sdf = f"""<?xml version="1.0" ?>
         <sdf version="1.6">
             <model name="{name}">
                 <static>false</static>
                 <link name="base_link">
-                    <gravity>false</gravity>
+                    <gravity>true</gravity>
                     <visual name="visual">
                         <geometry>{geom}</geometry>
                         <material>
@@ -523,17 +591,15 @@ class DynamicShipManager(Node):
                         <geometry>{geom}</geometry>
                     </collision>
                     <inertial>
-                        <mass>50.0</mass>
+                        <mass>3500.0</mass>
                         <inertia>
-                            <ixx>4.0</ixx>
-                            <iyy>4.0</iyy>
-                            <izz>6.0</izz>
+                            <ixx>5000.0</ixx>
+                            <iyy>30000.0</iyy>
+                            <izz>30000.0</izz>
                         </inertia>
                     </inertial>
                 </link>
-                <plugin filename="gz-sim-velocity-control-system" name="gz::sim::systems::VelocityControl">
-                    <topic>/model/{name}/cmd_vel</topic>
-                </plugin>
+                {environment_plugins}
             </model>
         </sdf>
         """

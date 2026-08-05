@@ -22,7 +22,6 @@ find_package(geometry_msgs REQUIRED)
 find_package(ros_gz_interfaces REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(usv_interfaces REQUIRED)
-find_package(std_srvs REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   include/env_panel/vrx_env_panel.hpp
@@ -46,7 +45,6 @@ ament_target_dependencies(${PROJECT_NAME}
   ros_gz_interfaces
   rcl_interfaces
   usv_interfaces
-  std_srvs
 )
 
 target_link_libraries(${PROJECT_NAME}

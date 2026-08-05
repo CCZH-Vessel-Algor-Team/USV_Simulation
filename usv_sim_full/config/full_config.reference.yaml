@@ -136,8 +136,8 @@ visualization:
 # name:
 #   ROS/Gazebo 模型名，兼作 xacro namespace；sanitize 后用于文件名 final_robot_<sanitized>.urdf。
 #
-# enable_env_dynamics / env_dynamics:
-#   为 true 时 main.launch 为本船启动 usv_env_dynamics（风浪流增益 k_wind、k_current）。
+# 环境力由 Gazebo USVWind、Hydrodynamics、Surface 插件计算；
+# RViz VrxEnvPanel 通过 ros_gz_bridge 设置 Gazebo 环境参数。
 #
 # xacro_template:
 #   位于 usv_sim_full/description/urdf/ 下的文件名，例如 wamv_no_battery.urdf.xacro。
@@ -175,10 +175,6 @@ visualization:
 
 robot_1:
   name: usv_1
-  enable_env_dynamics: true
-  env_dynamics:
-    k_wind: 1.5
-    k_current: 250.0
   xacro_template: wamv_no_battery.urdf.xacro
   thruster_config: CUSTOM
   thrusters:
@@ -292,10 +288,6 @@ robot_1:
 # -----------------------------------------------------------------------------
 robot_2:
   name: usv_2
-  enable_env_dynamics: true
-  env_dynamics:
-    k_wind: 1.5
-    k_current: 250.0
   xacro_template: wamv_no_battery.urdf.xacro
   thruster_config: CUSTOM
   thrusters:

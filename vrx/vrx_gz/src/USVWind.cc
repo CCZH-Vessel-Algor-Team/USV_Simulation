@@ -1,4 +1,8 @@
+#include <cmath>
+#include <mutex>
+#include <optional>
 #include <string>
+#include <vector>
 #include <Eigen/Eigen>
 #include <gz/common/Profiler.hh>
 #include <gz/math/Vector3.hh>
@@ -6,8 +10,10 @@
 #include <sdf/sdf.hh>
 #include <gz/sim/Util.hh>
 #include <gz/sim/Entity.hh>
+#include <gz/sim/Model.hh>
 #include <gz/transport/Node.hh>
 #include <gz/msgs/float.pb.h>
+#include <gz/msgs/vector3d.pb.h>
 #include "gz/msgs/Utility.hh"
 #include "gz/sim/components/LinearVelocity.hh"
 #include "gz/sim/components/Inertial.hh"
@@ -31,6 +37,10 @@ struct WindObj
 class USVWind::Implementation
 {
 
+  /// \brief Model entity that owns this plugin.
+public:
+  sim::Entity modelEntity = sim::kNullEntity;
+
   /// \brief vector of simple objects effected by the wind
 public:
   std::vector<WindObj> windObjs;
@@ -45,11 +55,11 @@ public:
 
   /// \brief Wind velocity unit vector in Gazebo coordinates [m/s]
 public:
-  math::Vector3d windDirection;
+  math::Vector3d windDirection{1.0, 0.0, 0.0};
 
   /// \brief Average wind velocity
 public:
-  double windMeanVelocity;
+  double windMeanVelocity = 0.0;
 
   /// \brief User specified gain constant
 public:
@@ -77,6 +87,18 @@ public:
   /// \brief Topic where the wind direction is published
 public:
   std::string topicWindDirection = "/vrx/debug/wind/direction";
+
+  /// \brief Topic used to command the mean wind velocity vector.
+public:
+  std::string topicWindVelocityCmd;
+
+  /// \brief Synchronizes Gazebo Transport callbacks with the simulation loop.
+public:
+  std::mutex windCmdMutex;
+
+  /// \brief Latest valid wind command. The simulation loop consumes it.
+public:
+  std::optional<math::Vector3d> pendingWindVelocity;
   /// \brief Message to store wind vector (constant)
 public:
   msgs::Float windDirMsg;
@@ -104,6 +126,28 @@ public:
   /// \def Random generator
 public:
   std::unique_ptr<std::mt19937> randGenerator;
+
+  /// \brief Cache a finite horizontal wind velocity command.
+public:
+  void OnWindVelocityCmd(const msgs::Vector3d &_msg)
+  {
+    if (!std::isfinite(_msg.x()) || !std::isfinite(_msg.y()) ||
+        !std::isfinite(_msg.z()))
+    {
+      gzwarn << "Ignoring non-finite wind velocity command" << std::endl;
+      return;
+    }
+
+    if (std::abs(_msg.z()) > 1e-9)
+    {
+      gzwarn << "USVWind only supports horizontal wind; ignoring z="
+             << _msg.z() << std::endl;
+      return;
+    }
+
+    std::lock_guard<std::mutex> lock(this->windCmdMutex);
+    this->pendingWindVelocity = math::Vector3d(_msg.x(), _msg.y(), 0.0);
+  }
 };
 
 //////////////////////////////////////////////////
@@ -118,6 +162,7 @@ void USVWind::Configure(const sim::Entity &_entity,
                         sim::EventManager & /*_eventMgr*/)
 {
   sdf::ElementPtr sdf = _sdf->Clone();
+  this->dataPtr->modelEntity = _entity;
 
   // Retrieve models' parameters from SDF
   if (!sdf->HasElement("wind_obj"))
@@ -226,6 +271,20 @@ void USVWind::Configure(const sim::Entity &_entity,
   gzmsg << "topic wind direction = " << 
       this->dataPtr->topicWindDirection << std::endl;
 
+  if (sdf->HasElement("topic_wind_velocity_cmd"))
+  {
+    this->dataPtr->topicWindVelocityCmd =
+        sdf->Get<std::string>("topic_wind_velocity_cmd");
+    if (!this->dataPtr->node.Subscribe(
+        this->dataPtr->topicWindVelocityCmd,
+        &Implementation::OnWindVelocityCmd,
+        this->dataPtr.get()))
+    {
+      gzerr << "Unable to subscribe to wind velocity command topic ["
+            << this->dataPtr->topicWindVelocityCmd << "]" << std::endl;
+    }
+  }
+
   // Setting the  seed for the random generator.
   unsigned int seed = std::random_device{}();
   if (sdf->HasElement("random_seed") &&
@@ -261,6 +320,25 @@ void USVWind::PreUpdate(
   GZ_PROFILE("USVWind::PreUpdate");
   if (_info.paused)
     return;
+
+  std::optional<math::Vector3d> windCmd;
+  {
+    std::lock_guard<std::mutex> lock(this->dataPtr->windCmdMutex);
+    windCmd.swap(this->dataPtr->pendingWindVelocity);
+  }
+  if (windCmd)
+  {
+    const double speed = std::hypot(windCmd->X(), windCmd->Y());
+    this->dataPtr->windMeanVelocity = speed;
+    if (speed > 1e-9)
+    {
+      this->dataPtr->windDirection = *windCmd / speed;
+      double directionDeg = std::atan2(windCmd->Y(), windCmd->X()) * 180.0 / M_PI;
+      if (directionDeg < 0.0)
+        directionDeg += 360.0;
+      this->dataPtr->windDirMsg.set_data(directionDeg);
+    }
+  }
   auto time = std::chrono::duration<double>(_info.simTime);
   if (this->dataPtr->previousTime == std::chrono::duration<double>(0))
   {
@@ -275,10 +353,18 @@ void USVWind::PreUpdate(
       if (!i.init)
       {
         {
-          auto entity = sim::entitiesFromScopedName(i.linkName, _ecm);
-          if (!entity.empty())
+          sim::Model model(this->dataPtr->modelEntity);
+          auto entity = model.Valid(_ecm) ?
+            model.LinkByName(_ecm, i.linkName) : sim::kNullEntity;
+          if (entity == sim::kNullEntity && !model.Valid(_ecm))
           {
-            i.linkEntity = *entity.begin();
+            const auto entities = sim::entitiesFromScopedName(i.linkName, _ecm);
+            if (!entities.empty())
+              entity = *entities.begin();
+          }
+          if (entity != sim::kNullEntity)
+          {
+            i.linkEntity = entity;
             gzdbg << i.modelName << " initialized" << std::endl;
             ++this->dataPtr->windObjsInitCount;
             i.init = true;
@@ -299,21 +385,35 @@ void USVWind::PreUpdate(
   }
 
   auto dT = time - this->dataPtr->previousTime;
+  if (dT.count() <= 0.0 || !std::isfinite(dT.count()))
+  {
+    this->dataPtr->previousTime = time;
+    this->dataPtr->varVel = 0.0;
+    return;
+  }
 
-  std::normal_distribution<double> dist(0, 1);
-  double randomDist = dist(*this->dataPtr->randGenerator);
-
-  // Current variable wind velocity
-  this->dataPtr->varVel += 1.0 / this->dataPtr->timeConstant *
-                           (-1.0 * this->dataPtr->varVel + 
-                           this->dataPtr->filterGain / sqrt(dT.count()) * 
-                           randomDist) * dT.count();
+  if (this->dataPtr->filterGain > 0.0)
+  {
+    std::normal_distribution<double> dist(0, 1);
+    const double randomDist = dist(*this->dataPtr->randGenerator);
+    this->dataPtr->varVel += 1.0 / this->dataPtr->timeConstant *
+      (-this->dataPtr->varVel +
+      this->dataPtr->filterGain / std::sqrt(dT.count()) * randomDist) *
+      dT.count();
+  }
+  else
+  {
+    this->dataPtr->varVel = 0.0;
+  }
   // Current wind velocity
   double velocity = this->dataPtr->varVel + this->dataPtr->windMeanVelocity;
   msgs::Float windVelMsg;
   windVelMsg.set_data(velocity);
-  this->dataPtr->windSpeedPub.Publish(windVelMsg);
-  this->dataPtr->windDirectionPub.Publish(this->dataPtr->windDirMsg);
+  if (this->dataPtr->windObjsInit)
+  {
+    this->dataPtr->windSpeedPub.Publish(windVelMsg);
+    this->dataPtr->windDirectionPub.Publish(this->dataPtr->windDirMsg);
+  }
   for (auto &windObj : this->dataPtr->windObjs)
   {
     // Apply the forces of the wind to all wind objects only if they have been
@@ -323,9 +423,11 @@ void USVWind::PreUpdate(
       continue;
     }
     // get world linear velocity of link
-    auto worldVel = 
-        *std::move(_ecm.ComponentData<sim::components::WorldLinearVelocity>
-        (windObj.linkEntity));
+    auto worldVelData =
+        _ecm.ComponentData<sim::components::WorldLinearVelocity>(windObj.linkEntity);
+    if (!worldVelData)
+      continue;
+    auto worldVel = *worldVelData;
     math::Vector3d relativeWind =
         this->dataPtr->windDirection * velocity - worldVel;
     math::Vector3d windForce(
@@ -334,6 +436,11 @@ void USVWind::PreUpdate(
     math::Vector3d windTorque(0.0, 0.0,
                               -2.0 * windObj.windCoeff.Z() * relativeWind.X() * 
                               relativeWind.Y());
+    if (!windForce.IsFinite() || !windTorque.IsFinite())
+    {
+      gzwarn << "Skipping non-finite wind wrench" << std::endl;
+      continue;
+    }
     auto linkWrenchComp =
         _ecm.Component<sim::components::ExternalWorldWrenchCmd>
         (windObj.linkEntity);

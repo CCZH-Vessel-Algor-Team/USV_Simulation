@@ -121,6 +121,9 @@ void PublisherPlugin::Configure(const sim::Entity &_entity,
         }
       }
 
+      if (info.topic == "/vrx/wavefield/parameters")
+        info.every = 0;
+
       const std::string msgStr = messageElem->Get<std::string>();
       info.msgData = msgs::Factory::New(info.msgType, msgStr);
       if (info.msgData)

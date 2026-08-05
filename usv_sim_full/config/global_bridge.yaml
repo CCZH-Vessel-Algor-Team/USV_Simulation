@@ -3,3 +3,33 @@
   ros_type_name: "rosgraph_msgs/msg/Clock"
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
+
+- ros_topic_name: "/vrx/debug/wind/speed"
+  gz_topic_name: "/vrx/debug/wind/speed"
+  ros_type_name: "std_msgs/msg/Float32"
+  gz_type_name: "gz.msgs.Float"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/vrx/debug/wind/direction"
+  gz_topic_name: "/vrx/debug/wind/direction"
+  ros_type_name: "std_msgs/msg/Float32"
+  gz_type_name: "gz.msgs.Float"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/vrx/wind/velocity_cmd"
+  gz_topic_name: "/vrx/wind/velocity_cmd"
+  ros_type_name: "geometry_msgs/msg/Vector3"
+  gz_type_name: "gz.msgs.Vector3d"
+  direction: ROS_TO_GZ
+
+- ros_topic_name: "/ocean_current"
+  gz_topic_name: "/ocean_current"
+  ros_type_name: "geometry_msgs/msg/Vector3"
+  gz_type_name: "gz.msgs.Vector3d"
+  direction: ROS_TO_GZ
+
+- ros_topic_name: "/vrx/wavefield/parameters"
+  gz_topic_name: "/vrx/wavefield/parameters"
+  ros_type_name: "ros_gz_interfaces/msg/ParamVec"
+  gz_type_name: "gz.msgs.Param"
+  direction: ROS_TO_GZ

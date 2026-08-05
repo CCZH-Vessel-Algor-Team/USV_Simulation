@@ -358,6 +358,13 @@ void WaveVisualPrivate::OnUpdate()
     (*vsParams)["omega"].InitializeBuffer(3);
     (*vsParams)["omega"].UpdateBuffer(omegaV);
 
+    float phaseV[3] = {
+        static_cast<float>(this->wavefield.Phase_V()[0]),
+        static_cast<float>(this->wavefield.Phase_V()[1]),
+        static_cast<float>(this->wavefield.Phase_V()[2])};
+    (*vsParams)["phase"].InitializeBuffer(3);
+    (*vsParams)["phase"].UpdateBuffer(phaseV);
+
     auto directions0 = this->wavefield.Direction_V()[0];
     float dir0[2] = {
         static_cast<float>(directions0.X()),
@@ -455,7 +462,9 @@ void WaveVisualPrivate::OnRenderTeardown()
 void WaveVisualPrivate::OnWavefield(const msgs::Param &_msg)
 {
   std::lock_guard<std::mutex> lock(this->mutex);
-  this->wavefield.Load(_msg);
+  const double simTime =
+    std::chrono::duration<double>(this->currentSimTime).count();
+  this->wavefield.Load(_msg, simTime, math::Vector3d(0.0, 0.0, 0.0));
   this->paramsSet = false;
 }
 
