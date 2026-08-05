@@ -18,14 +18,9 @@ visualization:
   launch_rviz: true
   enable_telemetry: true
 
-# 船 1（robot_<N> 按数字排序）。周邻 CTRV 真值见 scenario.ground_truth_sim；overrides.ground_truth_enabled 仅为 xacro P3D。
-# enable_env_dynamics：本船 usv_env_dynamics；false 时本船不启该节点。
+# 船 1（robot_<N> 按数字排序）。环境力由 Gazebo 插件计算。
 robot_1:
   name: usv_1
-  enable_env_dynamics: true
-  env_dynamics:
-    k_wind: 1.5
-    k_current: 250.0
   xacro_template: wamv_no_battery.urdf.xacro
   thruster_config: CUSTOM
   thrusters:

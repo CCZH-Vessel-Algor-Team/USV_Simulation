@@ -18,8 +18,10 @@
   <depend>robot_state_publisher</depend>
   <depend>rviz2</depend>
   <depend>rviz_common</depend>
+  <exec_depend>env_panel</exec_depend>
   <depend>ros_gz_sim</depend>
   <depend>ros_gz_bridge</depend>
+  <depend>ros_gz_interfaces</depend>
   <depend>robot_localization</depend>
   <depend>usv_mmwave_sim</depend>
   <depend>wamv_gazebo</depend>

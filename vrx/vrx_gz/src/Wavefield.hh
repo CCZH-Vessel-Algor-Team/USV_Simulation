@@ -165,6 +165,10 @@ namespace vrx
     /// \param[in] _msg The SDF Element tree containing the wavefield parameters
     public: void Load(const gz::msgs::Param &_msg);
 
+    /// \brief Apply runtime parameters while preserving phase at a reference point.
+    public: void Load(const gz::msgs::Param &_msg, double _time,
+                      const gz::math::Vector3d &_referencePoint);
+
     /// \brief Is the wavefield loaded.
     /// \return True when the wavefield has been loaded or false otherwise.
     public: bool Active() const;

@@ -162,6 +162,7 @@ list(APPEND VRX_GZ_PLUGINS
   ScanDockScoringPlugin
   SimpleHydrodynamics
   Surface
+  TargetShipController
   USVWind
   WaveVisual
   WildlifeScoringPlugin
@@ -180,6 +181,16 @@ foreach(PLUGIN ${VRX_GZ_PLUGINS})
     Eigen3::Eigen
   )
 endforeach()
+
+target_link_libraries(USVWind PUBLIC
+  gz-msgs10::gz-msgs10
+  gz-transport13::gz-transport13
+)
+
+target_link_libraries(TargetShipController PUBLIC
+  gz-msgs10::gz-msgs10
+  gz-transport13::gz-transport13
+)
 
 install(
   TARGETS ${VRX_GZ_PLUGINS}

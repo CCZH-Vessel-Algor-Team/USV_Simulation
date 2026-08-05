@@ -95,10 +95,6 @@ visualization:
 
 robot_1:
   name: usv_1
-  enable_env_dynamics: true
-  env_dynamics:
-    k_wind: 1.5
-    k_current: 250.0
   xacro_template: wamv_no_battery.urdf.xacro
   thruster_config: CUSTOM
   thrusters:

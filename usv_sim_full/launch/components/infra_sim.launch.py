@@ -10,12 +10,14 @@
 """
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable, OpaqueFunction, ExecuteProcess
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory, get_package_prefix
 from usv_sim_full.launch_config_helpers import quiet_ros_node_kwargs
 import os
+import shlex
+import xml.etree.ElementTree as ET
 
 
 def generate_launch_description():
@@ -146,10 +148,6 @@ def generate_launch_description():
                 print(f"Synced {key} to os.environ for gz_sim.launch.py (value length={len(os.environ[key])})")
         return []
 
-    # 启动Gazebo仿真 - 使用ros_gz_sim的内置启动文件
-    from launch.actions import IncludeLaunchDescription
-    from launch.launch_description_sources import PythonLaunchDescriptionSource
-
     def launch_gazebo_with_selected_world(context, *args, **kwargs):
         selected_world_name = world_name.perform(context)
         headless = gz_headless.perform(context).lower() in ('true', '1', 'yes')
@@ -176,17 +174,31 @@ def generate_launch_description():
                 f"World not found: {world_file}. Available world_name values: {available_worlds}"
             )
 
-        gz_args = f'-r -s {world_file}' if headless else f'-r {world_file}'
-        gazebo_launch = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
-                get_package_share_directory('ros_gz_sim'),
-                '/launch/gz_sim.launch.py'
-            ]),
-            launch_arguments={
-                'gz_args': gz_args
-            }.items()
+        gz_args = ['-r', '-s', world_file] if headless else ['-r', world_file]
+        filtered_gz_command = (
+            'ruby "$(which gz)" sim '
+            f'{shlex.join(gz_args)} --force-version 8 '
+            '2>&1 | grep --line-buffered -vE -- '
+            '"SceneManager\\.cc:615|Could not find visual for entity: 0"; '
+            'gz_status=${PIPESTATUS[0]}; exit "$gz_status"'
         )
-        return [gazebo_launch]
+        gz_environment = {
+            'GZ_SIM_SYSTEM_PLUGIN_PATH': ':'.join([
+                os.environ.get('GZ_SIM_SYSTEM_PLUGIN_PATH', ''),
+                os.environ.get('LD_LIBRARY_PATH', ''),
+            ]),
+            'IGN_GAZEBO_SYSTEM_PLUGIN_PATH': ':'.join([
+                os.environ.get('IGN_GAZEBO_SYSTEM_PLUGIN_PATH', ''),
+                os.environ.get('LD_LIBRARY_PATH', ''),
+            ]),
+        }
+        return [
+            ExecuteProcess(
+                cmd=['bash', '-lc', filtered_gz_command],
+                output='screen',
+                additional_env=gz_environment,
+            )
+        ]
     
     def launch_global_bridge(context, *args, **kwargs):
         v = verbose_launch.perform(context)
@@ -203,6 +215,46 @@ def generate_launch_description():
             )
         ]
 
+    def launch_sun_light_bridge(context, *args, **kwargs):
+        selected_world_name = world_name.perform(context)
+        worlds_dir = os.path.join(usv_sim_path, 'worlds')
+        world_file = next(
+            (
+                path for path in (
+                    os.path.join(worlds_dir, f'{selected_world_name}.sdf'),
+                    os.path.join(worlds_dir, f'{selected_world_name}.world'),
+                )
+                if os.path.exists(path)
+            ),
+            None,
+        )
+        if world_file is None:
+            raise FileNotFoundError(
+                f'Cannot configure sun light bridge: world {selected_world_name} not found')
+
+        world_element = ET.parse(world_file).getroot().find('world')
+        if world_element is None or not world_element.get('name'):
+            raise ValueError(
+                f'Cannot configure sun light bridge: missing world name in {world_file}')
+
+        gazebo_topic = f'/world/{world_element.get("name")}/light_config'
+        v = verbose_launch.perform(context)
+        kw = quiet_ros_node_kwargs(
+            v,
+            base_arguments=[
+                f'{gazebo_topic}@ros_gz_interfaces/msg/Light]gz.msgs.Light'
+            ],
+        )
+        return [
+            Node(
+                package='ros_gz_bridge',
+                executable='parameter_bridge',
+                name='sun_light_bridge',
+                remappings=[(gazebo_topic, '/vrx/environment/sun_light_cmd')],
+                **kw,
+            )
+        ]
+
     return LaunchDescription([
         world_name_arg,
         verbose_launch_arg,
@@ -214,4 +266,5 @@ def generate_launch_description():
         OpaqueFunction(function=sync_gz_system_plugin_path_to_os_environ),
         OpaqueFunction(function=launch_gazebo_with_selected_world),
         OpaqueFunction(function=launch_global_bridge),
+        OpaqueFunction(function=launch_sun_light_bridge),
     ])

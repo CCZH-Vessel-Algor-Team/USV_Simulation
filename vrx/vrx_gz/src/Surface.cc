@@ -16,7 +16,9 @@
  */
 #include <gz/msgs/param.pb.h>
 #include <chrono>
+#include <cmath>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <gz/common/Profiler.hh>
 #include <gz/math/Vector3.hh>
@@ -78,6 +80,11 @@ class vrx::Surface::Implementation
 
   /// \brief Mutex to protect the wavefield.
   public: std::mutex mutex;
+
+  /// \brief Simulation time when this surface starts receiving waves.
+  public: std::optional<double> waveStartTime;
+  public: double lastSimTime = 0.0;
+  public: math::Vector3d phaseReference{0.0, 0.0, 0.0};
 };
 
 //////////////////////////////////////////////////
@@ -112,7 +119,7 @@ void Surface::Implementation::ParsePoints(
 void Surface::Implementation::OnWavefield(const msgs::Param &_msg)
 {
   std::lock_guard<std::mutex> lock(this->mutex);
-  this->wavefield.Load(_msg);
+  this->wavefield.Load(_msg, this->lastSimTime, this->phaseReference);
 }
 
 //////////////////////////////////////////////////
@@ -225,6 +232,9 @@ void Surface::PreUpdate(const sim::UpdateInfo &_info,
   math::Quaternion vq(kEuler.X(), kEuler.Y(), kEuler.Z());
 
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+  this->dataPtr->lastSimTime = std::chrono::duration<double>(_info.simTime).count();
+  // Keep the same global phase reference as WaveVisual and other vessels.
+  this->dataPtr->phaseReference = math::Vector3d(0.0, 0.0, 0.0);
 
   for (auto const &bpnt : this->dataPtr->points)
   {
@@ -241,7 +251,18 @@ void Surface::PreUpdate(const sim::UpdateInfo &_info,
 
     // Compute the depth at the grid point.
     double simTime = std::chrono::duration<double>(_info.simTime).count();
-    double depth = this->dataPtr->wavefield.ComputeDepthSimply(point, simTime);
+    if (!this->dataPtr->waveStartTime ||
+      simTime < *this->dataPtr->waveStartTime)
+    {
+      this->dataPtr->waveStartTime = simTime;
+    }
+    double depth = this->dataPtr->wavefield.ComputeDepthSimply(
+      point, simTime, *this->dataPtr->waveStartTime);
+    if (!std::isfinite(depth) || !std::isfinite(kDdz))
+    {
+      gzwarn << "Skipping non-finite surface buoyancy sample" << std::endl;
+      continue;
+    }
 
     // Total z location of boat grid point relative to fluid surface.
     double deltaZ = (this->dataPtr->fluidLevel + depth) - kDdz;
@@ -253,6 +274,11 @@ void Surface::PreUpdate(const sim::UpdateInfo &_info,
       this->CircleSegment(this->dataPtr->hullRadius, deltaZ) *
         this->dataPtr->hullLength / this->dataPtr->points.size() *
           -this->dataPtr->gravity.Z() * this->dataPtr->fluidDensity;
+    if (!std::isfinite(kBuoyForce))
+    {
+      gzwarn << "Skipping non-finite surface buoyancy force" << std::endl;
+      continue;
+    }
 
     // Apply force at the point.
     // Position is in the link frame and force is in world frame.

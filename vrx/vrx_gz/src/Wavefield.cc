@@ -63,7 +63,8 @@ class vrx::WavefieldPrivate
     wavelength(2 * M_PI / this->DeepWaterDispersionToWavenumber(2.0 * M_PI)),
     wavenumber(this->DeepWaterDispersionToWavenumber(2.0 * M_PI)),
     tau(2.0),
-    gain(1.0)
+    gain(1.0),
+    significantHeight(-1.0)
   {
   }
 
@@ -115,7 +116,7 @@ class vrx::WavefieldPrivate
   /// \brief The mean wave period [s]
   public: double period;
 
-  /// \brief The mean wave phase (not currently enabled).
+  /// \brief The mean wave phase used to preserve runtime wave continuity.
   public: double phase;
 
   /// \brief The mean wave direction.
@@ -126,6 +127,9 @@ class vrx::WavefieldPrivate
 
   /// \brief The multiplier applied to PM spectra
   public: double gain;
+
+  /// \brief Target significant wave height for PMS [m]. Negative means legacy gain mode.
+  public: double significantHeight;
 
   /// \brief The mean wave angular frequency (derived).
   public: double angularFrequency;
@@ -210,6 +214,7 @@ void WavefieldPrivate::RecalculateCwr()
 
     directions.push_back(d);
   }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -273,6 +278,23 @@ void WavefieldPrivate::RecalculatePms()
     const math::Vector2d d(c, s);
 
     directions.push_back(d);
+  }
+
+  if (this->significantHeight >= 0.0)
+  {
+    double sumSquared = 0.0;
+    for (const auto a : this->amplitudes)
+      sumSquared += a * a;
+    const double currentHs = 4.0 * std::sqrt(sumSquared / 2.0);
+    const double factor = currentHs > 1e-9 ? this->significantHeight / currentHs : 0.0;
+    for (auto &a : this->amplitudes)
+      a *= factor;
+    for (size_t i = 0; i < this->amplitudes.size(); ++i)
+    {
+      this->steepnesses[i] = math::equal(this->amplitudes[i], 0.0) ? 0.0 :
+        std::min(1.0, this->steepness /
+        (this->amplitudes[i] * this->wavenumbers[i] * this->number));
+    }
   }
 }
 
@@ -391,6 +413,11 @@ void WavefieldPrivate::FillParameters()
   gainValue.set_double_value(this->gain);
   (*params)["gain"] = gainValue;
 
+  gz::msgs::Any significantHeightValue;
+  significantHeightValue.set_type(gz::msgs::Any_ValueType::Any_ValueType_DOUBLE);
+  significantHeightValue.set_double_value(this->significantHeight);
+  (*params)["significant_height"] = significantHeightValue;
+
   // tau
   gz::msgs::Any tauValue;
   tauValue.set_type(gz::msgs::Any_ValueType::Any_ValueType_DOUBLE);
@@ -445,6 +472,8 @@ void Wavefield::Load(const std::shared_ptr<const sdf::Element> &_sdf)
       sdfWave->Get<double>("steepness", this->data->steepness).first;
     this->data->tau = sdfWave->Get<double>("tau", this->data->tau).first;
     this->data->gain = sdfWave->Get<double>("gain", this->data->gain).first;
+    this->data->significantHeight = sdfWave->Get<double>(
+      "significant_height", this->data->significantHeight).first;
 
     this->data->Recalculate();
   }
@@ -457,7 +486,83 @@ void Wavefield::Load(const std::shared_ptr<const sdf::Element> &_sdf)
 ///////////////////////////////////////////////////////////////////////////////
 void Wavefield::Load(const msgs::Param &_msg)
 {
+  this->Load(_msg, 0.0, math::Vector3d(0.0, 0.0, 0.0));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void Wavefield::Load(const msgs::Param &_msg, double _time,
+  const math::Vector3d &_referencePoint)
+{
   auto params = _msg.params();
+
+  const auto finiteDouble = [&params](const std::string &_name)
+  {
+    return params.count(_name) == 0 ||
+      std::isfinite(params.at(_name).double_value());
+  };
+
+  if (!finiteDouble("amplitude") || !finiteDouble("period") ||
+      !finiteDouble("phase") || !finiteDouble("direction") ||
+      !finiteDouble("scale") || !finiteDouble("angle") ||
+      !finiteDouble("steepness") || !finiteDouble("gain") ||
+      !finiteDouble("tau") || !finiteDouble("significant_height"))
+  {
+    gzwarn << "Ignoring wavefield parameters containing non-finite values"
+           << std::endl;
+    return;
+  }
+
+  if ((params.count("period") > 0 &&
+       params.at("period").double_value() <= 0.0) ||
+      (params.count("gain") > 0 &&
+       (params.at("gain").double_value() < 0.0 ||
+        params.at("gain").double_value() > 1.0)) ||
+      (params.count("amplitude") > 0 &&
+       params.at("amplitude").double_value() < 0.0) ||
+      (params.count("steepness") > 0 &&
+       (params.at("steepness").double_value() < 0.0 ||
+        params.at("steepness").double_value() > 1.0)) ||
+      (params.count("scale") > 0 &&
+       params.at("scale").double_value() <= 1.0) ||
+      (params.count("tau") > 0 &&
+       params.at("tau").double_value() <= 0.0) ||
+      (params.count("number") > 0 &&
+       params.at("number").int_value() <= 0) ||
+      (params.count("significant_height") > 0 &&
+       params.at("significant_height").double_value() < 0.0))
+  {
+    gzwarn << "Ignoring invalid wavefield parameters" << std::endl;
+    return;
+  }
+
+  const std::string resultingModel = params.count("model") > 0 ?
+    params.at("model").string_value() : this->data->model;
+  const int resultingNumber = params.count("number") > 0 ?
+    params.at("number").int_value() : static_cast<int>(this->data->number);
+  if (resultingModel == "PMS" && resultingNumber != 3)
+  {
+    gzwarn << "Ignoring PMS wavefield parameters: number must be 3"
+           << std::endl;
+    return;
+  }
+
+  std::vector<double> oldTheta;
+  const bool canPreservePhase = this->data->number > 0 &&
+    this->data->number / 2 < this->data->angularFrequencies.size() &&
+    this->data->number / 2 < this->data->wavenumbers.size() &&
+    this->data->number / 2 < this->data->directions.size() &&
+    this->data->phases.size() == this->data->number;
+  if (canPreservePhase)
+  {
+    oldTheta.resize(this->data->number);
+    for (size_t i = 0; i < this->data->number; ++i)
+    {
+      const auto &d = this->data->directions[i];
+      oldTheta[i] = this->data->wavenumbers[i] *
+        (_referencePoint.X() * d.X() + _referencePoint.Y() * d.Y()) -
+        this->data->angularFrequencies[i] * _time + this->data->phases[i];
+    }
+  }
 
   if (params.count("size") > 0)
   {
@@ -513,9 +618,25 @@ void Wavefield::Load(const msgs::Param &_msg)
   {
     this->data->tau = params["tau"].double_value();
   }
+  if (params.count("significant_height") > 0)
+  {
+    this->data->significantHeight = params["significant_height"].double_value();
+  }
 
   this->data->FillParameters();
   this->data->Recalculate();
+  if (canPreservePhase && this->data->number > 0 &&
+    this->data->phases.size() == this->data->number)
+  {
+    for (size_t i = 0; i < this->data->number; ++i)
+    {
+      const auto &d = this->data->directions[i];
+      this->data->phases[i] = oldTheta[i] - this->data->wavenumbers[i] *
+        (_referencePoint.X() * d.X() + _referencePoint.Y() * d.Y()) +
+        this->data->angularFrequencies[i] * _time;
+    }
+    this->data->phase = this->data->phases[this->data->number / 2];
+  }
   this->data->active = true;
 }
 
@@ -760,7 +881,7 @@ double Wavefield::ComputeDepthSimply(const math::Vector3d &_point,
     double dy =  this->Direction_V()[i].Y();
     double dot = _point.X() * dx + _point.Y() * dy;
     double omega = this->AngularFrequency_V()[i];
-    double theta = k * dot - omega * _time;
+     double theta = k * dot - omega * _time + this->Phase_V()[i];
     double c = cos(theta);
     h += a*c;
   }
@@ -815,7 +936,7 @@ double Wavefield::ComputeDepthDirectly(const math::Vector3d &_point,
       const double a = wp.a[i];
       const double k = wp.k[i];
       const double dot = x.x() * dx + x.y() * dy;
-      const double theta = k * dot - wp.omega[i] * t;
+       const double theta = k * dot - wp.omega[i] * t + wp.phi[i];
       const double s = std::sin(theta);
       const double c = std::cos(theta);
       const double qakc = q * a * k * c;

@@ -126,10 +126,10 @@
       <static_update_frequency>1</static_update_frequency>
     </plugin>
 
-    <plugin
-      filename="gz-sim-joint-state-publisher-system"
-      name="gz::sim::systems::JointStatePublisher">
-    </plugin>
+    <!-- JointStatePublisher was removed: it can forward an invalid null joint
+         entity to the Ogre2 JointVisual synchronizer. Thruster joint control
+         remains provided by the individual Thruster/JointPositionController
+         plugins above. -->
   </gazebo>
 
 
@@ -219,56 +219,70 @@
     <xacro:include filename="$(arg extra_sensors)" />
   </xacro:if>
 
-  <!-- === 水动力学插件 - 使用配置参数 === -->
+  <!-- === Gazebo 原生环境动力学插件 === -->
   <gazebo>
-    <!-- 左船体 -->
+    <!-- 四个浮力点由同一插件原子更新，避免左右参数切换不同步。 -->
     <plugin filename="libSurface.so" name="vrx::Surface">
       <link_name>$(arg namespace)/base_link</link_name>
-      <hull_length>$(arg hull_length)</hull_length>
+      <!-- 一个插件等效原来的左右双船体，总排水长度为单体的两倍。 -->
+      <hull_length>${2.0 * float('$(arg hull_length)')}</hull_length>
       <hull_radius>$(arg hull_radius)</hull_radius>
       <fluid_level>$(arg fluid_level)</fluid_level>
       <points>
         <point>0.6 1.03 0</point>
         <point>-1.4 1.03 0</point>
-      </points>
-      <wavefield>
-        <topic>/vrx/wavefield/parameters</topic>
-      </wavefield>
-    </plugin>
-
-    <!-- 右船体 -->
-    <plugin filename="libSurface.so" name="vrx::Surface">
-      <link_name>$(arg namespace)/base_link</link_name>
-      <hull_length>$(arg hull_length)</hull_length>
-      <hull_radius>$(arg hull_radius)</hull_radius>
-      <fluid_level>$(arg fluid_level)</fluid_level>
-      <points>
         <point>0.6 -1.03 0</point>
         <point>-1.4 -1.03 0</point>
       </points>
       <wavefield>
         <topic>/vrx/wavefield/parameters</topic>
+        <wave>
+          <model>PMS</model>
+          <period>5.0</period>
+          <direction>0.0</direction>
+          <gain>0.3</gain>
+          <steepness>0.0</steepness>
+        </wave>
       </wavefield>
     </plugin>
 
-    <plugin filename="libSimpleHydrodynamics.so" name="vrx::SimpleHydrodynamics">
+    <plugin filename="gz-sim-hydrodynamics-system" name="gz::sim::systems::Hydrodynamics">
       <link_name>$(arg namespace)/base_link</link_name>
-      <!-- 附加质量 -->
-      <xDotU>$(arg xDotU)</xDotU>
-      <yDotV>$(arg yDotV)</yDotV>
-      <nDotR>$(arg nDotR)</nDotR>
-      <!-- 线性和二次阻力 -->
-      <xU>$(arg xU)</xU>
-      <xUU>$(arg xUU)</xUU>
-      <yV>$(arg yV)</yV>
-      <yVV>$(arg yVV)</yVV>
-      <zW>$(arg zW)</zW>
-      <kP>$(arg kP)</kP>
-      <kPP>$(arg kPP)</kPP>
-      <mQ>$(arg mQ)</mQ>
-      <mQQ>$(arg mQQ)</mQQ>
-      <nR>$(arg nR)</nR>
-      <nRR>$(arg nRR)</nRR>
+      <!-- Gazebo Hydrodynamics uses signed SNAME derivatives. -->
+      <xDotU>${-float('$(arg xDotU)')}</xDotU>
+      <yDotV>${-float('$(arg yDotV)')}</yDotV>
+      <nDotR>${-float('$(arg nDotR)')}</nDotR>
+      <xU>${-float('$(arg xU)')}</xU>
+      <xUabsU>${-float('$(arg xUU)')}</xUabsU>
+      <yV>${-float('$(arg yV)')}</yV>
+      <yVabsV>${-float('$(arg yVV)')}</yVabsV>
+      <zW>${-float('$(arg zW)')}</zW>
+      <kP>${-float('$(arg kP)')}</kP>
+      <kPabsP>${-float('$(arg kPP)')}</kPabsP>
+      <mQ>${-float('$(arg mQ)')}</mQ>
+      <mQabsQ>${-float('$(arg mQQ)')}</mQabsQ>
+      <nR>${-float('$(arg nR)')}</nR>
+      <nRabsR>${-float('$(arg nRR)')}</nRabsR>
+      <disable_added_mass>true</disable_added_mass>
+      <disable_coriolis>true</disable_coriolis>
+      <default_current>0 0 0</default_current>
+    </plugin>
+
+    <plugin filename="libUSVWind.so" name="vrx::USVWind">
+      <wind_obj>
+        <name>$(arg namespace)</name>
+        <link_name>$(arg namespace)/base_link</link_name>
+        <coeff_vector>0.5 0.5 0.33</coeff_vector>
+      </wind_obj>
+      <wind_direction>0</wind_direction>
+      <wind_mean_velocity>0.0</wind_mean_velocity>
+      <var_wind_gain_constants>0</var_wind_gain_constants>
+      <var_wind_time_constants>2</var_wind_time_constants>
+      <random_seed>10</random_seed>
+      <update_rate>10</update_rate>
+      <topic_wind_velocity_cmd>/vrx/wind/velocity_cmd</topic_wind_velocity_cmd>
+      <topic_wind_speed>/vrx/debug/wind/speed</topic_wind_speed>
+      <topic_wind_direction>/vrx/debug/wind/direction</topic_wind_direction>
     </plugin>
   </gazebo>
 

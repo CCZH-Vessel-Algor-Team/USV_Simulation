@@ -16,6 +16,7 @@
   <depend>geometry_msgs</depend>
   <depend>ros_gz_interfaces</depend>
   <depend>rcl_interfaces</depend>
+  <depend>usv_interfaces</depend>
 
   <build_depend>qtbase5-dev</build_depend>
   <exec_depend>qtbase5-dev</exec_depend>
