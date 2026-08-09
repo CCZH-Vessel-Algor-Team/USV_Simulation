@@ -18,9 +18,10 @@ controller_server:
       max_angular_vel: 0.8
       max_angular_accel: 1.5
       forward_dist: 8.0
-      gamma: 0.0003
+      gamma: 0.0015
       beta_hat0: 0.0
-      reset_beta_on_new_path: true
+      reset_beta_on_new_goal: true
+      beta_reset_goal_dist_tolerance: 0.05
       max_angle_for_motion: 0.8
       max_robot_pose_search_dist: 10.0
 
