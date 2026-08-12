@@ -23,6 +23,8 @@ Panels:
     Name: Navigation 2
   - Class: env_panel/DynamicShipConfig
     Name: DynamicShipConfig
+  - Class: env_panel/StormFieldConfig
+    Name: StormFieldConfig
 Visualization Manager:
   Class: ""
   Displays:
@@ -57,6 +59,19 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /sim/ground_truth_markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Storm Field Hazards
+      Namespaces:
+        storm_field: true
+        storm_field_label: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /storm_field/markers
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
@@ -441,6 +456,7 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /usv_1/goal_pose
     - Class: rviz_default_plugins/PublishPoint
+      Name: Dynamic Ship Point
       Single click: true
       Topic:
         Depth: 5
@@ -448,6 +464,14 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /clicked_point
+    - Class: env_panel/StormPoint
+      Single click: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /storm_field/clicked_point
   Transformation:
     Current:
       Class: rviz_default_plugins/TF
@@ -485,6 +509,8 @@ Window Geometry:
   Displays:
     collapsed: false
   DynamicShipConfig:
+    collapsed: false
+  StormFieldConfig:
     collapsed: false
   Height: 1371
   Hide Left Dock: false

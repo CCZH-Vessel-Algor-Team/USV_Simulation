@@ -75,6 +75,35 @@ def _colregs_bringup_available() -> bool:
         return False
 
 
+def _dynamic_ship_manager_node(context, *args, **kwargs):
+    cfg_path = LaunchConfiguration('config_path').perform(context)
+    usv_sim_full_pkg = get_package_share_directory('usv_sim_full')
+    world_name = 'sydney_regatta'
+    try:
+        with open(cfg_path, 'r') as f:
+            cfg = yaml.safe_load(f) or {}
+        world_name = cfg.get('environment', {}).get('world_name', world_name)
+    except Exception:
+        pass
+
+    return [
+        Node(
+            package='usv_sim_full',
+            executable='dynamic_ship_manager_node',
+            name='dynamic_ship_manager',
+            output='screen',
+            parameters=[{
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'world_name': world_name,
+                'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
+                'default_mesh_profile': os.path.join(
+                    usv_sim_full_pkg, 'description', 'models',
+                    'target_ship', '10m_mesh_profile.yaml'),
+            }],
+        ),
+    ]
+
+
 _NAV2_INSTALL_HINT = (
     '未找到 nav2_bringup（Nav2 导航栈）。仿真将继续运行，但不会启动 Nav2。'
     '请先在 usv_ws 内构建 usv_nav：'
@@ -788,18 +817,19 @@ def generate_launch_description():
         OpaqueFunction(function=_convert_to_trackship_node),
         map_server,
         map_lifecycle_manager,
+        OpaqueFunction(function=_dynamic_ship_manager_node),
         Node(
             package='usv_sim_full',
-            executable='dynamic_ship_manager_node',
-            name='dynamic_ship_manager',
+            executable='storm_field_manager_node',
+            name='storm_field_manager',
             output='screen',
             parameters=[{
                 'use_sim_time': use_sim_time,
-                'world_name': 'sydney_regatta',
-                'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
-                'default_mesh_profile': os.path.join(
-                    usv_sim_full_pkg, 'description', 'models',
-                    'target_ship', '10m_mesh_profile.yaml'),
+                'frame_id': 'map',
+                'tracked_ship_topic': '/dynamic_ship/tracked_ships',
+                'names_topic': '/storm_field/names',
+                'storm_field_topic': '/storm_field/storms',
+                'clicked_point_topic': '/storm_field/clicked_point',
             }],
         ),
         OpaqueFunction(function=vector_object_server_launch),

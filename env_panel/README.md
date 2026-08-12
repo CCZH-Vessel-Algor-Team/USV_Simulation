@@ -78,6 +78,21 @@ wave_gain = clamp((0.11 * wind_speed^2/g) / 3, 0, 1)
 
 ## ROS 与 Gazebo 话题
 
+### 左右舷吃水节点
+
+`hull_draft_publisher` 随 `usv_sim_full` 的每艘船自动启动，订阅船体里程计并按
+`Surface` 插件的四个浮力采样点计算静水吃水。波浪瞬时水面高度暂未纳入计算。
+
+以 `usv_1` 为例：
+
+| 话题 | 类型 | 内容 |
+| --- | --- | --- |
+| `/usv_1/hull_draft` | `usv_interfaces/msg/HullDraft` | 保留原始四点与两舷均值，并新增 `average_draft`、`trim`、`heel` |
+
+默认浮力点为前后 `x=[0.6,-1.4]`、左右 `y=[1.03,-1.03]`，浮体半径为 `0.213 m`。
+模型参数变化时，可通过 `front_x`、`aft_x`、`port_y`、`starboard_y`、`hull_radius`
+和 `fluid_level` 覆盖。`trim` 正值表示艏部更深，`heel` 正值表示左舷更深。
+
 桥接配置位于：
 
 ```text

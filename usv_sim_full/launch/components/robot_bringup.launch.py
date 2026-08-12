@@ -306,6 +306,17 @@ def generate_launch_description():
                 }],
                 **odom_kw,
             ),
+            Node(
+                package='env_panel',
+                executable='hull_draft_publisher',
+                name=f'hull_draft_publisher_{safe}',
+                parameters=[{
+                    'odom_topic': f'/{rn}/odom',
+                    'draft_topic': f'/{rn}/hull_draft',
+                    'use_sim_time': use_sim_time_val,
+                }],
+                **odom_kw,
+            ),
         ]
         if bridge_on:
             radar_kw = quiet_ros_node_kwargs(v)

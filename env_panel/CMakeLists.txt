@@ -15,7 +15,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(ament_cmake REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
+find_package(rviz_default_plugins REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -26,8 +28,12 @@ find_package(usv_interfaces REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   include/env_panel/vrx_env_panel.hpp
   include/env_panel/dynamic_ship_panel.hpp
+  include/env_panel/storm_field_panel.hpp
+  include/env_panel/storm_point_tool.hpp
   src/vrx_env_panel.cpp
   src/dynamic_ship_panel.cpp
+  src/storm_field_panel.cpp
+  src/storm_point_tool.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -39,6 +45,7 @@ target_include_directories(${PROJECT_NAME}
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rviz_common
+  rviz_default_plugins
   pluginlib
   std_msgs
   geometry_msgs
@@ -52,6 +59,16 @@ target_link_libraries(${PROJECT_NAME}
   Qt5::Widgets
 )
 
+add_executable(hull_draft_publisher
+  src/hull_draft_node.cpp
+)
+
+ament_target_dependencies(hull_draft_publisher
+  rclcpp
+  nav_msgs
+  usv_interfaces
+)
+
 pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
 
 install(TARGETS ${PROJECT_NAME}
@@ -59,6 +76,10 @@ install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+install(TARGETS hull_draft_publisher
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
