@@ -1,0 +1,9 @@
+std_msgs/Header header
+string route_id
+float32 corridor_half_width_m
+float32[] distance_m
+float32[] depth_min_m
+float32[] ukc_m
+float32[] uncertainty_m
+uint8[] risk
+uint32[] route_index

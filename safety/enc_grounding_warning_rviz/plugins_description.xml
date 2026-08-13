@@ -1,0 +1,7 @@
+<library path="enc_grounding_warning_rviz">
+  <class name="enc_grounding_warning_rviz/GroundingWarningPanel"
+         type="enc_grounding_warning_rviz::GroundingWarningPanel"
+         base_class_type="rviz_common::Panel">
+    <description>Panel showing UKC / grounding alert / depth grid status.</description>
+  </class>
+</library>

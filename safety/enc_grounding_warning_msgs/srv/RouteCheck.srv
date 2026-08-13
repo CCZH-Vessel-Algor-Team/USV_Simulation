@@ -1,0 +1,10 @@
+nav_msgs/Path route
+---
+bool success
+RouteDepthProfile profile
+int32 first_unsafe_index  # -1 表示无危险
+float64 danger_x
+float64 danger_y
+float32 min_ukc_m
+float32 time_to_danger_s
+string message

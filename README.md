@@ -18,6 +18,7 @@
 | **Demo 参数** | [docs/docs_v4/DEMO_RUN.md](docs/docs_v4/DEMO_RUN.md) |
 | **架构与目录** | [docs/docs_v3/仿真仓库结构说明.md](docs/docs_v3/仿真仓库结构说明.md) |
 | **全栈架构** | [usv_sim_full/docs/nav2_sim_three_vision_mmwave_architecture.md](usv_sim_full/docs/nav2_sim_three_vision_mmwave_architecture.md) |
+| **仿真安全能力** | [safety/README.md](safety/README.md) |
 
 历史文档（v1/v2/v3，可能含旧版 Docker 表述）：[docs/docs_v1](docs/docs_v1/)、[docs/docs_v2](docs/docs_v2/)、[docs/docs_v3](docs/docs_v3/)。
 

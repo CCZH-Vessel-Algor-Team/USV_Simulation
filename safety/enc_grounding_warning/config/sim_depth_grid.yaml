@@ -1,0 +1,26 @@
+depth_grid:
+  frame_id: map
+  origin_x: -2000.0
+  origin_y: -2000.0
+  resolution: 5.0
+  width: 800
+  height: 800
+  mode: flat              # flat / file
+  data_file: ""           # mode=file 时必填（相对本 config 目录）
+  depth_m: 3.0
+  undulation:
+    enabled: true
+    amplitude_m: 1.2
+    wavelength_m: 50.0
+    direction_deg: 30.0
+  uncertainty_m: 0.1
+  quality: 3              # CATZOC B
+  shoals:
+    - {x: 50.0, y: 100.0, radius: 30.0, depth_m: 0.8}
+    - {x: 300.0, y: 250.0, radius: 50.0, depth_m: 0.5}
+    - {x: -50.0, y: 80.0, radius: 25.0, depth_m: 0.6}
+    - {x: 120.0, y: -40.0, radius: 35.0, depth_m: 0.7}
+    - {x: 250.0, y: 150.0, radius: 20.0, depth_m: 1.0}
+    - {x: 400.0, y: 320.0, radius: 25.0, depth_m: 0.6}
+    - {x: 0.0, y: -120.0, radius: 40.0, depth_m: 0.9}
+    - {x: -150.0, y: -80.0, radius: 45.0, depth_m: 0.4}
