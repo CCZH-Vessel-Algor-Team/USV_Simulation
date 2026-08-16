@@ -44,6 +44,7 @@ from usv_sim_full.launch_config_helpers import (
     ground_truth_gazebo_visual_enabled,
     merge_ground_truth_gazebo_entity_params,
     merge_ground_truth_gazebo_models_params,
+    primary_robot_name,
     quiet_ros_node_kwargs,
     resolve_ground_truth_user_params_path,
     resolve_session_robots,
@@ -158,6 +159,11 @@ def launch_setup(context, *args, **kwargs):
 
     with open(config_path, 'r') as f:
         user_config = yaml.safe_load(f)
+
+    raw_nav2_namespace = LaunchConfiguration('nav2_namespace').perform(context).strip()
+    if raw_nav2_namespace in ('', 'auto'):
+        raw_nav2_namespace = primary_robot_name(user_config)
+    nav2_namespace = raw_nav2_namespace
 
     world_name = user_config.get('environment', {}).get('world_name', 'sydney_regatta')
     launch_rviz = user_config.get('visualization', {}).get('launch_rviz', True)
@@ -457,6 +463,7 @@ def launch_setup(context, *args, **kwargs):
             'rviz_config_path': rviz_config_path,
             'verbose_launch': verbose_s,
             'use_sim_time': use_sim_time,
+            'nav2_namespace': nav2_namespace,
         }.items()
     )
 
@@ -551,6 +558,12 @@ def generate_launch_description():
             'use_sim_time',
             default_value='true',
             description='Use simulation clock'
+        ),
+
+        DeclareLaunchArgument(
+            'nav2_namespace',
+            default_value='',
+            description='Nav2 动作服务命名空间；非空时透传给 visualization.launch.py 供 RViz remap'
         ),
 
         DeclareLaunchArgument(
