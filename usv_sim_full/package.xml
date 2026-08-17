@@ -42,6 +42,8 @@
   <exec_depend>nav2_colregs_msgs</exec_depend>
   <exec_depend>nav2_colregs_alos_controller</exec_depend>
   <exec_depend>nav2_colregs_costmap_layers</exec_depend>
+  <!-- 海事态势评估：nav2_maritime_situation_monitor 源码位于 usv_ws/src/usv_nav/src -->
+  <exec_depend>nav2_maritime_situation_monitor</exec_depend>
   <!-- 未声明时 colcon 的 packages-up-to usv_sim_full 不会编此二包，launch 会报 package not found -->
   <exec_depend>gy_radar_driver</exec_depend>
   <exec_depend>radar_gz_bridge</exec_depend>

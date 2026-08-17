@@ -165,6 +165,7 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             'rviz_config_path_override': default_rviz_config,
             'verbose_launch': verbose_launch,
+            'nav2_namespace': nav2_namespace,
         }.items(),
     )
 

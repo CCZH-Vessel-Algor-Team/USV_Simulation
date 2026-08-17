@@ -273,6 +273,73 @@ def _convert_to_trackship_node(context, *args, **kwargs):
     ]
 
 
+def _maritime_situation_monitor_node(context, *args, **kwargs):
+    """启动 maritime_situation_monitor：真值 TrackedShipList → SituationReportArray。"""
+    enable = LaunchConfiguration('enable_maritime_situation_monitor').perform(context)
+    if enable.lower() != 'true':
+        return [
+            LogInfo(msg='enable_maritime_situation_monitor:=false，跳过 maritime_situation_monitor。'),
+        ]
+
+    use_sim = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
+    verbose_s = LaunchConfiguration('verbose_launch').perform(context)
+    output = 'screen' if verbose_s.lower() in ('true', '1', 'yes') else 'log'
+
+    cfg_path = LaunchConfiguration('config_path').perform(context)
+    resolved_ns, _, _ = _resolve_nav2_namespace(
+        LaunchConfiguration('nav2_namespace').perform(context), cfg_path
+    )
+    params_file = LaunchConfiguration('monitor_params_file').perform(context)
+
+    tracked_ship_topic = LaunchConfiguration(
+        'monitor_tracked_ship_topic').perform(context).strip()
+    global_frame = LaunchConfiguration('monitor_global_frame').perform(context).strip()
+    odom_topic = LaunchConfiguration('monitor_odom_topic').perform(context).strip()
+    if not odom_topic:
+        odom_topic = f'/{resolved_ns}/odom'
+    base_frame = LaunchConfiguration('monitor_base_frame').perform(context).strip()
+    if not base_frame:
+        base_frame = f'{resolved_ns}/base_link'
+
+    return [
+        LogInfo(
+            msg=(
+                '启动 maritime_situation_monitor（tracked_ship_topic='
+                f'{tracked_ship_topic}，odom_topic={odom_topic}，'
+                f'global_frame={global_frame}，base_frame={base_frame}）'
+            )
+        ),
+        Node(
+            package='nav2_maritime_situation_monitor',
+            executable='maritime_situation_monitor',
+            name='maritime_situation_monitor',
+            output=output,
+            parameters=[
+                {'use_sim_time': use_sim},
+                params_file,
+                {
+                    'tracked_ship_topic': tracked_ship_topic,
+                    'odom_topic': odom_topic,
+                    'global_frame': global_frame,
+                    'base_frame': base_frame,
+                    'publish_frequency': float(
+                        LaunchConfiguration('monitor_publish_frequency').perform(context)
+                    ),
+                    'target_timeout': float(
+                        LaunchConfiguration('monitor_target_timeout').perform(context)
+                    ),
+                    'ownship_timeout': float(
+                        LaunchConfiguration('monitor_ownship_timeout').perform(context)
+                    ),
+                    'transform_timeout': float(
+                        LaunchConfiguration('monitor_transform_timeout').perform(context)
+                    ),
+                },
+            ],
+        ),
+    ]
+
+
 def generate_launch_description():
     usv_sim_full_pkg = get_package_share_directory('usv_sim_full')
     main_launch_file = os.path.join(usv_sim_full_pkg, 'launch', 'main.launch.py')
@@ -301,6 +368,11 @@ def generate_launch_description():
     trackship_pkg = get_package_share_directory('convert_to_trackship')
     default_convert_to_trackship_params = os.path.join(
         trackship_pkg, 'config', 'target_snapshot_to_tracked_ship.yaml'
+    )
+
+    monitor_pkg = get_package_share_directory('nav2_maritime_situation_monitor')
+    default_monitor_params = os.path.join(
+        monitor_pkg, 'config', 'maritime_situation_monitor.yaml'
     )
 
     default_vector_object_params = os.path.join(
@@ -405,6 +477,7 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             'rviz_config_path_override': rviz_config_path,
             'verbose_launch': verbose_launch,
+            'nav2_namespace': nav2_namespace,
         }.items(),
     )
 
@@ -667,6 +740,56 @@ def generate_launch_description():
             description='convert_to_trackship 参数（input/output topic 等）',
         ),
         DeclareLaunchArgument(
+            'enable_maritime_situation_monitor',
+            default_value='true',
+            description='false：不启动 maritime_situation_monitor（态势评估报告）',
+        ),
+        DeclareLaunchArgument(
+            'monitor_params_file',
+            default_value=default_monitor_params,
+            description='maritime_situation_monitor 参数（阈值类参数在此文件配置）',
+        ),
+        DeclareLaunchArgument(
+            'monitor_tracked_ship_topic',
+            default_value='/dynamic_ship/tracked_ships',
+            description='maritime_situation_monitor 订阅的 TrackedShipList 话题',
+        ),
+        DeclareLaunchArgument(
+            'monitor_odom_topic',
+            default_value='',
+            description='maritime_situation_monitor 订阅的 odom 话题；空则取 /{nav2_namespace}/odom',
+        ),
+        DeclareLaunchArgument(
+            'monitor_global_frame',
+            default_value='map',
+            description='maritime_situation_monitor 报告输出坐标系',
+        ),
+        DeclareLaunchArgument(
+            'monitor_base_frame',
+            default_value='',
+            description='maritime_situation_monitor 本船坐标系；空则取 {nav2_namespace}/base_link',
+        ),
+        DeclareLaunchArgument(
+            'monitor_publish_frequency',
+            default_value='0.5',
+            description='maritime_situation_monitor 评估发布频率（Hz）',
+        ),
+        DeclareLaunchArgument(
+            'monitor_target_timeout',
+            default_value='3.0',
+            description='maritime_situation_monitor 目标快照过期阈值（秒）',
+        ),
+        DeclareLaunchArgument(
+            'monitor_ownship_timeout',
+            default_value='1.0',
+            description='maritime_situation_monitor 本船快照过期阈值（秒）',
+        ),
+        DeclareLaunchArgument(
+            'monitor_transform_timeout',
+            default_value='0.2',
+            description='maritime_situation_monitor TF 查询超时（秒）',
+        ),
+        DeclareLaunchArgument(
             'enable_keepout_filter',
             default_value='true',
             description=(
@@ -832,6 +955,7 @@ def generate_launch_description():
                 'clicked_point_topic': '/storm_field/clicked_point',
             }],
         ),
+        OpaqueFunction(function=_maritime_situation_monitor_node),
         OpaqueFunction(function=vector_object_server_launch),
         OpaqueFunction(function=nav2_readiness_and_deferred_launch),
     ])
