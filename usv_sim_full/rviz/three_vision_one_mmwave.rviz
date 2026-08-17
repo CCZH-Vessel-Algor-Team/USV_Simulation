@@ -1,13 +1,13 @@
 Panels:
   - Class: rviz_common/Displays
-    Help Height: 70
+    Help Height: 0
     Name: Displays
     Property Tree Widget:
       Expanded:
         - /Global Options1
         - "/Lidar: front_lidar1/Status1"
       Splitter Ratio: 0.5
-    Tree Height: 844
+    Tree Height: 435
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -25,6 +25,13 @@ Panels:
     Name: DynamicShipConfig
   - Class: env_panel/StormFieldConfig
     Name: StormFieldConfig
+  - Class: nav2_rviz_plugins/Navigation 2
+    Name: Navigation 2
+  - Class: enc_grounding_warning_rviz/GroundingWarningPanel
+    Name: GroundingWarningPanel
+    Namespace: usv_1
+  - Class: env_panel/VrxEnvPanel
+    Name: VrxEnvPanel
 Visualization Manager:
   Class: ""
   Displays:
@@ -50,9 +57,7 @@ Visualization Manager:
       Enabled: true
       Name: Scenario CTRV targets (ground_truth_sim)
       Namespaces:
-        target_history: true
-        target_path: true
-        target_pose: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -64,8 +69,7 @@ Visualization Manager:
       Enabled: true
       Name: Storm Field Hazards
       Namespaces:
-        storm_field: true
-        storm_field_label: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -89,8 +93,7 @@ Visualization Manager:
       Enabled: true
       Name: Safety Grounding Markers
       Namespaces:
-        grounding_route: true
-        grounding_danger: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -102,7 +105,7 @@ Visualization Manager:
       Enabled: true
       Name: Safety Route Depth Markers
       Namespaces:
-        route_depth_grid: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -138,8 +141,6 @@ Visualization Manager:
       Visual Enabled: true
     - Class: rviz_default_plugins/TF
       Enabled: true
-      Filter (blacklist): ""
-      Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: true
@@ -258,9 +259,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0
+      Max Intensity: -999999
       Min Color: 0; 0; 0
-      Min Intensity: 0
+      Min Intensity: 999999
       Name: "Lidar: front_lidar"
       Position Transformer: XYZ
       Selectable: true
@@ -270,6 +271,7 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Best Effort
         Value: /usv_1/sensors/lidar/front_lidar/points
@@ -291,9 +293,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 8.96926498413086
+      Max Intensity: -999999
       Min Color: 0; 0; 0
-      Min Intensity: 0.6203227043151855
+      Min Intensity: 999999
       Name: "mmWave: mmwave_front"
       Position Transformer: XYZ
       Selectable: true
@@ -303,6 +305,7 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Best Effort
         Value: /usv_1/sensors/mmwave/mmwave_front/points
@@ -380,8 +383,6 @@ Visualization Manager:
       Value: true
       fixed_frame_orientation: true
     - Alpha: 0.699999988079071
-      Binary representation: false
-      Binary threshold: 100
       Class: rviz_default_plugins/Map
       Color Scheme: map
       Draw Behind: false
@@ -433,7 +434,8 @@ Visualization Manager:
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: CPA (CPA points)
-      Namespaces: {}
+      Namespaces:
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -444,7 +446,8 @@ Visualization Manager:
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: Barrier (U-shaped barriers)
-      Namespaces: {}
+      Namespaces:
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -455,7 +458,8 @@ Visualization Manager:
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: Avoidance Point (avoidance arrows)
-      Namespaces: {}
+      Namespaces:
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -493,7 +497,6 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /usv_1/goal_pose
     - Class: rviz_default_plugins/PublishPoint
-      Name: Dynamic Ship Point
       Single click: true
       Topic:
         Depth: 5
@@ -516,16 +519,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 672.0052490234375
+      Distance: 412.61883544921875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 77.71744537353516
+        Y: -17.18440055847168
+        Z: 42.22018051147461
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -547,20 +550,24 @@ Window Geometry:
     collapsed: false
   DynamicShipConfig:
     collapsed: false
-  StormFieldConfig:
+  GroundingWarningPanel:
     collapsed: false
-  Height: 1371
+  Height: 1310
   Hide Left Dock: false
   Hide Right Dock: false
   Navigation 2:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000200000000000001cb000003d2fc0200000005fb000000100044006900730070006c006100790073010000003f000003d2000000cc00fffffffb0000001200530065006c0065006300740069006f006e000000013f000000730000005d00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007300000001740000008a0000005d00fffffffb0000000a0056006900650077007300000001c20000013b000000a900fffffffb00000018004e0061007600690067006100740069006f006e002000320000000111000001f8000001f800ffffff00000003000009be00000125fc0100000004fb0000002200430061006d006500720061003a002000660072006f006e0074005f00630061006d01000000000000034f000000b500fffffffb0000002000430061006d006500720061003a0020006c006500660074005f00630061006d010000035500000368000000aa00fffffffb0000002200430061006d006500720061003a002000720069006700680074005f00630061006d01000006c3000002fb000000b200fffffffb0000002000430061006d006500720061003a00200072006500610072005f00630061006d000000045f000001e10000000000000000000007ed000003d200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000300000000000001cb00000310fc0200000006fb0000001200530065006c0065006300740069006f006e000000013f000000730000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007300000001740000008a0000005c00fffffffb0000000a0056006900650077007300000001c20000013b000000a400fffffffb00000018004e0061007600690067006100740069006f006e002000320000000111000001f80000013900fffffffb00000018004e0061007600690067006100740069006f006e00200032010000003d000001390000013900fffffffb000000160056007200780045006e007600500061006e0065006c010000017c000001d10000005a00ffffff00000001000001a900000310fc0200000002fb000000100044006900730070006c006100790073010000003d000001f0000000c900fffffffb0000002a00470072006f0075006e00640069006e0067005700610072006e0069006e006700500061006e0065006c01000002330000011a0000011a0000011a0000000300000a00000001aefc0100000008fc00000000000001ce000000f300fffffffa000000000200000002fb0000002200440079006e0061006d0069006300530068006900700043006f006e0066006900670100000000ffffffff0000019100fffffffb0000002000530074006f0072006d004600690065006c00640043006f006e00660069006701000003830000017e0000017e00fffffffb0000002000430061006d006500720061003a0020006c006500660074005f00630061006d01000000f9000000e10000000000000000fb0000002200430061006d006500720061003a002000660072006f006e0074005f00630061006d01000001e0000000f60000000000000000fb0000002200430061006d006500720061003a002000720069006700680074005f00630061006d01000002dc000000f80000000000000000fb0000002000430061006d006500720061003a0020006c006500660074005f00630061006d01000001d400000257000000ab00fffffffb0000002200430061006d006500720061003a002000660072006f006e0074005f00630061006d010000043100000322000000b600fffffffb0000002200430061006d006500720061003a002000720069006700680074005f00630061006d0100000759000002a7000000b400fffffffb0000002000430061006d006500720061003a00200072006500610072005f00630061006d000000045f000001e10000000000000000000006800000031000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
+    collapsed: false
+  StormFieldConfig:
     collapsed: false
   Tool Properties:
     collapsed: false
   Views:
     collapsed: false
-  Width: 2494
-  X: 1986
-  Y: 32
+  VrxEnvPanel:
+    collapsed: false
+  Width: 2560
+  X: 2560
+  Y: 27
