@@ -65,6 +65,12 @@ PASS: closed-loop integration test
 ros2 launch enc_grounding_warning full_sim_with_grounding_warning.launch.py
 ```
 
+CCS 认证环境可从仿真包直接启动（`usv_sim_full` 已集成安全节点）：
+
+```bash
+ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py
+```
+
 常用参数：
 
 ```bash
@@ -123,6 +129,12 @@ ros2 launch enc_grounding_warning enc_grounding_warning.launch.py \
 ### 2.3 `full_sim_with_grounding_warning.launch.py`
 
 一键启动“现有仿真 + Nav2 + 预警节点 + RViz”。
+
+`usv_sim_full` 的
+`CCS_Certified_Simulation_Environment.launch.py` 是另一条集成入口：
+它在 CCS 三视觉/毫米波环境中默认 Include `enc_grounding_warning.launch.py`，
+可通过 `enable_safety:=false` 关闭，或通过
+`safety_depth_grid_file` / `safety_params_file` 覆盖水深与预警参数。
 
 主要参数：
 
@@ -206,6 +218,7 @@ ros2 run enc_grounding_warning generate_depth_grid --config config/sim_depth_gri
 | `lookahead_time_s` | 300 | 前瞻时间 |
 | `lookahead_distance_m` | 1000 | 前瞻距离 |
 | `sample_ds_m` | 2.0 | 航线采样步长 |
+| `plan_immediate_min_interval_s` | 0.2 | 收到新 plan 后立即计算的限流间隔 |
 | `route_corridor_half_width_m` | 10.0 | 航线走廊半宽 |
 | `route_grid_resolution_m` | 1.0 | 航线走廊栅格分辨率 |
 

@@ -233,6 +233,10 @@ u_total = safety_factor * sqrt(u_depth² + u_tide² + u_draft² + u_squat² + u_
 
 没有航线时，就按当前航向和速度往前直线外推一段。
 
+收到新的 `/usv_1/plan` 后，`grounding_warning_node`、`route_depth_publisher_node`
+和 `ukc_estimator_node` 会在 `plan_immediate_min_interval_s`（默认 0.2 秒）的
+限流条件下立即计算并发布一次，避免每次都等定时器；周期发布仍然保留，作为兜底。
+
 告警按时间分三级：
 
 ```text

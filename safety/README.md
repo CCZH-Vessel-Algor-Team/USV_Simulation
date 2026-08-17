@@ -34,7 +34,13 @@ source install/setup.bash
 ros2 launch enc_grounding_warning full_sim_with_grounding_warning.launch.py
 ```
 
-说明：集成 launch 默认 Include `usv_sim_full/nav2_sim_full_bringup.launch.py`
+CCS 认证环境也已集成在仿真包中，启动 `usv_sim_full` 的 CCS launch 时会默认一起拉起安全节点：
+
+```bash
+ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py
+```
+
+说明（`full_sim_with_grounding_warning.launch.py`）：默认 Include `usv_sim_full/nav2_sim_full_bringup.launch.py`
 （当前工作区未安装 `dynamic_ship_manager_node`，因此不使用 three-vision mmwave bringup）。
 `params_file` 为 Nav2 参数，`gw_params_file` 为搁浅预警自身参数，两者独立。
 集成 launch 默认启动 RViz（`enable_rviz:=true`），使用

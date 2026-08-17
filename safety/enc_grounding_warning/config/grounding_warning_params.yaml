@@ -29,4 +29,5 @@ ukc:
   route_corridor_half_width_m: 10.0
   route_grid_resolution_m: 1.0
   route_depth_publish_hz: 1.0
+  plan_immediate_min_interval_s: 0.2
   publish_hz: 2.0
