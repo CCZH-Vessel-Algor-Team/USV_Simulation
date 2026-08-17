@@ -21,6 +21,8 @@ GroundingWarningPanel::GroundingWarningPanel(QWidget * parent)
   timer_(nullptr)
 {
   auto * root = new QVBoxLayout;
+  root->setContentsMargins(2, 2, 2, 2);
+  root->setSpacing(2);
 
   auto * ns_row = new QHBoxLayout;
   ns_row->addWidget(new QLabel("Namespace:"));
@@ -55,6 +57,8 @@ GroundingWarningPanel::GroundingWarningPanel(QWidget * parent)
   root->addWidget(grid_box);
 
   setLayout(root);
+  setMaximumHeight(260);
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
   connect(apply_button_, &QPushButton::clicked, this, &GroundingWarningPanel::onApplyNamespace);
 }

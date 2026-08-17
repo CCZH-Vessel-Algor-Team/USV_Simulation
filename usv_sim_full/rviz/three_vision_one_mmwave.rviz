@@ -25,8 +25,6 @@ Panels:
     Name: DynamicShipConfig
   - Class: env_panel/StormFieldConfig
     Name: StormFieldConfig
-  - Class: enc_grounding_warning_rviz/GroundingWarningPanel
-    Name: GroundingWarning
 Visualization Manager:
   Class: ""
   Displays:

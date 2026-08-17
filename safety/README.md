@@ -93,6 +93,15 @@ ros2 launch enc_grounding_warning enc_grounding_warning.launch.py namespace:=usv
 - Panel 显示：UKC、风险等级、告警信息、水深栅格统计
 - Panel 顶部可修改 Namespace（默认 `usv_1`）
 
+默认 RViz 配置已包含三个 safety MarkerArray 显示：
+
+- Safety Current Risk：`/usv_1/safety/current_risk_marker`
+- Safety Grounding Markers：`/usv_1/safety/grounding_markers`
+- Safety Route Depth Markers：`/usv_1/safety/route_depth_markers`
+
+GroundingWarningPanel 当前不建议写进默认配置：与原有全部面板同时预加载会触发
+RViz/Ogre 的窗口 resize 崩溃，启动后手动添加 Panel 即可正常使用。
+
 Marker 话题：
 
 - `/usv_1/safety/current_risk_marker`：当前船位风险球 + UKC 文字
