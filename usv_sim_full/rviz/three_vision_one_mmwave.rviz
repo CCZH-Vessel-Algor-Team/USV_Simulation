@@ -467,6 +467,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /avoidance_point_marker
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Maritime Situation
+      Namespaces:
+        {}
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /maritime_situation_markers
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 153; 193; 241
