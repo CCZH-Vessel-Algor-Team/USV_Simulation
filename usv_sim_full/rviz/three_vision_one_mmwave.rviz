@@ -25,6 +25,8 @@ Panels:
     Name: DynamicShipConfig
   - Class: env_panel/StormFieldConfig
     Name: StormFieldConfig
+  - Class: enc_grounding_warning_rviz/GroundingWarningPanel
+    Name: GroundingWarning
 Visualization Manager:
   Class: ""
   Displays:
@@ -72,6 +74,43 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /storm_field/markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Safety Current Risk
+      Namespaces:
+        ukc_current: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /usv_1/safety/current_risk_marker
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Safety Grounding Markers
+      Namespaces:
+        grounding_route: true
+        grounding_danger: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /usv_1/safety/grounding_markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Safety Route Depth Markers
+      Namespaces:
+        route_depth_grid: true
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /usv_1/safety/route_depth_markers
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
