@@ -4,6 +4,8 @@
 # /sim/ground_truth 为 map 坐标；感知 FoV/量测以 body_frame（usv_1/base_link）为原点。
 # frame_id / body_frame 须与 full_config.yaml robot_N.name 前缀一致（默认 usv_1）。
 # nav2_sim_three_vision_mmwave_bringup.launch.py 启动时会按 robot 名动态覆盖。
+# max_range_m：视觉与置信度拐点一致（300 m）；毫米波对齐 sensor_config 的
+# perception_range_limit_m / gpu_ray_max_range（300 m）。
 
 sim_vision_front:
   ros__parameters:
@@ -15,11 +17,14 @@ sim_vision_front:
     use_tf_transform: true
     warn_on_tf_unavailable: false
     publish_markers: true
+    publish_fov_marker: true
     camera_id: "front"
     camera_yaw: 0.0
     camera_mount_x_m: 0.25
     camera_mount_y_m: 0.0
     fov_half_angle: 0.5235987756
+    max_range_m: 300.0
+    fov_marker_color: [0.15, 0.50, 1.00]
     sigma_angle: 0.01
     distance_noise_offset: 0.02
     distance_noise_scale: 0.0002
@@ -38,11 +43,14 @@ sim_vision_left:
     use_tf_transform: true
     warn_on_tf_unavailable: false
     publish_markers: true
+    publish_fov_marker: true
     camera_id: "left"
     camera_yaw: 0.7853981634
     camera_mount_x_m: 0.0
     camera_mount_y_m: 0.25
     fov_half_angle: 0.5235987756
+    max_range_m: 300.0
+    fov_marker_color: [0.00, 0.85, 0.80]
     sigma_angle: 0.01
     distance_noise_offset: 0.02
     distance_noise_scale: 0.0002
@@ -61,11 +69,14 @@ sim_vision_right:
     use_tf_transform: true
     warn_on_tf_unavailable: false
     publish_markers: true
+    publish_fov_marker: true
     camera_id: "right"
     camera_yaw: -0.7853981634
     camera_mount_x_m: 0.0
     camera_mount_y_m: -0.25
     fov_half_angle: 0.5235987756
+    max_range_m: 300.0
+    fov_marker_color: [0.75, 0.35, 1.00]
     sigma_angle: 0.01
     distance_noise_offset: 0.02
     distance_noise_scale: 0.0002
@@ -84,11 +95,14 @@ sim_mmwave_front:
     use_tf_transform: true
     warn_on_tf_unavailable: false
     publish_markers: true
+    publish_fov_marker: true
     radar_id: "mmwave_front"
     radar_yaw: 0.0
     radar_mount_x_m: 0.25
     radar_mount_y_m: 0.0
     fov_half_angle: 1.0471975512
+    max_range_m: 300.0
+    fov_marker_color: [1.00, 0.55, 0.10]
     radial_noise_std: 0.5
     angle_noise_deg: 0.1
     velocity_resolution_m_s: 0.1
