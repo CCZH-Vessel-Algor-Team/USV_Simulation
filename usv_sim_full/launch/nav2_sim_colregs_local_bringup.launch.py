@@ -1,12 +1,17 @@
-"""Nav2 全栈仿真 + 三视觉/毫米波真值感知链 + 晚期融合 + Nav2 目标接入。
+"""COLREGS Local Planner Server 全栈仿真 bringup（nav2_sim_three_vision_mmwave_bringup 的独立变体）。
 
-在 nav2_sim_full_bringup.launch.py 全部能力基础上，默认使用
-config/three_vision_one_mmwave/ 下的整机与传感器内参，并启动：
-  ground_truth_sim (main.launch) → ground_truth_sensor_sim → usv_late_fusion
-  → convert_to_trackship（FusedSceneSnapshot → TrackedShipList）
+与原 three_vision launch 的差异（其余仿真/感知/融合/监控链完全一致）：
+  - Nav2 栈改为 components/colregs_local_stack.launch.py：
+      colregs_local_planner_server（内置 VO-RRT* 避障规划 + TS 决策 + colregs_costmap）
+      替代标准 planner_server 与 TS 三节点子系统（ts_state_manager /
+      avoidance_point_node / barrier_node 已在上游 usv_nav 中删除并内化）
+  - 默认参数 config/radar_nav2_param_colregs_local.yaml（planner_server /
+      global_costmap 段移除，新增 colregs_* 三段；BT xml 为
+      navigate_to_pose_colregs_local.xml，planner_id=RRTStar）
+  - 默认 RViz rviz/three_vision_one_mmwave_colregs.rviz（cpa_markers 显示改为
+    /usv_1/cpa_markers，随 colregs_ts_state 子节点命名空间）
 
-默认周邻真值：motion_mode=waypoint，3 艘 10m mesh 船沿 fixed_targets 固定航路往返。
-默认 RViz：rviz/three_vision_one_mmwave.rviz（三视觉/毫米波/融合/Nav2 显示项）。
+原 launch 保持不动，供仍需旧栈的同事使用。
 """
 
 import os
@@ -15,7 +20,6 @@ import yaml
 
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 from usv_sim_full.launch_config_helpers import (
-    default_radar_nav2_param_yaml,
     primary_robot_name,
     ship_config_blocks,
 )
@@ -61,26 +65,19 @@ def _resolve_nav2_namespace(requested_ns: str, cfg_path: str) -> tuple[str, list
 
 def _nav2_bringup_available() -> bool:
     try:
-        get_package_share_directory('nav2_bringup')
-        return True
-    except PackageNotFoundError:
-        return False
-
-
-def _colregs_bringup_available() -> bool:
-    try:
-        get_package_share_directory('nav2_colregs_bringup')
+        get_package_share_directory('nav2_colregs_local_planner_server')
         return True
     except PackageNotFoundError:
         return False
 
 
 _NAV2_INSTALL_HINT = (
-    '未找到 nav2_bringup（Nav2 导航栈）。仿真将继续运行，但不会启动 Nav2。'
-    '请先在 usv_ws 内构建 usv_nav：'
-    ' cd src/usv_nav && colcon build --symlink-install'
-    ' 或在工作区根目录： colcon build --packages-up-to usv_sim_full --symlink-install；'
-    ' 然后 source install/setup.bash（若使用独立 usv_nav 安装，另 source src/usv_nav/install/setup.bash）。'
+    '未找到 nav2_colregs_local_planner_server。仿真将继续运行，但不会启动 Nav2。'
+    '请先在 usv_ws 内构建 usv_nav（feat/rrt-star-local-planner-server-humble 分支）：'
+    ' cd src/usv_nav && colcon build --symlink-install --packages-select '
+    ' nav2_colregs_msgs nav2_colregs_ts_manager nav2_colregs_local_planner_server'
+    ' nav2_colregs_costmap_layers nav2_colregs_alos_controller'
+    '；然后 source 对应 install/setup.zsh。'
 )
 
 
@@ -314,35 +311,22 @@ def _maritime_situation_monitor_node(context, *args, **kwargs):
 def generate_launch_description():
     usv_sim_full_pkg = get_package_share_directory('usv_sim_full')
     main_launch_file = os.path.join(usv_sim_full_pkg, 'launch', 'main.launch.py')
-    nav2_thruster_launch_file = os.path.join(
-        usv_sim_full_pkg, 'launch', 'nav2_thruster_bringup.launch.py'
+    colregs_local_stack_file = os.path.join(
+        usv_sim_full_pkg, 'launch', 'components', 'colregs_local_stack.launch.py'
     )
-    # 新版 usv_nav 已删除 ts_subsystem_launch.py（TS 子系统并入
-    # colregs_local_planner_server）。install 里可能是断链 symlink，用 isfile
-    # 探测；缺失时跳过 TS 子系统（VORRTStar 插件退化为纯 RRT*）并给出提示。
-    ts_subsystem_missing = False
-    ts_subsystem_launch_file = None
-    if _colregs_bringup_available():
-        _ts_candidate = os.path.join(
-            get_package_share_directory('nav2_colregs_bringup'),
-            'launch', 'ts_subsystem_launch.py',
-        )
-        if os.path.isfile(_ts_candidate):
-            ts_subsystem_launch_file = _ts_candidate
-        else:
-            ts_subsystem_missing = True
-
-    ts_subsystem_warn = [LogInfo(
-        msg=(
-            '[WARN] 未找到 nav2_colregs_bringup/launch/ts_subsystem_launch.py'
-            '（新版 usv_nav 已将 TS 三节点并入 colregs_local_planner_server）。'
-            '本次跳过 TS 子系统；VORRTStar 插件将退化为纯 RRT*（无 COLREGS 避让决策）。'
-            '如需 COLREGS 避障栈请使用 nav2_sim_colregs_local_bringup.launch.py。'
-        ),
-    )] if ts_subsystem_missing else []
 
     launch_dir = os.path.dirname(os.path.abspath(__file__))
-    default_nav2_params_file = default_radar_nav2_param_yaml(launch_dir)
+
+    # 默认参数：COLREGS Local Planner Server 版（share 优先，源码树回退）
+    _params_share = os.path.join(
+        usv_sim_full_pkg, 'config', 'radar_nav2_param_colregs_local.yaml'
+    )
+    _params_src = os.path.normpath(os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), '..', 'config',
+        'radar_nav2_param_colregs_local.yaml'))
+    default_nav2_params_file = (
+        _params_share if os.path.isfile(_params_share) else _params_src
+    )
 
     cfg_dir = os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave')
     default_config_path = os.path.join(cfg_dir, 'full_config.yaml')
@@ -376,7 +360,7 @@ def generate_launch_description():
     )
     default_map_yaml = os.path.join(usv_sim_full_pkg, 'maps', 'sydney_map2.yaml')
 
-    _rviz_name = 'three_vision_one_mmwave.rviz'
+    _rviz_name = 'three_vision_one_mmwave_colregs.rviz'
     _rviz_share = os.path.join(usv_sim_full_pkg, 'rviz', _rviz_name)
     _rviz_src = os.path.normpath(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'rviz', _rviz_name)
@@ -424,6 +408,7 @@ def generate_launch_description():
 
         kill_pattern = (
             'nav2_thruster_bringup.launch.py|'
+            'colregs_local_stack.launch.py|colregs_local_planner_server|'
             'navigation_launch.py|'
             'main.launch.py|'
             'gz sim|'
@@ -542,8 +527,8 @@ def generate_launch_description():
             }],
         )
 
-        nav2_thruster_launch = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(nav2_thruster_launch_file),
+        colregs_stack_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(colregs_local_stack_file),
             launch_arguments={
                 'namespace': resolved_ns,
                 'params_file': params_file.perform(context),
@@ -554,18 +539,6 @@ def generate_launch_description():
             }.items(),
         )
 
-        ts_subsystem_launch = None
-        if ts_subsystem_launch_file is not None:
-            ts_subsystem_launch = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(ts_subsystem_launch_file),
-                launch_arguments={
-                    'tracked_ship_topic': '/dynamic_ship/tracked_ships',
-                    'robot_base_frame': f'{resolved_ns}/base_link',
-                    'odom_topic': f'/{resolved_ns}/odom',
-                    'use_sim_time': use_sim_time.perform(context),
-                }.items(),
-            )
-
         def on_readiness_gate_exit(event, _context):
             if event.returncode != 0:
                 if nav2_start_on_gate_failure.perform(_context).lower() == 'true':
@@ -573,7 +546,6 @@ def generate_launch_description():
                         return [
                             LogInfo(msg='[ERROR] ' + _NAV2_INSTALL_HINT),
                         ]
-                    extra = [ts_subsystem_launch] if ts_subsystem_launch is not None else []
                     return [
                         LogInfo(
                             msg=(
@@ -582,8 +554,8 @@ def generate_launch_description():
                                 + ')，nav2_start_on_gate_failure:=true，仍启动 Nav2'
                             )
                         ),
-                        nav2_thruster_launch,
-                    ] + extra
+                        colregs_stack_launch,
+                    ]
                 return [
                     LogInfo(
                         msg=(
@@ -605,17 +577,16 @@ def generate_launch_description():
                     ),
                 ]
 
-            extra = [ts_subsystem_launch] if ts_subsystem_launch is not None else []
             return [
                 LogInfo(
                     msg=(
-                        'Nav2 TF readiness gate 通过，启动 Nav2 (namespace='
+                        'Nav2 TF readiness gate 通过，启动 COLREGS Nav2 (namespace='
                         + resolved_ns
                         + ')'
                     )
                 ),
-                nav2_thruster_launch,
-            ] + extra
+                colregs_stack_launch,
+            ]
 
         gate_exit_handler = RegisterEventHandler(
             OnProcessExit(
@@ -796,14 +767,17 @@ def generate_launch_description():
             description=(
                 'Nav2 与 cmd_vel→桨 所跟船的 ROS 命名空间，必须与 full_config 中该船 '
                 'robot_*.name 完全一致（如 usv_1），以便 TF 帧 {name}/odom、{name}/base_link '
-                '与 radar_nav2_param 中 __ROBOT_NS__ 替换一致。'
+                '与参数文件中 __ROBOT_NS__ 替换一致。'
                 'auto 或空：取 robot_1（按 slot 数字排序后的首船）。'
             ),
         ),
         DeclareLaunchArgument(
             'params_file',
             default_value=default_nav2_params_file,
-            description='Nav2 parameters file path',
+            description=(
+                'Nav2 参数文件（默认 config/radar_nav2_param_colregs_local.yaml，'
+                'colregs_local_planner_server 替代 planner_server + TS 子系统）'
+            ),
         ),
         DeclareLaunchArgument(
             'control_params_file',
@@ -899,14 +873,14 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'verbose_launch',
             default_value='false',
-            description='透传 main / nav2_thruster：true 时终端详细输出（默认降噪）',
+            description='透传 main / nav2 栈：true 时终端详细输出（默认降噪）',
         ),
         DeclareLaunchArgument(
             'rviz_config_path',
             default_value=default_rviz_config,
             description=(
                 'RViz 配置文件路径；透传 main.launch rviz_config_path_override。'
-                '默认 rviz/three_vision_one_mmwave.rviz（三视觉/毫米波/融合/Nav2）。'
+                '默认 rviz/three_vision_one_mmwave_colregs.rviz（colregs_costmap/cpa_markers 适配）。'
             ),
         ),
         DeclareLaunchArgument(
@@ -919,8 +893,7 @@ def generate_launch_description():
             default_value=default_map_yaml,
             description='PGM map yaml file for nav2_map_server',
         ),
-        LogInfo(msg=['Starting three-vision mmwave bringup from: ', config_path]),
-        *ts_subsystem_warn,
+        LogInfo(msg=['Starting COLREGS local planner bringup from: ', config_path]),
         OpaqueFunction(function=disable_fastdds_shm_env),
         OpaqueFunction(function=prelaunch_cleanup),
         sim_launch,

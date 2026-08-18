@@ -1,0 +1,44 @@
+
+<!--
+  COLREGS Local Planner Server 版行为树（派生自 navigate_to_pose_w_replanning_and_recovery_1hz.xml）。
+  差异：
+    - ComputePathToPose 的 planner_id 改为 "RRTStar"（colregs_local_planner_server
+      内置 VO-RRT*，仅接受空或 "RRTStar"）
+    - 全局清图服务名由 global_costmap/... 改为 colregs_costmap/...
+      （实测服务路径为 /usv_1/colregs_costmap/clear_entirely_colregs_costmap）
+  注意：本 fork 的 BtServiceNode 在 BT 加载时即等待服务（默认 1s 超时抛异常），
+  因此 lifecycle 顺序上 colregs_local_planner_server 须先于 bt_navigator 激活
+  （colregs_local_stack.launch.py 的 node_names 顺序已保证）。
+  This Behavior Tree replans the global path periodically at 0.3 Hz and it also has
+  recovery actions specific to planning / control as well as general system issues.
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithReplanning">
+        <RateController hz="0.3">
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="RRTStar"/>
+            <ClearEntireCostmap name="ClearColregsCostmap-Context" service_name="colregs_costmap/clear_entirely_colregs_costmap"/>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          <FollowPath path="{path}" controller_id="FollowPath"/>
+          <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated/>
+        <RoundRobin name="RecoveryActions">
+          <Sequence name="ClearingActions">
+            <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <ClearEntireCostmap name="ClearColregsCostmap-Subtree" service_name="colregs_costmap/clear_entirely_colregs_costmap"/>
+          </Sequence>
+          <Spin spin_dist="1.57"/>
+          <Wait wait_duration="5"/>
+          <BackUp backup_dist="0.30" backup_speed="0.05"/>
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

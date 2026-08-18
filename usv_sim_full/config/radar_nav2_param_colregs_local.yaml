@@ -1,0 +1,303 @@
+# COLREGS Local Planner Server 版 Nav2 参数（替代 planner_server + TS 三节点）。
+# 派生自 radar_nav2_param.yaml：
+#   - 移除 planner_server / global_costmap（规划与全局图并入 colregs_local_planner_server）
+#   - 新增 colregs_local_planner_server / colregs_costmap / colregs_ts_state 三段
+# 占位符 __ROBOT_NS__（无首尾 /）表示船名（如 usv_1），由
+# components/colregs_local_stack.launch.py 替换，便于多船复用。
+#
+# 差异说明：
+#   - colregs_local_planner_server 内置 VO-RRT*（两段式避让规划），serve
+#     compute_path_to_pose action，BT 中 planner_id 须为 "RRTStar" 或留空
+#   - TS 决策参数（原 ts_state_manager/avoidance_point/barrier 三节点内联参数）收敛到
+#     colregs_ts_state 段：tcpa_horizon 20.0 / safety_factor 1.5 / os_radius 5.0
+#     （VRX 尺度，与原 ts_subsystem_launch 内联值一致）
+#   - BT xml 换用 navigate_to_pose_colregs_local.xml（planner_id=RRTStar，
+#     清图服务名对齐 colregs_costmap）
+colregs_local_planner_server:
+  ros__parameters:
+    action_server_result_timeout: 10.0
+    # colregs_costmap 更新频率 1.0 Hz，等待余量给足
+    costmap_update_timeout: 2.0
+    # RRT* 截止时间：800x800 大图长航程规划实测需数秒（旧 VORRTStar 插件无时间
+    # 限制，此处为安全上限；BT 以 0.3Hz 重规划）
+    max_planning_time: 5.0
+
+    # RRT* 参数与原 VORRTStar 插件段一致（VRX 尺度）
+    step_size: 2.0
+    max_iterations: 5000
+    goal_bias: 0.1
+    goal_threshold: 2.0
+    safety_dist: 1.5
+    cost_weight: 0.3
+    max_optimize_iters: 100
+    eta: 3.0
+    random_seed: 42
+    prune_path: true
+    # COLREGS 通过侧（right = 右舷让路）
+    avoid_direction: "right"
+
+# colregs_local_planner_server 内部持有的全局 costmap（替代原 global_costmap）。
+# 节点路径：<ns>/colregs_costmap/colregs_costmap。
+colregs_costmap:
+  colregs_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: __ROBOT_NS__/base_link
+      use_sim_time: True
+
+      rolling_window: false
+      track_unknown_space: false
+      width: 800
+      height: 800
+      resolution: 0.3   # conform static layer resolution
+      plugins: ["static_layer", "obstacle_layer", "ts_projection_layer", "inflation_layer"]
+      # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
+      filters: ["keepout_filter"]
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: front_lidar clearing_scan
+
+        front_lidar:
+          topic: /__ROBOT_NS__/sensors/lidar/front_lidar/points
+          data_type: "PointCloud2"
+          marking: true
+          clearing: false
+
+          obstacle_min_range: 0.5
+          obstacle_max_range: 200.0
+          raytrace_min_range: 0.5
+          raytrace_max_range: 200.0
+
+          min_obstacle_height: -1.0
+          max_obstacle_height: 2.0
+
+          # 仿真 front_lidar 实测 ~1.1Hz 且抖动（间隔最大 ~3s）。该参数语义为
+          # "过期窗口秒数"（ObservationBuffer::isCurrent：now-last_update<=X）；
+          # 本 server 有 isCurrent 门限，须放大窗口避免频繁 not-current
+          expected_update_rate: 5.0
+          observation_persistence: 0.5
+          inf_is_valid: true
+
+        clearing_scan:
+          topic: /clearing_scan
+          data_type: "PointCloud2"
+          marking: false
+          clearing: true
+          min_obstacle_height: -5.0
+          max_obstacle_height: 5.0
+          obstacle_max_range: 200.0
+          raytrace_max_range: 200.0
+          obstacle_min_range: 0.0
+          raytrace_min_range: 0.0
+          expected_update_rate: 5.0
+          observation_persistence: 2.0
+          inf_is_valid: false
+
+      ts_projection_layer:
+        plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
+        enabled: True
+        track_timeout: 5.0
+        tracked_ship_topic: "/dynamic_ship/tracked_ships"
+
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        enabled: true
+        # map_server 发布的静态地图
+        map_topic: /map
+        # 必须打开，否则 static_layer 启动晚可能收不到 /map
+        map_subscribe_transient_local: true
+        subscribe_to_updates: false
+        transform_tolerance: 0.5
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        enabled: true
+        inflation_radius: 20.0   # 根据船只大小调整
+        cost_scaling_factor: 0.3
+
+      keepout_filter:
+        plugin: "nav2_costmap_2d::KeepoutFilter"
+        enabled: True
+        filter_info_topic: "/keepout_costmap_filter_info"
+
+      always_send_full_costmap: true
+
+# colregs_local_planner_server 内部 TS 状态子节点（节点路径 <ns>/colregs_ts_state）。
+# CPA 参数承接原 ts_subsystem_launch 内联值（VRX 尺度）。
+colregs_ts_state:
+  ros__parameters:
+    frequency: 10.0
+    ts_timeout: 3.0
+    tcpa_horizon: 20.0
+    safety_factor: 1.5
+    os_radius: 5.0
+    barrier_ray_length: 999.0
+    global_frame: "map"
+    robot_base_frame: "__ROBOT_NS__/base_link"
+    # 相对名 → <ns>/odom
+    odom_topic: "odom"
+    # 真值动态船（dynamic_ship_manager 发布）；融合链输出为 /fusion/tracked_ship
+    tracked_ship_topic: "/dynamic_ship/tracked_ships"
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+
+      update_frequency: 5.0
+      publish_frequency: 5.0
+      global_frame: __ROBOT_NS__/odom
+      robot_base_frame: __ROBOT_NS__/base_link
+      use_sim_time: true
+      rolling_window: true
+      width: 50  # 局部避障范围通常比雷达量程小
+      height: 50
+      resolution: 0.2
+      plugins: ["obstacle_layer", "ts_projection_layer", "inflation_layer"]
+      # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
+      filters: ["keepout_filter"]
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: front_lidar clearing_scan
+
+        front_lidar:
+          topic: /__ROBOT_NS__/sensors/lidar/front_lidar/points
+          data_type: "PointCloud2"
+          marking: true
+          clearing: false
+
+          obstacle_min_range: 0.5
+          obstacle_max_range: 80.0
+          raytrace_min_range: 0.5
+          raytrace_max_range: 90.0
+
+          min_obstacle_height: -1.0
+          max_obstacle_height: 2.0
+
+          expected_update_rate: 5.0
+          observation_persistence: 0.5
+          inf_is_valid: false
+
+        clearing_scan:
+          topic: /clearing_scan
+          data_type: "PointCloud2"
+          marking: false
+          clearing: true
+          min_obstacle_height: -5.0
+          max_obstacle_height: 5.0
+          obstacle_max_range: 80.0
+          raytrace_max_range: 90.0
+          obstacle_min_range: 0.0
+          raytrace_min_range: 0.0
+          expected_update_rate: 5.0
+          observation_persistence: 1.0
+          inf_is_valid: false
+
+      ts_projection_layer:
+        plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
+        enabled: True
+        track_timeout: 5.0
+        tracked_ship_topic: "/dynamic_ship/tracked_ships"
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 10.0
+        cost_scaling_factor: 2.0
+
+      keepout_filter:
+        plugin: "nav2_costmap_2d::KeepoutFilter"
+        enabled: True
+        filter_info_topic: "/keepout_costmap_filter_info"
+
+      always_send_full_costmap: true
+
+#控制器配置，很难调，我勉强让他跑的可以了
+controller_server:
+  ros__parameters:
+    controller_frequency: 10.0    # 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001   # 0.5
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 0.3
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
+    controller_plugins: ["FollowPath"]
+
+    # Progress checker parameters
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.1   # 0.5
+      movement_time_allowance: 60.0   # 10.0
+
+    general_goal_checker:
+      stateful: True
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 1.5      # 0.25
+      yaw_goal_tolerance: 6.28    # 0.25
+    # ALOS (Adaptive Line-of-Sight) — sideslip-compensated guidance
+    FollowPath:
+      plugin: "nav2_colregs_alos_controller::ALOSController"
+      desired_linear_vel: 1.0
+      max_linear_accel: 0.2
+      max_angular_vel: 0.5
+      max_angular_accel: 0.5
+      forward_dist: 6.0
+      gamma: 0.0006
+      beta_hat0: 0.0
+      reset_beta_on_new_goal: true
+      beta_reset_goal_dist_tolerance: 0.05
+      max_angle_for_motion: 1.0
+      max_robot_pose_search_dist: 10.0
+
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: True
+    global_frame: map
+    robot_base_frame: __ROBOT_NS__/base_link
+    odom_topic: odom
+    default_nav_to_pose_bt_xml: "$(find-pkg-share usv_sim_full)/config/navigate_to_pose_colregs_local.xml"
+    # colregs server 无 compute_path_through_poses action；占位 BT 防止
+    # on_configure 预加载默认 NTP BT 失败（NTP 目标将快速失败）
+    default_nav_through_poses_bt_xml: "$(find-pkg-share usv_sim_full)/config/navigate_through_poses_colregs_local.xml"
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: True
+    global_frame: map
+    robot_base_frame: __ROBOT_NS__/base_link
+    local_frame: __ROBOT_NS__/odom
+
+collision_monitor:
+  ros__parameters:
+    use_sim_time: true
+    base_frame_id: "__ROBOT_NS__/base_link"
+    odom_frame_id: "__ROBOT_NS__/odom"
+    cmd_vel_in_topic: "cmd_vel_smoothed"
+    cmd_vel_out_topic: "cmd_vel"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.5
+    source_timeout: 1.0
+
+    polygons: ["StopPolygon"]
+
+    StopPolygon:
+      type: "circle"
+      radius: 2.0
+      action_type: "stop"
+      min_points: 1
+      visualize: true
+
+    observation_sources: ["nav_radar_points"]
+
+    nav_radar_points:
+      type: "pointcloud"
+      topic: "/__ROBOT_NS__/sensors/radar/nav/points"
+      enabled: true
+      min_height: -2.0
+      max_height: 5.0
