@@ -71,7 +71,7 @@ global_costmap:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
         track_timeout: 5.0
-        tracked_ship_topic: "/dynamic_ship/tracked_ships"
+        tracked_ship_topic: "/tracked_ship"
 
       static_layer:
         # plugin: "nav2_costmap_2d::StaticLayer"
@@ -169,7 +169,7 @@ local_costmap:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
         track_timeout: 5.0
-        tracked_ship_topic: "/dynamic_ship/tracked_ships"
+        tracked_ship_topic: "/tracked_ship"
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"

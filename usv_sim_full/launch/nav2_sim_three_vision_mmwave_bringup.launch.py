@@ -571,7 +571,7 @@ def generate_launch_description():
             ts_subsystem_launch = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(ts_subsystem_launch_file),
                 launch_arguments={
-                    'tracked_ship_topic': '/dynamic_ship/tracked_ships',
+                    'tracked_ship_topic': '/tracked_ship',
                     'robot_base_frame': f'{resolved_ns}/base_link',
                     'odom_topic': f'/{resolved_ns}/odom',
                     'use_sim_time': use_sim_time.perform(context),
@@ -751,7 +751,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'monitor_tracked_ship_topic',
-            default_value='/dynamic_ship/tracked_ships',
+            default_value='/tracked_ship',
             description='maritime_situation_monitor 订阅的 TrackedShipList 话题',
         ),
         DeclareLaunchArgument(
