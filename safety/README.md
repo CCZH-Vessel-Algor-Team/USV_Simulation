@@ -34,7 +34,13 @@ source install/setup.bash
 ros2 launch enc_grounding_warning full_sim_with_grounding_warning.launch.py
 ```
 
-说明：集成 launch 默认 Include `usv_sim_full/nav2_sim_full_bringup.launch.py`
+CCS 认证环境也已集成在仿真包中，启动 `usv_sim_full` 的 CCS launch 时会默认一起拉起安全节点：
+
+```bash
+ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py
+```
+
+说明（`full_sim_with_grounding_warning.launch.py`）：默认 Include `usv_sim_full/nav2_sim_full_bringup.launch.py`
 （当前工作区未安装 `dynamic_ship_manager_node`，因此不使用 three-vision mmwave bringup）。
 `params_file` 为 Nav2 参数，`gw_params_file` 为搁浅预警自身参数，两者独立。
 集成 launch 默认启动 RViz（`enable_rviz:=true`），使用
@@ -86,6 +92,15 @@ ros2 launch enc_grounding_warning enc_grounding_warning.launch.py namespace:=usv
 - RViz 菜单：`Panels -> Add New Panel -> enc_grounding_warning_rviz/GroundingWarningPanel`
 - Panel 显示：UKC、风险等级、告警信息、水深栅格统计
 - Panel 顶部可修改 Namespace（默认 `usv_1`）
+
+默认 RViz 配置已包含三个 safety MarkerArray 显示：
+
+- Safety Current Risk：`/usv_1/safety/current_risk_marker`
+- Safety Grounding Markers：`/usv_1/safety/grounding_markers`
+- Safety Route Depth Markers：`/usv_1/safety/route_depth_markers`
+
+GroundingWarningPanel 当前不建议写进默认配置：与原有全部面板同时预加载会触发
+RViz/Ogre 的窗口 resize 崩溃，启动后手动添加 Panel 即可正常使用。
 
 Marker 话题：
 

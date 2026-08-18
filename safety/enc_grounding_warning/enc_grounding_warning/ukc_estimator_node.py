@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import math
+import time
 
 import rclpy
+from nav_msgs.msg import Path
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
 from tf2_ros import Buffer, TransformListener
@@ -48,6 +50,7 @@ class UkcEstimatorNode(Node):
         self.vessel_sub = self.create_subscription(
             VesselState, "state/vessel", self.vessel_cb, qos
         )
+        self.plan_sub = self.create_subscription(Path, "plan", self.plan_cb, qos)
         self.ukc_pub = self.create_publisher(UKCState, "safety/ukc_state", qos)
         self.risk_pub = self.create_publisher(
             GroundingRiskGrid, "safety/grounding_risk_grid", qos
@@ -61,6 +64,7 @@ class UkcEstimatorNode(Node):
         self.latest_vessel = None
         self._risk_counter = 0
         self._active_risk = None
+        self._last_immediate = 0.0
 
         hz = float(self.get_parameter("publish_hz").value)
         self.timer = self.create_timer(1.0 / hz, self.timer_cb)
@@ -68,6 +72,19 @@ class UkcEstimatorNode(Node):
 
     def vessel_cb(self, msg: VesselState):
         self.latest_vessel = msg
+
+    def plan_cb(self, msg: Path):
+        if self._should_immediate():
+            self.timer_cb()
+            self.publish_risk_grid()
+
+    def _should_immediate(self) -> bool:
+        now = time.monotonic()
+        min_interval = float(self.params.get("plan_immediate_min_interval_s", 0.2))
+        if now - self._last_immediate < min_interval:
+            return False
+        self._last_immediate = now
+        return True
 
     def _current_sog(self) -> float:
         if self.latest_vessel is None:

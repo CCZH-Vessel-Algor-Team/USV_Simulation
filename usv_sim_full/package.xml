@@ -35,6 +35,8 @@
   <exec_depend>convert_to_trackship</exec_depend>
   <exec_depend>usv_vision</exec_depend>
   <exec_depend>usv_map_rtsp_streamer</exec_depend>
+  <!-- 搁浅预警：CCS launch 默认拉起 safety/enc_grounding_warning -->
+  <exec_depend>enc_grounding_warning</exec_depend>
   <!-- Nav2 + COLREGs：源码位于 usv_ws/src/usv_nav/src，勿依赖 apt navigation2 -->
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>nav2_map_server</exec_depend>
