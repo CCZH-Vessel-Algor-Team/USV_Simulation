@@ -17,14 +17,54 @@
         <scene>scene</scene>
         <ambient_light>0.15 0.15 0.15</ambient_light>
         <background_color>0.8 0.8 0.8</background_color>
-        <camera_pose>0 0 140 0 1.2 0</camera_pose>
+        <camera_pose>-9072.528 -4613.771 140 0 1.2 0</camera_pose>
         <camera_clip>
           <near>0.25</near>
-          <far>10000</far>
+          <far>50000</far>
         </camera_clip>
       </plugin>
-      <plugin filename="GzSceneManager" name="Scene Manager" />
-      <plugin filename="InteractiveViewControl" name="Interactive view control" />
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="bool" key="resizable">false</property>
+          <property type="double" key="width">5</property>
+          <property type="double" key="height">5</property>
+          <property type="string" key="state">floating</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="GzSceneManager" name="Scene Manager">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="bool" key="resizable">false</property>
+          <property type="double" key="width">5</property>
+          <property type="double" key="height">5</property>
+          <property type="string" key="state">floating</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="InteractiveViewControl" name="Interactive view control">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="bool" key="resizable">false</property>
+          <property type="double" key="width">5</property>
+          <property type="double" key="height">5</property>
+          <property type="string" key="state">floating</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="CameraTracking" name="Camera Tracking">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="bool" key="resizable">false</property>
+          <property type="double" key="width">5</property>
+          <property type="double" key="height">5</property>
+          <property type="string" key="state">floating</property>
+        </gz-gui>
+      </plugin>
+      <plugin filename="EntityTree" name="Entity tree">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+      </plugin>
       <plugin filename="WorldControl" name="World control">
         <play_pause>true</play_pause>
         <step>true</step>
@@ -63,8 +103,8 @@
     <spherical_coordinates>
       <surface_model>EARTH_WGS84</surface_model>
       <world_frame_orientation>ENU</world_frame_orientation>
-      <latitude_deg>34.69149699539598</latitude_deg>
-      <longitude_deg>119.53601222131164</longitude_deg>
+      <latitude_deg>34.733750</latitude_deg>
+      <longitude_deg>119.580417</longitude_deg>
       <elevation>0.0</elevation>
       <heading_deg>0.0</heading_deg>
     </spherical_coordinates>
@@ -84,9 +124,15 @@
     </light>
 
     <include>
-      <name>Coast Waves</name>
+      <name>CCS Extended Waves</name>
       <pose>0 0 0 0 0 0</pose>
-      <uri>coast_waves</uri>
+      <uri>model://coast_waves/model_36km.sdf</uri>
+    </include>
+
+    <include>
+      <name>CCS Chart Obstacles</name>
+      <pose>0 0 0 0 0 0</pose>
+      <uri>model://ccs_chart_obstacles</uri>
     </include>
 
     <plugin filename="libPublisherPlugin.so" name="vrx::PublisherPlugin">
