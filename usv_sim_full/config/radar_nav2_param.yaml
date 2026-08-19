@@ -16,15 +16,14 @@ global_costmap:
 
       rolling_window: false
       track_unknown_space: false      # true
-      # 初始值；非滚动窗口会由 StaticLayer 自动调整为 PGM 的尺寸、分辨率和原点。
       width: 800
       height: 800
-      resolution: 2.0
-      # origin_x: -400.0
-      # origin_y: -400.0
-      plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "inflation_layer"]
-      # plugins: ["static_layer","inflation_layer"]
-
+      resolution: 0.3
+      # 无 static_layer 时须手动设定 origin，使 costmap 覆盖仿真区域（单位：米）
+      # 船 spawn 于 map 原点附近；origin=(-400,-400) 使 800×800m 区域以 spawn 点为中心
+      origin_x: -400.0
+      origin_y: -400.0
+      plugins: ["obstacle_layer", "ts_projection_layer", "inflation_layer"]
       # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
       filters: ["keepout_filter"]
 
@@ -72,31 +71,8 @@ global_costmap:
       ts_projection_layer:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
-
-        track_timeout: 5.0
-        tracked_ship_topic: "/tracked_ships"
-
-      static_layer:
-        # plugin: "nav2_costmap_2d::StaticLayer"
-        # map_subscribe_transient_local: False
-
-        # map_topic: "/map/navradar/occupancy_grid"
-        # subscribe_to_updates: true
-        # lethal_cost_threshold: 50
-
-        plugin: "nav2_costmap_2d::StaticLayer"
-        enabled: true
-
-        # map_server 发布 CN441122_enc_5km.yaml 对应的 OccupancyGrid。
-        map_topic: /map
-
-        # 必须建议打开，否则 static_layer 启动晚可能收不到 /map
-        map_subscribe_transient_local: true
-
-        # PGM/YAML 静态地图一般没有动态 update
-        subscribe_to_updates: false
-
-        transform_tolerance: 0.5
+        track_timeout: 0.5
+        tracked_ship_topic: "/tracked_ship"
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -109,8 +85,7 @@ global_costmap:
         enabled: True
         filter_info_topic: "/keepout_costmap_filter_info"
 
-      # 该海图约 1.08 亿栅格；首次发送全图，后续只发送变化区域。
-      always_send_full_costmap: false
+      always_send_full_costmap: true
 
 local_costmap:
   local_costmap:
@@ -300,3 +275,4 @@ collision_monitor:
       enabled: true
       min_height: -2.0
       max_height: 5.0
+

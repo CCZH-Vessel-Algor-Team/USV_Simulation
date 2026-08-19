@@ -1,8 +1,8 @@
 # 三视觉 + 单毫米波 + Nav2：CCS 开阔水域配置。
-# 地理原点由 worlds/ccs_open_water_crop.sdf 的 spherical_coordinates 定义：
-# latitude=34.692120, longitude=119.481403（CN441122 WGS84 ENU 栅格中心）。
+# 地理原点由 worlds/ccs_open_water.sdf 的 spherical_coordinates 定义：
+# latitude=34.69149699539598, longitude=119.53601222131164。
 environment:
-  world_name: ccs_open_water_crop
+  world_name: ccs_open_water
 
 sensor_config_path: sensor_config.yaml
 
@@ -70,7 +70,6 @@ robot_1:
   thrusters:
     enabled: true
   spawn_pose:
-  # WGS84: longitude 119.481403, latitude 34.692120 (world ENU origin).
   - 0.0
   - 0.0
   - 0.5
