@@ -12,10 +12,12 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
+    ExecuteProcess,
     GroupAction,
     IncludeLaunchDescription,
     LogInfo,
     OpaqueFunction,
+    TimerAction,
 )
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -104,7 +106,91 @@ def _safety_include(context, *args, **kwargs):
                 'depth_grid_file': LaunchConfiguration('safety_depth_grid_file'),
                 'params_file': LaunchConfiguration('safety_params_file'),
                 'robot_base_frame': f'{ns}/base_link',
+                # CCS publishes the only map->odom transform below.
+                'publish_identity_map_odom_tf': 'false',
             }.items(),
+        ),
+    ]
+
+
+def _ccs_map_to_odom_tf(context, *args, **kwargs):
+    """Connect chart/ENU frames and provide Humble Nav2's base_link alias."""
+    config_path = LaunchConfiguration('config_path').perform(context)
+    ns = _resolve_robot_namespace(config_path)
+    return [
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='ccs_map_to_odom_tf',
+            output='screen',
+            parameters=[{
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+            }],
+            arguments=[
+                '--x', LaunchConfiguration('ccs_map_to_odom_x'),
+                '--y', LaunchConfiguration('ccs_map_to_odom_y'),
+                '--z', '0.0',
+                '--roll', '0.0',
+                '--pitch', '0.0',
+                '--yaw', LaunchConfiguration('ccs_map_to_odom_yaw'),
+                '--frame-id', 'map',
+                '--child-frame-id', f'{ns}/odom',
+            ],
+        ),
+        # Humble NavigateThroughPoses internally requests the conventional
+        # un-namespaced base_link even when bt_navigator is namespaced.
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='ccs_base_link_compat_tf',
+            output='screen',
+            parameters=[{
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+            }],
+            arguments=[
+                '--x', '0.0',
+                '--y', '0.0',
+                '--z', '0.0',
+                '--roll', '0.0',
+                '--pitch', '0.0',
+                '--yaw', '0.0',
+                '--frame-id', f'{ns}/base_link',
+                '--child-frame-id', 'base_link',
+            ],
+        ),
+    ]
+
+
+def _gazebo_camera_follow(context, *args, **kwargs):
+    """Make the Gazebo GUI camera follow the CCS vessel after it spawns."""
+    enable = (
+        LaunchConfiguration('enable_gazebo_camera_follow')
+        .perform(context)
+        .strip()
+        .lower()
+    )
+    if enable not in ('true', '1', 'yes'):
+        return []
+
+    ns = _resolve_robot_namespace(
+        LaunchConfiguration('config_path').perform(context)
+    )
+    return [
+        TimerAction(
+            period=8.0,
+            actions=[
+                ExecuteProcess(
+                    cmd=[
+                        'gz', 'service',
+                        '-s', '/gui/follow',
+                        '--reqtype', 'gz.msgs.StringMsg',
+                        '--reptype', 'gz.msgs.Boolean',
+                        '--timeout', '5000',
+                        '--req', f'data: "{ns}"',
+                    ],
+                    output='log',
+                ),
+            ],
         ),
     ]
 
@@ -149,6 +235,8 @@ def generate_launch_description():
         launch_arguments={
             'config_path': config_path,
             'use_sim_time': use_sim_time,
+            # CCS publishes a non-identity UTM-map -> ENU-odom transform.
+            'use_static_map_odom_tf': 'false',
         }.items(),
     )
 
@@ -218,9 +306,29 @@ def generate_launch_description():
             description='Use simulation clock; forwarded to the base simulation and safety nodes',
         ),
         DeclareLaunchArgument(
+            'ccs_map_to_odom_x',
+            default_value='-8932.7933',
+            description='UTM-local map coordinate of the ccs_open_water ENU origin (x)',
+        ),
+        DeclareLaunchArgument(
+            'ccs_map_to_odom_y',
+            default_value='-4677.2702',
+            description='UTM-local map coordinate of the ccs_open_water ENU origin (y)',
+        ),
+        DeclareLaunchArgument(
+            'ccs_map_to_odom_yaw',
+            default_value='0.0246604',
+            description='ENU-to-UTM grid convergence rotation in radians',
+        ),
+        DeclareLaunchArgument(
             'enable_dynamic_ship_gt_bridge',
             default_value='true',
             description='true：启动 /dynamic_ship/tracked_ships -> /sim/ground_truth 转换节点',
+        ),
+        DeclareLaunchArgument(
+            'enable_gazebo_camera_follow',
+            default_value='true',
+            description='Follow the CCS vessel in the Gazebo GUI; press Esc to release',
         ),
         DeclareLaunchArgument(
             'enable_safety',
@@ -290,6 +398,8 @@ def generate_launch_description():
         ),
         LogInfo(msg=['Starting CCS certified simulation from: ', config_path]),
         base_bringup,
+        OpaqueFunction(function=_ccs_map_to_odom_tf),
+        OpaqueFunction(function=_gazebo_camera_follow),
         OpaqueFunction(function=_dynamic_ship_ground_truth_bridge),
         *camera_streams,
         OpaqueFunction(function=_safety_include),

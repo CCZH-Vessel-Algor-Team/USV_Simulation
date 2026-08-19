@@ -18,7 +18,8 @@ global_costmap:
       track_unknown_space: false      # true
       width: 800
       height: 800
-      resolution: 0.3   # comform static layer resolution
+      # resolution: 0.3   # comform static layer resolution
+      resolution: 2.0
       # origin_x: -400.0
       # origin_y: -400.0
       plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "inflation_layer"]
@@ -112,6 +113,9 @@ global_costmap:
 local_costmap:
   local_costmap:
     ros__parameters:
+
+      # footprint: "[[2.5, 1.0], [2.5, -1.0], [-2.5, -1.0], [-2.5, 1.0]]"
+      # footprint_padding: 0.5
 
       update_frequency: 5.0
       publish_frequency: 5.0
@@ -297,4 +301,3 @@ collision_monitor:
       enabled: true
       min_height: -2.0
       max_height: 5.0
-

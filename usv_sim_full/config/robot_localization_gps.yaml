@@ -56,4 +56,8 @@ navsat_transform_node:
     zero_altitude: true
     publish_filtered_gps: false
     use_odometry_yaw: true
-    wait_for_datum: false
+    # Humble navsat_transform_node manual datum syntax. The datum matches
+    # worlds/ccs_open_water.sdf; UTM remains the internal Cartesian projection.
+    wait_for_datum: true
+    use_local_cartesian: false
+    datum: [34.692120, 119.481403, 0.0]
