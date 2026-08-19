@@ -64,10 +64,10 @@ Visualization Manager:
       Description Source: Topic
       Description Topic:
         Depth: 5
-        Durability Policy: Transient Local
+        Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /usv_1/robot_description
+        Value: ""
       Enabled: true
       Links:
         All Links Enabled: true

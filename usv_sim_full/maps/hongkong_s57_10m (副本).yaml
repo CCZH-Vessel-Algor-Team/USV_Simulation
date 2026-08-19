@@ -1,0 +1,10 @@
+image: hongkong_s57_10m.pgm
+mode: trinary
+resolution: 10.0
+origin:
+- 187164.11338949314
+- 2466554.3029479343
+- 0.0
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25
