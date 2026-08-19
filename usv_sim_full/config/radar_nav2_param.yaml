@@ -8,8 +8,8 @@ global_costmap:
       # footprint: "[[2.5, 1.0], [2.5, -1.0], [-2.5, -1.0], [-2.5, 1.0]]"
       # footprint_padding: 0.5
 
-      update_frequency: 1.0
-      publish_frequency: 1.0
+      update_frequency: 5.0
+      publish_frequency: 5.0
       global_frame: map
       robot_base_frame: __ROBOT_NS__/base_link
       use_sim_time: True
@@ -71,7 +71,7 @@ global_costmap:
       ts_projection_layer:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
-        track_timeout: 5.0
+        track_timeout: 0.5
         tracked_ship_topic: "/tracked_ship"
 
       inflation_layer:
@@ -146,7 +146,7 @@ local_costmap:
       ts_projection_layer:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
-        track_timeout: 5.0
+        track_timeout: 0.5
         tracked_ship_topic: "/tracked_ship"
 
       inflation_layer:
