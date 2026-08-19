@@ -7,6 +7,7 @@ default, and adds three camera streams plus the radar occupancy-map stream.
 
 import os
 
+import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
@@ -14,11 +15,98 @@ from launch.actions import (
     GroupAction,
     IncludeLaunchDescription,
     LogInfo,
+    OpaqueFunction,
 )
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, SetRemap
+
+
+def _resolve_robot_namespace(config_path: str) -> str:
+    """从 CCS full_config 解析首船 ROS 命名空间，供 safety 节点使用。"""
+    try:
+        with open(config_path, 'r') as f:
+            cfg = yaml.safe_load(f) or {}
+        from usv_sim_full.launch_config_helpers import primary_robot_name
+
+        ns = primary_robot_name(cfg)
+        return ns or 'usv_1'
+    except Exception:
+        return 'usv_1'
+
+
+def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
+    """可选启动 dynamic_ship/tracked_ships → /sim/ground_truth 转换节点。"""
+    enable = LaunchConfiguration('enable_dynamic_ship_gt_bridge').perform(context).strip().lower()
+    if enable not in ('true', '1', 'yes'):
+        return [
+            LogInfo(msg='enable_dynamic_ship_gt_bridge:=false，跳过动态船真值转换节点。'),
+        ]
+
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
+    return [
+        LogInfo(
+            msg='启动 dynamic_ship_to_ground_truth（/dynamic_ship/tracked_ships -> /sim/ground_truth）。'
+        ),
+        Node(
+            package='ground_truth_sensor_sim',
+            executable='dynamic_ship_to_ground_truth',
+            name='dynamic_ship_to_ground_truth',
+            output='log',
+            parameters=[{
+                'use_sim_time': use_sim_time,
+                'input_topic': '/dynamic_ship/tracked_ships',
+                'output_topic': '/sim/ground_truth',
+                'frame_id': 'map',
+                'size_w': 3.6,
+                'size_l': 10.0,
+                'size_h': 2.0,
+                'is_dark_target': True,
+                'is_ais_matched': False,
+                'matched_mmsi': 0,
+                'source_model_name': 'dynamic_ship',
+            }],
+        ),
+    ]
+
+
+def _safety_include(context, *args, **kwargs):
+    """可选启动 enc_grounding_warning 搁浅预警节点。"""
+    enable_safety = LaunchConfiguration('enable_safety').perform(context).strip().lower()
+    if enable_safety not in ('true', '1', 'yes'):
+        return [
+            LogInfo(msg='enable_safety:=false，跳过 enc_grounding_warning 搁浅预警。'),
+        ]
+
+    config_path = LaunchConfiguration('config_path').perform(context)
+    ns = _resolve_robot_namespace(config_path)
+    gw_pkg_share = get_package_share_directory('enc_grounding_warning')
+    gw_launch_file = os.path.join(
+        gw_pkg_share,
+        'launch',
+        'enc_grounding_warning.launch.py',
+    )
+    return [
+        LogInfo(
+            msg=[
+                'Starting enc_grounding_warning safety nodes, namespace=',
+                ns,
+                ', config=',
+                LaunchConfiguration('config_path'),
+            ]
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(gw_launch_file),
+            launch_arguments={
+                'namespace': ns,
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'depth_grid_file': LaunchConfiguration('safety_depth_grid_file'),
+                'params_file': LaunchConfiguration('safety_params_file'),
+                'robot_base_frame': f'{ns}/base_link',
+            }.items(),
+        ),
+    ]
 
 
 def generate_launch_description():
@@ -49,6 +137,7 @@ def generate_launch_description():
     )
 
     config_path = LaunchConfiguration('config_path')
+    use_sim_time = LaunchConfiguration('use_sim_time')
     enable_camera_rtsp = LaunchConfiguration('enable_camera_rtsp_streaming')
     enable_map_rtsp = LaunchConfiguration('enable_map_rtsp_streamer')
     camera_width = LaunchConfiguration('camera_stream_width')
@@ -59,6 +148,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(base_launch_file),
         launch_arguments={
             'config_path': config_path,
+            'use_sim_time': use_sim_time,
         }.items(),
     )
 
@@ -123,6 +213,37 @@ def generate_launch_description():
             description='CCS simulation configuration file',
         ),
         DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='true',
+            description='Use simulation clock; forwarded to the base simulation and safety nodes',
+        ),
+        DeclareLaunchArgument(
+            'enable_dynamic_ship_gt_bridge',
+            default_value='true',
+            description='true：启动 /dynamic_ship/tracked_ships -> /sim/ground_truth 转换节点',
+        ),
+        DeclareLaunchArgument(
+            'enable_safety',
+            default_value='true',
+            description='Start the enc_grounding_warning grounding safety stack',
+        ),
+        DeclareLaunchArgument(
+            'safety_depth_grid_file',
+            default_value='',
+            description=(
+                'Override the enc_grounding_warning depth grid file; '
+                'empty uses the safety package default'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'safety_params_file',
+            default_value='',
+            description=(
+                'Override the enc_grounding_warning parameter file; '
+                'empty uses the safety package default'
+            ),
+        ),
+        DeclareLaunchArgument(
             'enable_camera_rtsp_streaming',
             default_value='true',
             description='Start RTSP streaming for the three simulated cameras',
@@ -169,6 +290,8 @@ def generate_launch_description():
         ),
         LogInfo(msg=['Starting CCS certified simulation from: ', config_path]),
         base_bringup,
+        OpaqueFunction(function=_dynamic_ship_ground_truth_bridge),
         *camera_streams,
+        OpaqueFunction(function=_safety_include),
         map_streamer,
     ])

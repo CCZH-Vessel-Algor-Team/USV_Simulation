@@ -218,23 +218,31 @@ def _late_fusion_node(context, *args, **kwargs):
         LaunchConfiguration('nav2_namespace').perform(context), cfg_path
     )
     output_frame_id = f'{resolved_ns}/base_link'
+    odom_topic = f'/{resolved_ns}/odom'
 
     return [
         LogInfo(
-            msg=f'启动 usv_late_fusion late_fusion_node（output_frame_id={output_frame_id}）'
+            msg=(
+                f'启动 usv_late_fusion late_fusion_node（output_frame_id={output_frame_id}，'
+                f'ego_rotation_comp=true，odom={odom_topic}）'
+            )
         ),
         Node(
             package='usv_late_fusion',
             executable='late_fusion_node',
             name='late_fusion_node',
             output=output,
-            parameters=param_files + [{'output_frame_id': output_frame_id}],
+            parameters=param_files + [{
+                'output_frame_id': output_frame_id,
+                'odom_topic': odom_topic,
+                'enable_ego_rotation_compensation': True,
+            }],
         ),
     ]
 
 
 def _convert_to_trackship_node(context, *args, **kwargs):
-    """启动 convert_to_trackship：/fusion/snapshot → /fusion/tracked_ship。"""
+    """启动 convert_to_trackship：/fusion/snapshot → /tracked_ship（map 系）。"""
     enable = LaunchConfiguration('enable_convert_to_trackship').perform(context)
     if enable.lower() != 'true':
         return [
@@ -249,14 +257,14 @@ def _convert_to_trackship_node(context, *args, **kwargs):
     resolved_ns, _, _ = _resolve_nav2_namespace(
         LaunchConfiguration('nav2_namespace').perform(context), cfg_path
     )
-    frame_id = f'{resolved_ns}/base_link'
+    source_frame = f'{resolved_ns}/base_link'
     params_file = LaunchConfiguration('convert_to_trackship_params_file').perform(context)
 
     return [
         LogInfo(
             msg=(
-                '启动 convert_to_trackship（/fusion/snapshot → /fusion/tracked_ship，'
-                f'frame_id={frame_id}）'
+                '启动 convert_to_trackship（/fusion/snapshot → /tracked_ship，'
+                f'{source_frame} → map）'
             )
         ),
         Node(
@@ -267,7 +275,10 @@ def _convert_to_trackship_node(context, *args, **kwargs):
             parameters=[
                 {'use_sim_time': use_sim},
                 params_file,
-                {'frame_id': frame_id},
+                {
+                    'frame_id': source_frame,
+                    'output_frame_id': 'map',
+                },
             ],
         ),
     ]
@@ -573,7 +584,7 @@ def generate_launch_description():
             ts_subsystem_launch = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(ts_subsystem_launch_file),
                 launch_arguments={
-                    'tracked_ship_topic': '/dynamic_ship/tracked_ships',
+                    'tracked_ship_topic': '/tracked_ship',
                     'robot_base_frame': f'{resolved_ns}/base_link',
                     'odom_topic': f'/{resolved_ns}/odom',
                     'use_sim_time': use_sim_time.perform(context),
@@ -753,7 +764,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'monitor_tracked_ship_topic',
-            default_value='/dynamic_ship/tracked_ships',
+            default_value='/tracked_ship',
             description='maritime_situation_monitor 订阅的 TrackedShipList 话题',
         ),
         DeclareLaunchArgument(

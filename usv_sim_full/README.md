@@ -46,6 +46,7 @@ source install/setup.bash
 | 文件 | 作用 |
 |------|------|
 | `launch/main.launch.py` | **唯一全量主入口**：`session_manager` → `infra_sim` + 每船 `robot_bringup`（海事雷达桥按块开关）；静态 `map`→`{robot}/odom`；可选 RViz（追加雷达栅格与首船前相机）；每船 `usv_sim_wrapper`；按配置 `enable_env_dynamics` 启 `usv_env_dynamics`；`scenario_manager_node`；毫米波 `mmwave_4d_cloud_node`；海事雷达时 `gy_radar_driver`。参数：`config_path`、`enable_robot_localization`、`localization_params_file`、`localization_start_delay`、`use_static_map_odom_tf`。 |
+| `launch/CCS_Certified_Simulation_Environment.launch.py` | CCS 认证环境入口：在 `nav2_sim_three_vision_mmwave_bringup` 基础上增加三路相机 RTSP 与雷达地图 RTSP，并默认同时启动 `enc_grounding_warning` 搁浅预警（`enable_safety:=false` 可关闭；`safety_depth_grid_file` / `safety_params_file` 可覆盖安全包配置）。 |
 | `launch/nav2_sim_full_bringup.launch.py` | 先启动 `main.launch.py`（整船仿真），**延时**后启动 `nav2_thruster_bringup.launch.py`；可选启动前 `pkill` 清理与 Fast DDS shm 清理。`namespace` 默认 `auto` 时从 YAML 解析首船名。 |
 | `launch/nav2_thruster_bringup.launch.py` | 单船 **Nav2**：`tf_namespace_relay`、改写 `radar_nav2_param.yaml` 中 static_layer 的 `map_topic` 指向 `/{ns}/map/navradar/occupancy_grid`，再 `navigation_launch.py`；并行启动 `cmd_vel_to_thruster`。 |
 | `launch/sensor_tune.launch.py` | **无 Gazebo**：仅 `session_manager` + `robot_state_publisher` + `joint_state_publisher_gui` + `config/tf_tune.rviz`，用于 URDF/TF 与关节在 RViz 中调试。支持 `robot_index` 选择多船中的序号。 |
@@ -69,6 +70,9 @@ source /path/to/USV_ROS/install/setup.bash
 
 # 完整仿真（默认 share 内 full_config.yaml）
 ros2 launch usv_sim_full main.launch.py
+
+# CCS 认证仿真 + 相机/雷达地图 RTSP + 搁浅预警
+ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py
 
 # 指定配置
 ros2 launch usv_sim_full main.launch.py config_path:=/path/to/my.yaml

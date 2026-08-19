@@ -7,6 +7,8 @@ warning corridor logic.
 
 from __future__ import annotations
 
+import time
+
 import rclpy
 from geometry_msgs.msg import Point
 from nav_msgs.msg import Path
@@ -76,11 +78,22 @@ class RouteDepthPublisherNode(Node):
         )
 
         self.latest_plan = None
+        self._last_immediate = 0.0
         hz = float(self.get_parameter("publish_hz").value)
         self.timer = self.create_timer(1.0 / hz, self.timer_cb)
 
     def plan_cb(self, msg: Path):
         self.latest_plan = msg
+        if self._should_immediate():
+            self.run_once()
+
+    def _should_immediate(self) -> bool:
+        now = time.monotonic()
+        min_interval = float(self.params.get("plan_immediate_min_interval_s", 0.2))
+        if now - self._last_immediate < min_interval:
+            return False
+        self._last_immediate = now
+        return True
 
     def _corridor_half_width(self) -> float:
         return float(
@@ -93,6 +106,9 @@ class RouteDepthPublisherNode(Node):
         )
 
     def timer_cb(self):
+        self.run_once()
+
+    def run_once(self):
         if self.latest_plan is None or len(self.latest_plan.poses) < 2:
             return
 

@@ -1,12 +1,13 @@
 Panels:
   - Class: rviz_common/Displays
-    Help Height: 0
+    Help Height: 70
     Name: Displays
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - "/Lidar: front_lidar1/Status1"
       Splitter Ratio: 0.5
-    Tree Height: 140
+    Tree Height: 365
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -29,8 +30,6 @@ Panels:
   - Class: enc_grounding_warning_rviz/GroundingWarningPanel
     Name: GroundingWarningPanel
     Namespace: usv_1
-  - Class: env_panel/VrxEnvPanel
-    Name: VrxEnvPanel
 Visualization Manager:
   Class: ""
   Displays:
@@ -92,8 +91,7 @@ Visualization Manager:
       Enabled: true
       Name: Safety Grounding Markers
       Namespaces:
-        grounding_danger: true
-        grounding_route: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -102,7 +100,7 @@ Visualization Manager:
         Value: /usv_1/safety/grounding_markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: Safety Route Depth Markers
       Namespaces:
         {}
@@ -112,7 +110,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /usv_1/safety/route_depth_markers
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
@@ -120,10 +118,10 @@ Visualization Manager:
       Description Source: Topic
       Description Topic:
         Depth: 5
-        Durability Policy: Transient Local
+        Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /usv_1/robot_description
+        Value: ""
       Enabled: true
       Links:
         All Links Enabled: true
@@ -259,9 +257,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0
+      Max Intensity: -999999
       Min Color: 0; 0; 0
-      Min Intensity: 0
+      Min Intensity: 999999
       Name: "Lidar: front_lidar"
       Position Transformer: XYZ
       Selectable: true
@@ -488,7 +486,7 @@ Visualization Manager:
       Enabled: true
       Name: CPA (CPA points)
       Namespaces:
-        cpa: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -500,7 +498,7 @@ Visualization Manager:
       Enabled: true
       Name: Barrier (U-shaped barriers)
       Namespaces:
-        barrier: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
@@ -512,94 +510,13 @@ Visualization Manager:
       Enabled: true
       Name: Avoidance Point (avoidance arrows)
       Namespaces:
-        avoidance: true
+        {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /avoidance_point_marker
-      Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: Maritime Situation
-      Namespaces:
-        maritime_00245a60865d41b69489efe86e9f31c9: true
-        maritime_0823495df650406280508ef1999bd888: true
-        maritime_0e368213072945779a5687bcb6169b5f: true
-        maritime_26623bcea4e14d76908501622544d584: true
-        maritime_3b5e9865157647ab9e8d276d4c18616c: true
-        maritime_4c14aaa95aa74f4eb53ad7332a6a05df: true
-        maritime_51108bbe8e72443c9216daf4acad2fdb: true
-        maritime_5fe68e13229b4893bde4eb0bd16e402a: true
-        maritime_6427c2dabd5e409bbcac08c1b6054446: true
-        maritime_6c2b12adeb654094ae667b8303f1d205: true
-        maritime_6c9c10730400489f9446071c288607c5: true
-        maritime_7565fcdb1d23416abfd5d022920665d0: true
-        maritime_75aff7b1236a4d6ba58fbb57d804dc8e: true
-        maritime_7a2638c774cc426aa01bf9d95b3caf9f: true
-        maritime_7d891bba335940bab7d0b6176319ebd1: true
-        maritime_7ff1a047cce04c47b9f2c63ea5e9e663: true
-        maritime_844c121731a24ef2ae68f1cd5aaefd90: true
-        maritime_8bc941b84b7242bea782a6b703efa80c: true
-        maritime_8e689086d1d447738c6d471acad198b5: true
-        maritime_90fd364b18034652b4c90531a5024864: true
-        maritime_a2fc63bbc3584474b25ce28ff22abf5d: true
-        maritime_a8d12b39c65a475f869f8df7c892d4ee: true
-        maritime_a9a0029ea40c48e3acb5bd280282d61b: true
-        maritime_b27456c6e2f64c7486eb29b0e0463af5: true
-        maritime_b3c6f5ebeac94eaeb23d7e5f84f0a987: true
-        maritime_b6a094093bd146ceaea61a3e31e3c18b: true
-        maritime_b784b348c193427c963911fde2d0b49a: true
-        maritime_b989b4098dbf49b1b248b1eb8fb7afc1: true
-        maritime_cb86af53c83541a5989a4b66e4c6483d: true
-        maritime_d218c3ecd07b4dd8a42c45df405c2d57: true
-        maritime_f1b6b37e22d74dcdb81164bb551b695e: true
-        maritime_f69c75599e1942b98c701c47ae81c6a4: true
-        maritime_f97f64cd9db44713b23ccd05f1b29590: true
-        maritime_fb49fafbe1e84baeb8fc6af192a4b37d: true
-        maritime_ffb68c8ea2cc4b74821eb4733512ee85: true
-      Topic:
-        Depth: 10
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /maritime_situation_markers
-      Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: fusion_target
-      Namespaces:
-        fusion_target_box: true
-        fusion_target_label: true
-        fusion_target_velocity: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /fusion/target_markers
-      Value: true
-    - Alpha: 0.699999988079071
-      Class: rviz_default_plugins/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: true
-      Name: global_map
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /usv_1/global_costmap/costmap
-      Update Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /usv_1/global_costmap/costmap_updates
-      Use Timestamp: false
       Value: true
   Enabled: true
   Global Options:
@@ -653,16 +570,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 193.27464294433594
+      Distance: 672.0052490234375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 77.31338500976562
-        Y: -50.6905403137207
-        Z: 41.38614273071289
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -686,12 +603,12 @@ Window Geometry:
     collapsed: false
   GroundingWarningPanel:
     collapsed: false
-  Height: 1015
+  Height: 1310
   Hide Left Dock: false
   Hide Right Dock: false
   Navigation 2:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000300000000000001cb000001e9fc0200000006fb0000001200530065006c0065006300740069006f006e000000013f000000730000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007300000001740000008a0000005c00fffffffb0000000a0056006900650077007300000001c20000013b000000a400fffffffb00000018004e0061007600690067006100740069006f006e002000320000000111000001f80000012600fffffffb00000018004e0061007600690067006100740069006f006e00200032010000003d000001260000012600fffffffb000000160056007200780045006e007600500061006e0065006c0100000169000000bd0000005a00ffffff00000001000001a9000001e9fc0200000002fb000000100044006900730070006c006100790073010000003d000000c9000000c900fffffffb0000002a00470072006f0075006e00640069006e0067005700610072006e0069006e006700500061006e0065006c010000010c0000011a0000011a0000011a0000000300000780000001aefc0100000008fc0000000000000130000000f300fffffffa000000000200000002fb0000002200440079006e0061006d0069006300530068006900700043006f006e0066006900670100000000ffffffff0000019100fffffffb0000002000530074006f0072006d004600690065006c00640043006f006e00660069006701000003830000017e0000017e00fffffffb0000002000430061006d006500720061003a0020006c006500660074005f00630061006d0100000144000000ab0000000000000000fb0000002200430061006d006500720061003a002000660072006f006e0074005f00630061006d01000001f5000000b60000000000000000fb0000002200430061006d006500720061003a002000720069006700680074005f00630061006d01000002b1000000b40000000000000000fb0000002000430061006d006500720061003a0020006c006500660074005f00630061006d0100000136000000b7000000ab00fffffffb0000002200430061006d006500720061003a002000660072006f006e0074005f00630061006d01000001f3000002fe000000b600fffffffb0000002200430061006d006500720061003a002000720069006700680074005f00630061006d01000004f700000289000000b400fffffffb0000002000430061006d006500720061003a00200072006500610072005f00630061006d000000045f000001e1000000000000000000000400000001e900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000300000000000001cb00000310fc0200000005fb0000001200530065006c0065006300740069006f006e000000013f000000730000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007300000001740000008a0000005c00fffffffb0000000a0056006900650077007300000001c20000013b000000a400fffffffb00000018004e0061007600690067006100740069006f006e002000320000000111000001f80000013900fffffffb00000018004e0061007600690067006100740069006f006e00200032010000003d000003100000013900ffffff00000001000001a900000310fc0200000002fb000000100044006900730070006c006100790073010000003d000001f0000000c900fffffffb0000002a00470072006f0075006e00640069006e0067005700610072006e0069006e006700500061006e0065006c01000002330000011a0000011a0000011a00000003000009be000001aefc0100000005fc00000000000001d1000000f300fffffffa000000000200000002fb0000002200440079006e0061006d0069006300530068006900700043006f006e0066006900670100000000ffffffff0000019100fffffffb0000002000530074006f0072006d004600690065006c00640043006f006e00660069006701000003830000017e0000017e00fffffffb0000002200430061006d006500720061003a002000660072006f006e0074005f00630061006d01000001d7000002ae000000b600fffffffb0000002000430061006d006500720061003a0020006c006500660074005f00630061006d010000048b000002c3000000ab00fffffffb0000002200430061006d006500720061003a002000720069006700680074005f00630061006d01000007540000026a000000b400fffffffb0000002000430061006d006500720061003a00200072006500610072005f00630061006d000000045f000001e100000000000000000000063e0000031000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   StormFieldConfig:
@@ -700,8 +617,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  VrxEnvPanel:
-    collapsed: false
-  Width: 1920
-  X: 369
-  Y: 253
+  Width: 2494
+  X: 2560
+  Y: 27

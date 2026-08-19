@@ -8,8 +8,8 @@ global_costmap:
       # footprint: "[[2.5, 1.0], [2.5, -1.0], [-2.5, -1.0], [-2.5, 1.0]]"
       # footprint_padding: 0.5
 
-      update_frequency: 1.0
-      publish_frequency: 1.0
+      update_frequency: 5.0
+      publish_frequency: 5.0
       global_frame: map
       robot_base_frame: __ROBOT_NS__/base_link
       use_sim_time: True
@@ -24,6 +24,7 @@ global_costmap:
       # origin_y: -400.0
       plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "inflation_layer"]
       # plugins: ["static_layer","inflation_layer"]
+
       # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
       filters: ["keepout_filter"]
 
@@ -71,8 +72,9 @@ global_costmap:
       ts_projection_layer:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
+
         track_timeout: 5.0
-        tracked_ship_topic: "/dynamic_ship/tracked_ships"
+        tracked_ship_topic: "/tracked_ships"
 
       static_layer:
         # plugin: "nav2_costmap_2d::StaticLayer"
@@ -95,7 +97,6 @@ global_costmap:
         subscribe_to_updates: false
 
         transform_tolerance: 0.5
-
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -170,8 +171,8 @@ local_costmap:
       ts_projection_layer:
         plugin: "nav2_colregs_costmap_layers::TSProjectionLayer"
         enabled: True
-        track_timeout: 5.0
-        tracked_ship_topic: "/dynamic_ship/tracked_ships"
+        track_timeout: 0.5
+        tracked_ship_topic: "/tracked_ship"
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"

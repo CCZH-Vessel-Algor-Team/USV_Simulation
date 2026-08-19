@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import time
 
 import rclpy
 from geometry_msgs.msg import Point
@@ -65,12 +66,23 @@ class GroundingWarningNode(Node):
         self.latest_plan = None
         self.latest_vessel = None
         self._last_alert_key = None
+        self._last_immediate = 0.0
 
         hz = float(self.get_parameter("publish_hz").value)
         self.timer = self.create_timer(1.0 / hz, self.timer_cb)
 
     def plan_cb(self, msg: Path):
         self.latest_plan = msg
+        if self._should_immediate():
+            self.run_once()
+
+    def _should_immediate(self) -> bool:
+        now = time.monotonic()
+        min_interval = float(self.params.get("plan_immediate_min_interval_s", 0.2))
+        if now - self._last_immediate < min_interval:
+            return False
+        self._last_immediate = now
+        return True
 
     def vessel_cb(self, msg: VesselState):
         self.latest_vessel = msg
@@ -101,6 +113,9 @@ class GroundingWarningNode(Node):
         )
 
     def timer_cb(self):
+        self.run_once()
+
+    def run_once(self):
         try:
             x, y, yaw = lookup_map_pose(
                 self.tf_buffer,
