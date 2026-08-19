@@ -1,8 +1,0 @@
-image: "CN441122_aids_crop.pgm"
-mode: trinary
-resolution: 2
-# The 2501 x 2001 image center pixel (1250, 1000) is the ENU origin.
-origin: [-2501.0, -2001.0, 0.0]
-negate: 0
-occupied_thresh: 0.65
-free_thresh: 0.196
