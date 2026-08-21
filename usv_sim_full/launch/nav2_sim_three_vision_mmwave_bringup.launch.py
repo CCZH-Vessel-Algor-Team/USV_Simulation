@@ -397,7 +397,8 @@ def generate_launch_description():
     default_localization_params = os.path.join(
         usv_sim_full_pkg, 'config', 'robot_localization_gps.yaml'
     )
-    default_map_yaml = os.path.join(usv_sim_full_pkg, 'maps', 'sydney_map2.yaml')
+    # default_map_yaml = os.path.join(usv_sim_full_pkg, 'maps', 'sydney_map2.yaml')
+    default_map_yaml = os.path.join(usv_sim_full_pkg, 'maps', 'CN441122_aids_crop.yaml')
 
     _rviz_name = 'three_vision_one_mmwave.rviz'
     _rviz_share = os.path.join(usv_sim_full_pkg, 'rviz', _rviz_name)

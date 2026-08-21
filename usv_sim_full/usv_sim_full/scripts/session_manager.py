@@ -1097,6 +1097,26 @@ def generate_rviz_config(config_data, session_dir):
         'Value': True,
     })
 
+    # Static chart published by nav2_map_server. The generated RViz session
+    # otherwise only contains robot and sensor displays, hiding map alignment.
+    displays.append({
+        'Class': 'rviz_default_plugins/Map',
+        'Name': 'Chart (static map)',
+        'Enabled': True,
+        'Topic': {
+            'Value': '/map',
+            'Depth': 5,
+            'Durability Policy': 'Transient Local',
+            'History Policy': 'Keep Last',
+            'Reliability Policy': 'Reliable',
+        },
+        'Alpha': 1.0,
+        'Color Scheme': 'map',
+        'Draw Behind': False,
+        'Use Timestamp': False,
+        'Value': True,
+    })
+
     # 保存RViz配置到会话目录
     rviz_config_path = os.path.join(session_dir, "session.rviz")
     with open(rviz_config_path, 'w') as f:

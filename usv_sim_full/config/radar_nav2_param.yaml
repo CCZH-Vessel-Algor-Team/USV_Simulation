@@ -18,12 +18,12 @@ global_costmap:
       track_unknown_space: false      # true
       width: 800
       height: 800
-      resolution: 0.3
-      # 无 static_layer 时须手动设定 origin，使 costmap 覆盖仿真区域（单位：米）
-      # 船 spawn 于 map 原点附近；origin=(-400,-400) 使 800×800m 区域以 spawn 点为中心
-      origin_x: -400.0
-      origin_y: -400.0
-      plugins: ["obstacle_layer", "ts_projection_layer", "inflation_layer"]
+      # resolution: 0.3   # comform static layer resolution
+      resolution: 2.0
+      # origin_x: -400.0
+      # origin_y: -400.0
+      plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "inflation_layer"]
+      # plugins: ["static_layer","inflation_layer"]
       # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
       filters: ["keepout_filter"]
 
@@ -90,6 +90,9 @@ global_costmap:
 local_costmap:
   local_costmap:
     ros__parameters:
+
+      # footprint: "[[2.5, 1.0], [2.5, -1.0], [-2.5, -1.0], [-2.5, 1.0]]"
+      # footprint_padding: 0.5
 
       update_frequency: 5.0
       publish_frequency: 5.0
@@ -275,4 +278,3 @@ collision_monitor:
       enabled: true
       min_height: -2.0
       max_height: 5.0
-
