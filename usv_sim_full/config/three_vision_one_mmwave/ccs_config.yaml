@@ -112,7 +112,7 @@ robot_1:
     type: lidar
     parent_link: base_link
     xyz:
-    - 0.7
+    - 0.0
     - 0.0
     - 1.8
     rpy:
