@@ -1,0 +1,58 @@
+usv_route_planner:
+  ros__parameters:
+    map_topic: /map
+    mission_topic: /mission/waypoints
+    candidates_topic: /route_planner/candidates
+    selection_topic: /route_planner/selection
+    cancel_service: /route_planner/cancel
+    shortest_path_topic: /route_planner/shortest_path
+    safest_path_topic: /route_planner/safest_path
+    selected_path_topic: /route_planner/selected_path
+    status_topic: /route_planner/status
+    chart_map_frame: map
+
+    # Reject maps from other DDS participants publishing the same /map topic.
+    enforce_map_geometry: true
+    expected_map_width: 2501
+    expected_map_height: 2001
+    expected_map_resolution: 2.0
+    expected_map_origin_x: -10501.0
+    expected_map_origin_y: -6501.0
+    map_geometry_tolerance: 0.001
+
+    # CN441122_aids_crop, inherited from the centered EPSG:32650 source map.
+    utm_zone: 50
+    utm_north: true
+    utm_reference_easting: 736235.0
+    utm_reference_northing: 3846381.0
+
+    lethal_threshold: 80
+    unknown_is_obstacle: true
+
+    # Common center-to-obstacle clearance for both routes. Replace this
+    # example with footprint circumscribed radius plus the error budget.
+    collision_clearance_m: 20.0
+
+    # Safest route requires this additional clearance outside the common mask.
+    safety_hard_extra_clearance_m: 30.0
+    safety_weight: 5.0
+    safety_decay_distance_m: 15.0
+    chart_risk_weight: 1.0
+
+    allow_diagonal: true
+    prevent_corner_cutting: true
+    max_start_goal_snap_distance_m: 10.0
+    roi_margin_m: 1000.0
+    max_expansions: 10000000
+
+    waypoint_spacing_m: 50.0
+    max_waypoints: 200
+    default_speed_mps: 2.0
+
+    route_max_age_sec: 300.0
+    nav2_action_name: /usv_1/navigate_through_poses
+    nav2_server_timeout_sec: 2.0
+    nav2_feedback_period_sec: 1.0
+    execute_with_nav2: true
+    nav2_include_start_pose: false
+    nav2_behavior_tree: ""
