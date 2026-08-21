@@ -96,6 +96,14 @@ public:
       "selected_path_topic", "/route_planner/selected_path");
     status_topic_ = declare_parameter<std::string>(
       "status_topic", "/route_planner/status");
+    enable_plan_gps_republish_ = declare_parameter<bool>(
+      "enable_plan_gps_republish", true);
+    nav2_plan_topic_ = declare_parameter<std::string>(
+      "nav2_plan_topic", "/usv_1/plan");
+    plan_gps_topic_ = declare_parameter<std::string>(
+      "plan_gps_topic", "/route_planner/plan_gps");
+    plan_gps_path_topic_ = declare_parameter<std::string>(
+      "plan_gps_path_topic", "/route_planner/plan_gps_path");
 
     lethal_threshold_ = declare_parameter<int>("lethal_threshold", 80);
     unknown_is_obstacle_ = declare_parameter<bool>("unknown_is_obstacle", true);
@@ -164,6 +172,16 @@ public:
       selected_path_topic_, rclcpp::QoS(1).reliable().transient_local());
     status_publisher_ = create_publisher<std_msgs::msg::String>(
       status_topic_, rclcpp::QoS(10).reliable());
+    if (enable_plan_gps_republish_) {
+      nav2_plan_subscription_ = create_subscription<nav_msgs::msg::Path>(
+        nav2_plan_topic_, rclcpp::QoS(10).reliable(),
+        std::bind(&RoutePlannerNode::onNav2Plan, this, std::placeholders::_1));
+      plan_gps_waypoints_publisher_ =
+        create_publisher<usv_interfaces::msg::WaypointList>(
+        plan_gps_topic_, rclcpp::QoS(10).reliable());
+      plan_gps_path_publisher_ = create_publisher<nav_msgs::msg::Path>(
+        plan_gps_path_topic_, rclcpp::QoS(10).reliable());
+    }
     nav2_client_ = rclcpp_action::create_client<NavigateThroughPoses>(
       this, navigate_action_name_);
 
@@ -311,6 +329,33 @@ private:
     return path;
   }
 
+  nav_msgs::msg::Path makeGpsPathAsPath(
+    const std::vector<MapPoint> & points, const rclcpp::Time & stamp) const
+  {
+    nav_msgs::msg::Path path;
+    path.header.stamp = stamp;
+    path.header.frame_id = "wgs84";
+    path.poses.reserve(points.size());
+    for (std::size_t i = 0; i < points.size(); ++i) {
+      double yaw = 0.0;
+      if (points.size() > 1) {
+        const std::size_t next = i + 1 < points.size() ? i + 1 : i;
+        const std::size_t previous = i + 1 < points.size() ? i : i - 1;
+        yaw = std::atan2(
+          points[next].y - points[previous].y,
+          points[next].x - points[previous].x);
+      }
+      const usv_interfaces::msg::Waypoint waypoint = mapToGps(points[i], yaw);
+      geometry_msgs::msg::PoseStamped pose;
+      pose.header = path.header;
+      pose.pose.position.x = waypoint.longitude;
+      pose.pose.position.y = waypoint.latitude;
+      pose.pose.orientation = quaternionFromYaw(yaw);
+      path.poses.push_back(std::move(pose));
+    }
+    return path;
+  }
+
   usv_interfaces::msg::RouteCandidate makeCandidate(
     const PlannedRoute & route, uint8_t plan_id, const std::string & request_id,
     const rclcpp::Time & stamp) const
@@ -344,6 +389,37 @@ private:
     candidates_publisher_->publish(output);
     publishStatus(message);
     RCLCPP_WARN(get_logger(), "%s", message.c_str());
+  }
+
+  void onNav2Plan(const nav_msgs::msg::Path::SharedPtr message)
+  {
+    if (!enable_plan_gps_republish_ ||
+        !plan_gps_waypoints_publisher_ || !plan_gps_path_publisher_) {
+      return;
+    }
+    if (message->header.frame_id != map_frame_) {
+      RCLCPP_WARN_ONCE(
+        get_logger(), "Ignoring Nav2 plan frame '%s'; expected '%s'",
+        message->header.frame_id.c_str(), map_frame_.c_str());
+      return;
+    }
+    if (message->poses.empty()) {
+      return;
+    }
+    try {
+      std::vector<MapPoint> points;
+      points.reserve(message->poses.size());
+      for (const auto & pose : message->poses) {
+        points.push_back({pose.pose.position.x, pose.pose.position.y});
+      }
+      plan_gps_waypoints_publisher_->publish(
+        makeGpsPath(points, message->header.stamp));
+      plan_gps_path_publisher_->publish(
+        makeGpsPathAsPath(points, message->header.stamp));
+    } catch (const std::exception & error) {
+      RCLCPP_WARN(
+        get_logger(), "Nav2 plan to GPS conversion failed: %s", error.what());
+    }
   }
 
   void onMission(const usv_interfaces::msg::WaypointList::SharedPtr message)
@@ -611,6 +687,10 @@ private:
   std::string safest_path_topic_;
   std::string selected_path_topic_;
   std::string status_topic_;
+  std::string nav2_plan_topic_;
+  std::string plan_gps_topic_;
+  std::string plan_gps_path_topic_;
+  bool enable_plan_gps_republish_;
   std::string map_frame_;
   std::string navigate_action_name_;
   std::string nav2_behavior_tree_;
@@ -656,6 +736,10 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr safest_path_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr selected_path_publisher_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr status_publisher_;
+  rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr nav2_plan_subscription_;
+  rclcpp::Publisher<usv_interfaces::msg::WaypointList>::SharedPtr
+    plan_gps_waypoints_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr plan_gps_path_publisher_;
   rclcpp_action::Client<NavigateThroughPoses>::SharedPtr nav2_client_;
 };
 

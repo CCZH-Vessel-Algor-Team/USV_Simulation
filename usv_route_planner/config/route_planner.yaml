@@ -11,6 +11,13 @@ usv_route_planner:
     status_topic: /route_planner/status
     chart_map_frame: map
 
+    # 将 Nav2 全局规划 /usv_1/plan（map 局部米制）转发为 WGS84 经纬度航线，
+    # 供上位机直接标绘；基准与 candidates 的 gps_path 完全一致。
+    enable_plan_gps_republish: true
+    nav2_plan_topic: /usv_1/plan
+    plan_gps_topic: /route_planner/plan_gps
+    plan_gps_path_topic: /route_planner/plan_gps_path
+
     # Reject maps from other DDS participants publishing the same /map topic.
     enforce_map_geometry: true
     expected_map_width: 2501
@@ -54,5 +61,5 @@ usv_route_planner:
     nav2_server_timeout_sec: 2.0
     nav2_feedback_period_sec: 1.0
     execute_with_nav2: true
-    nav2_include_start_pose: false
+    nav2_include_start_pose: true
     nav2_behavior_tree: ""
