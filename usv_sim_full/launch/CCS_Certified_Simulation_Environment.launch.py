@@ -294,6 +294,28 @@ def generate_launch_description():
         ],
     )
 
+    route_planner_launch_file = os.path.join(
+        get_package_share_directory('usv_route_planner'),
+        'launch',
+        'route_planner.launch.py',
+    )
+    # 显式指定 route planner 的参数文件：父链中的 params_file 已被 Nav2
+    # bringup 占用（radar_nav2_param.yaml），同名 LaunchConfiguration 会覆盖
+    # route_planner.launch.py 的默认值，导致节点加载错误参数。
+    route_planner_params_file = os.path.join(
+        get_package_share_directory('usv_route_planner'),
+        'config',
+        'route_planner.yaml',
+    )
+    route_planner_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(route_planner_launch_file),
+        condition=IfCondition(LaunchConfiguration('enable_route_planner')),
+        launch_arguments={
+            'use_sim_time': use_sim_time,
+            'params_file': route_planner_params_file,
+        }.items(),
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             'config_path',
@@ -396,8 +418,14 @@ def generate_launch_description():
             default_value='/usv_1/map/navradar/occupancy_grid',
             description='Actual occupancy-grid topic remapped into the map streamer',
         ),
+        DeclareLaunchArgument(
+            'enable_route_planner',
+            default_value='true',
+            description='true：随仿真一起启动 usv_route_planner 选路节点',
+        ),
         LogInfo(msg=['Starting CCS certified simulation from: ', config_path]),
         base_bringup,
+        route_planner_include,
         OpaqueFunction(function=_ccs_map_to_odom_tf),
         OpaqueFunction(function=_gazebo_camera_follow),
         OpaqueFunction(function=_dynamic_ship_ground_truth_bridge),
