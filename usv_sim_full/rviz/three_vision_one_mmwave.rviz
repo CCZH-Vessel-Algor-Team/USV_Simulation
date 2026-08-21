@@ -480,7 +480,7 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /usv_1/plan
       Value: true
-      - Alpha: 1
+    - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
       Color: 25; 255; 0
@@ -508,7 +508,7 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /route_planner/safest_path
       Value: true
-      - Alpha: 1
+    - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
       Color: 0; 0; 255
@@ -536,7 +536,7 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /route_planner/shortest_path
       Value: true
-      - Alpha: 1
+    - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
       Color: 255; 255; 0
