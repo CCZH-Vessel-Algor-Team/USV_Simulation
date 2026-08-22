@@ -666,6 +666,7 @@ def generate_bridge_config(config_data):
     # Determine namespace/robot name for topics
     robot_name_for_bridge = config_data.get('robot', {}).get('name', 'wamv')
     sanitized_bridge_ns = re.sub(r"[^A-Za-z0-9_\-]", '_', str(robot_name_for_bridge))
+    world_name = config_data.get('environment', {}).get('world_name', 'sydney_regatta')
     
     # 尝试导入 topics 模块获取模板
     try:
@@ -687,7 +688,7 @@ def generate_bridge_config(config_data):
         # 添加关节状态桥接（命名空间化）
         bridges.append({
             "ros_topic_name": f"/model/{sanitized_bridge_ns}/joint_state",
-            "gz_topic_name": f"/model/{sanitized_bridge_ns}/joint_state",
+            "gz_topic_name": f"/world/{world_name}/model/{sanitized_bridge_ns}/joint_state",
             "ros_type_name": "sensor_msgs/msg/JointState",
             "gz_type_name": "gz.msgs.Model",
             "direction": "GZ_TO_ROS"

@@ -126,10 +126,10 @@
       <static_update_frequency>1</static_update_frequency>
     </plugin>
 
-    <!-- JointStatePublisher was removed: it can forward an invalid null joint
-         entity to the Ogre2 JointVisual synchronizer. Thruster joint control
-         remains provided by the individual Thruster/JointPositionController
-         plugins above. -->
+    <plugin
+      filename="gz-sim-joint-state-publisher-system"
+      name="gz::sim::systems::JointStatePublisher">
+    </plugin>
   </gazebo>
 
 
