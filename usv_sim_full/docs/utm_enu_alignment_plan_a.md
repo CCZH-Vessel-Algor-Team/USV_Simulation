@@ -1,5 +1,10 @@
 # CCS UTM Chart / ENU Simulation Alignment (Plan A)
 
+> Historical design: the current `feature/ccs_world` defaults to the
+> `CN441122_enc_5km` local-ENU map, an identity `map -> odom` transform, and
+> LocalCartesian GPS conversion. The non-zero UTM alignment below is retained
+> only as a record of the previous map setup.
+
 ## 1. Purpose
 
 Plan A keeps the electronic chart and route planner in the existing local

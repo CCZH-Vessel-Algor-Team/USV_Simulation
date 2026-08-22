@@ -21,13 +21,19 @@ usv_route_planner:
     # Reject maps from other DDS participants publishing the same /map topic.
     enforce_map_geometry: true
     expected_map_width: 2501
-    expected_map_height: 2001
+    expected_map_height: 2501
     expected_map_resolution: 2.0
-    expected_map_origin_x: -10501.0
-    expected_map_origin_y: -6501.0
+    expected_map_origin_x: -2501.0
+    expected_map_origin_y: -2501.0
     map_geometry_tolerance: 0.001
 
-    # CN441122_aids_crop, inherited from the centered EPSG:32650 source map.
+    # CN441122_enc_5km is a local ENU raster centered on the Gazebo datum.
+    map_projection: local_cartesian
+    datum_latitude: 34.692120
+    datum_longitude: 119.481403
+    datum_altitude: 0.0
+
+    # Legacy UTM-offset mode parameters; ignored for local_cartesian.
     utm_zone: 50
     utm_north: true
     utm_reference_easting: 736235.0

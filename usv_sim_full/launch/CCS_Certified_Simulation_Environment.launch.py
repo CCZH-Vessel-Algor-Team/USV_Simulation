@@ -235,7 +235,7 @@ def generate_launch_description():
         launch_arguments={
             'config_path': config_path,
             'use_sim_time': use_sim_time,
-            # CCS publishes a non-identity UTM-map -> ENU-odom transform.
+            # CCS publishes the map -> odom transform below.
             'use_static_map_odom_tf': 'false',
         }.items(),
     )
@@ -329,18 +329,18 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'ccs_map_to_odom_x',
-            default_value='-8932.7933',
-            description='UTM-local map coordinate of the ccs_open_water ENU origin (x)',
+            default_value='0.0',
+            description='ENC-local ENU map to Gazebo odom translation (x)',
         ),
         DeclareLaunchArgument(
             'ccs_map_to_odom_y',
-            default_value='-4677.2702',
-            description='UTM-local map coordinate of the ccs_open_water ENU origin (y)',
+            default_value='0.0',
+            description='ENC-local ENU map to Gazebo odom translation (y)',
         ),
         DeclareLaunchArgument(
             'ccs_map_to_odom_yaw',
-            default_value='0.0246604',
-            description='ENU-to-UTM grid convergence rotation in radians',
+            default_value='0.0',
+            description='ENC-local ENU map to Gazebo odom yaw in radians',
         ),
         DeclareLaunchArgument(
             'enable_dynamic_ship_gt_bridge',

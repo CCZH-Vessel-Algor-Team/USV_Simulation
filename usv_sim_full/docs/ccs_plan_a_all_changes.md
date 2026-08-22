@@ -1,5 +1,10 @@
 # CCS 方案 A 全部修改记录
 
+> 历史方案：本方案记录旧的 UTM 裁剪地图对齐方式。当前
+> `feature/ccs_world` 默认使用 `CN441122_enc_5km` 局部 ENU 地图、零位姿
+> `map -> odom` 以及 LocalCartesian GPS 转换；以下非零 TF 和旧地图参数不再是
+> 当前运行默认值。
+
 ## 1. 修改目标
 
 本次修改解决以下问题：

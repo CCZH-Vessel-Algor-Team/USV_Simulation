@@ -1,3 +1,4 @@
+#include <GeographicLib/LocalCartesian.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 
 #include <atomic>
@@ -9,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -76,14 +78,14 @@ public:
       "cancel_service", "/route_planner/cancel");
     map_frame_ = declare_parameter<std::string>("chart_map_frame", "map");
     enforce_map_geometry_ = declare_parameter<bool>("enforce_map_geometry", true);
-    expected_map_width_ = declare_parameter<int>("expected_map_width", 12437);
-    expected_map_height_ = declare_parameter<int>("expected_map_height", 8689);
+    expected_map_width_ = declare_parameter<int>("expected_map_width", 2501);
+    expected_map_height_ = declare_parameter<int>("expected_map_height", 2501);
     expected_map_resolution_ = declare_parameter<double>(
       "expected_map_resolution", 2.0);
     expected_map_origin_x_ = declare_parameter<double>(
-      "expected_map_origin_x", -12437.0);
+      "expected_map_origin_x", -2501.0);
     expected_map_origin_y_ = declare_parameter<double>(
-      "expected_map_origin_y", -8689.0);
+      "expected_map_origin_y", -2501.0);
     map_geometry_tolerance_ = declare_parameter<double>(
       "map_geometry_tolerance", 1e-3);
     navigate_action_name_ = declare_parameter<std::string>(
@@ -107,12 +109,23 @@ public:
 
     lethal_threshold_ = declare_parameter<int>("lethal_threshold", 80);
     unknown_is_obstacle_ = declare_parameter<bool>("unknown_is_obstacle", true);
+    map_projection_ = declare_parameter<std::string>(
+      "map_projection", "local_cartesian");
+    datum_latitude_ = declare_parameter<double>("datum_latitude", 34.692120);
+    datum_longitude_ = declare_parameter<double>("datum_longitude", 119.481403);
+    datum_altitude_ = declare_parameter<double>("datum_altitude", 0.0);
     utm_zone_ = declare_parameter<int>("utm_zone", 50);
     utm_north_ = declare_parameter<bool>("utm_north", true);
     utm_reference_easting_ = declare_parameter<double>(
       "utm_reference_easting", 736235.0);
     utm_reference_northing_ = declare_parameter<double>(
       "utm_reference_northing", 3846381.0);
+    if (map_projection_ == "local_cartesian") {
+      local_cartesian_.Reset(
+        datum_latitude_, datum_longitude_, datum_altitude_);
+    } else if (map_projection_ != "utm_offset") {
+      throw std::invalid_argument("map_projection must be 'local_cartesian' or 'utm_offset'");
+    }
     default_speed_mps_ = declare_parameter<double>("default_speed_mps", 2.0);
     route_max_age_sec_ = declare_parameter<double>("route_max_age_sec", 60.0);
     nav2_server_timeout_sec_ = declare_parameter<double>(
@@ -252,6 +265,14 @@ private:
 
   MapPoint gpsToMap(double latitude, double longitude) const
   {
+    if (map_projection_ == "local_cartesian") {
+      double x = 0.0;
+      double y = 0.0;
+      double z = 0.0;
+      local_cartesian_.Forward(latitude, longitude, datum_altitude_, x, y, z);
+      return {x, y};
+    }
+
     int zone = utm_zone_;
     bool north = utm_north_;
     double easting = 0.0;
@@ -271,9 +292,15 @@ private:
   {
     double latitude = 0.0;
     double longitude = 0.0;
-    GeographicLib::UTMUPS::Reverse(
-      utm_zone_, utm_north_, point.x + utm_reference_easting_,
-      point.y + utm_reference_northing_, latitude, longitude);
+    if (map_projection_ == "local_cartesian") {
+      double altitude = 0.0;
+      local_cartesian_.Reverse(
+        point.x, point.y, 0.0, latitude, longitude, altitude);
+    } else {
+      GeographicLib::UTMUPS::Reverse(
+        utm_zone_, utm_north_, point.x + utm_reference_easting_,
+        point.y + utm_reference_northing_, latitude, longitude);
+    }
     usv_interfaces::msg::Waypoint waypoint;
     waypoint.latitude = latitude;
     waypoint.longitude = longitude;
@@ -703,6 +730,11 @@ private:
   double map_geometry_tolerance_;
   int lethal_threshold_;
   bool unknown_is_obstacle_;
+  std::string map_projection_;
+  double datum_latitude_;
+  double datum_longitude_;
+  double datum_altitude_;
+  GeographicLib::LocalCartesian local_cartesian_;
   int utm_zone_;
   bool utm_north_;
   double utm_reference_easting_;

@@ -59,22 +59,25 @@ usv_interfaces/Waypoint[] waypoints
 
 ### 3.1 坐标基准
 
-经纬度由来源 `/usv_1/plan` 的 `map` 局部米制坐标换算得到，换算公式与候选航线
-`gps_path` 完全一致（`route_planner_node.cpp::mapToGps`）：
+经纬度由来源 `/usv_1/plan` 的 `map` 局部米制坐标换算得到，换算方式与候选航线
+`gps_path` 完全一致（`route_planner_node.cpp::mapToGps`）。当前地图采用以
+`(34.692120, 119.481403)` 为 datum 的 GeographicLib LocalCartesian：
 
 ```text
-map_x = UTM_easting  - 736235
-map_y = UTM_northing - 3846381
+map_x = local ENU east
+map_y = local ENU north
 ```
 
-UTM 投影参数（可配置）：
+局部 ENU 参数（可配置）：
 
 | 参数 | 默认值 |
 | :--- | :--- |
-| `utm_zone` | 50 |
-| `utm_north` | true |
-| `utm_reference_easting` | 736235.0 |
-| `utm_reference_northing` | 3846381.0 |
+| `map_projection` | `local_cartesian` |
+| `datum_latitude` | 34.692120 |
+| `datum_longitude` | 119.481403 |
+| `datum_altitude` | 0.0 |
+
+旧 UTM 裁剪地图仍可通过 `map_projection: utm_offset` 使用原有 UTM 参数。
 
 ### 3.2 `heading_target`
 
@@ -119,6 +122,10 @@ UTM 投影参数（可配置）：
 | `nav2_plan_topic` | `/usv_1/plan` | 输入的 Nav2 全局规划路径话题 |
 | `plan_gps_topic` | `/route_planner/plan_gps` | 输出的 GPS 航线话题（WaypointList） |
 | `plan_gps_path_topic` | `/route_planner/plan_gps_path` | 输出的 GPS 航线话题（Path） |
+| `map_projection` | `local_cartesian` | `map` 与 WGS84 的转换模式 |
+| `datum_latitude` | `34.692120` | 局部 ENU 原点纬度 |
+| `datum_longitude` | `119.481403` | 局部 ENU 原点经度 |
+| `datum_altitude` | `0.0` | 局部 ENU 原点高程 |
 
 ---
 
@@ -155,8 +162,8 @@ waypoints:
 ## 7. 上位机接入建议
 
 - 直接按 `latitude`/`longitude` 在电子海图上标绘，无需再做 UTM/ENU 换算；
-- 不要对 `/usv_1/plan`（`map` 局部米制）自行用非 736235/3846381 基准换算，
-  否则会出现整体偏移；
+- 不要把 `/usv_1/plan` 的局部 ENU 坐标直接当作 UTM 偏移，否则会出现旋转和
+  比例误差；
 - 如需与候选航线叠加比对，两者的经纬度坐标基准一致（同一 `mapToGps` 算法）。
 
 ---

@@ -28,17 +28,18 @@
 
 ## 坐标基准
 
-当前配置对应 `CN441122_filled_aids` 的 EPSG:32650 和 center 原点：
+当前配置对应 `CN441122_enc_5km`：地图、Gazebo 世界和船舶 odom 共用
+WGS84 datum `(34.692120, 119.481403)` 定义的局部 ENU 坐标：
 
 ```text
-map_x = UTM_easting  - 736235
-map_y = UTM_northing - 3846381
+map_x = local ENU east
+map_y = local ENU north
 ```
 
-更换地图后必须从其 `.metadata.json` 同步 `utm_zone`、半球和
-`utm_reference_easting/northing`，并从 YAML 同步 `expected_map_*` 几何签名，
-否则 GPS 路线会整体偏移或新地图会被规划器拒绝。几何签名用于防止同一 DDS
-domain 内其他节点发布的 `/map` 覆盖当前 ENC 地图。
+`map_projection: local_cartesian` 使用 GeographicLib 在 WGS84 与局部 ENU
+之间双向转换。更换地图后必须从其 `.geo.json` 同步 datum，并从 YAML 同步
+`expected_map_*` 几何签名，否则 GPS 路线会整体偏移或新地图会被规划器拒绝。
+保留的 `utm_offset` 模式仅用于兼容旧 UTM 裁剪地图。
 
 ## 启动
 
@@ -50,8 +51,8 @@ ros2 launch usv_route_planner route_planner.launch.py use_sim_time:=true
 
 ```bash
 ros2 topic pub --once /mission/waypoints usv_interfaces/msg/WaypointList \
-  "{waypoints: [{latitude: 34.7326928276, longitude: 119.5583189090}, \
-                {latitude: 34.7317676685, longitude: 119.6019674413}]}"
+  "{waypoints: [{latitude: 34.692120, longitude: 119.481403}, \
+                {latitude: 34.697120, longitude: 119.486403}]}"
 ```
 
 从候选结果复制当前 `request_id` 后选择路线。`plan_id=1` 表示最短路线，
