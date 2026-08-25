@@ -18,6 +18,8 @@ sim_vision_front:
     warn_on_tf_unavailable: false
     publish_markers: true
     publish_fov_marker: true
+    publish_ai_objects: true
+    ai_objects_topic: "/perception/camera/front/objects"
     camera_id: "front"
     camera_yaw: 0.0
     camera_mount_x_m: 0.25
@@ -44,6 +46,8 @@ sim_vision_left:
     warn_on_tf_unavailable: false
     publish_markers: true
     publish_fov_marker: true
+    publish_ai_objects: true
+    ai_objects_topic: "/perception/camera/left/objects"
     camera_id: "left"
     camera_yaw: 0.7853981634
     camera_mount_x_m: 0.0
@@ -70,6 +74,8 @@ sim_vision_right:
     warn_on_tf_unavailable: false
     publish_markers: true
     publish_fov_marker: true
+    publish_ai_objects: true
+    ai_objects_topic: "/perception/camera/right/objects"
     camera_id: "right"
     camera_yaw: -0.7853981634
     camera_mount_x_m: 0.0
