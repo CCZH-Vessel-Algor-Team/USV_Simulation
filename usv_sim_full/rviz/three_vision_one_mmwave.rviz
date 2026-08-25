@@ -425,7 +425,7 @@ Visualization Manager:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Best Effort
+        Reliability Policy: Reliable
         Value: /usv_1/sensors/camera/front_cam/image_raw
       Value: true
     - Class: rviz_default_plugins/Image
@@ -439,7 +439,7 @@ Visualization Manager:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Best Effort
+        Reliability Policy: Reliable
         Value: /usv_1/sensors/camera/left_cam/image_raw
       Value: true
     - Class: rviz_default_plugins/Image
@@ -453,7 +453,7 @@ Visualization Manager:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Best Effort
+        Reliability Policy: Reliable
         Value: /usv_1/sensors/camera/right_cam/image_raw
       Value: true
     - Acceleration properties:
