@@ -962,7 +962,7 @@ def generate_launch_description():
             parameters=[{
                 'use_sim_time': use_sim_time,
                 'frame_id': 'map',
-                'tracked_ship_topic': '/dynamic_ship/tracked_ships',
+                'tracked_ship_topic': '/tracked_ship',
                 'names_topic': '/storm_field/names',
                 'storm_field_topic': '/storm_field/storms',
                 'clicked_point_topic': '/storm_field/clicked_point',
