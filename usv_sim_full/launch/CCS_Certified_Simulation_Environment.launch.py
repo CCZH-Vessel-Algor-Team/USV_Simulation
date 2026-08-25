@@ -73,6 +73,61 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
     ]
 
 
+def _sim_ais_node(context, *args, **kwargs):
+    """可选启动 /sim/ground_truth 到 AIS 报文的仿真节点。"""
+    enable = LaunchConfiguration('enable_ais_sim').perform(context).strip().lower()
+    if enable not in ('true', '1', 'yes'):
+        return [LogInfo(msg='enable_ais_sim:=false，跳过 AIS 仿真节点。')]
+
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
+    return [
+        LogInfo(msg='启动 sim_ais_node（/sim/ground_truth -> /perception/ais/*）。'),
+        Node(
+            package='ground_truth_sensor_sim',
+            executable='sim_ais_node',
+            name='sim_ais_node',
+            output='log',
+            parameters=[{
+                'use_sim_time': use_sim_time,
+                'input_topic': '/sim/ground_truth',
+                'origin_latitude': LaunchConfiguration('ais_origin_latitude'),
+                'origin_longitude': LaunchConfiguration('ais_origin_longitude'),
+                'location_period_sec': LaunchConfiguration('ais_location_period_sec'),
+                'only_ais_matched': False,
+                'auto_assign_mmsi': True,
+                'vessel_name_prefix': 'CCS_SIM_',
+            }],
+        ),
+    ]
+
+
+def _ais_aggregator_node(context, *args, **kwargs):
+    """可选启动 AIS 报文汇聚节点，生成 snapshot、catalog 与 tracks。"""
+    enable = LaunchConfiguration('enable_ais_aggregator').perform(context).strip().lower()
+    if enable not in ('true', '1', 'yes'):
+        return [LogInfo(msg='enable_ais_aggregator:=false，跳过 AIS 汇聚节点。')]
+
+    config_path = LaunchConfiguration('config_path').perform(context)
+    namespace = _resolve_robot_namespace(config_path)
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
+    return [
+        LogInfo(msg='启动 ais_aggregator_node（AIS 报文 -> snapshot/catalog/tracks）。'),
+        Node(
+            package='ais_perception',
+            executable='ais_aggregator_node',
+            name='ais_aggregator_node',
+            output='log',
+            parameters=[
+                LaunchConfiguration('ais_aggregator_params_file'),
+                {
+                    'use_sim_time': use_sim_time,
+                    'os_name': namespace,
+                },
+            ],
+        ),
+    ]
+
+
 def _safety_include(context, *args, **kwargs):
     """可选启动 enc_grounding_warning 搁浅预警节点。"""
     enable_safety = LaunchConfiguration('enable_safety').perform(context).strip().lower()
@@ -199,6 +254,7 @@ def generate_launch_description():
     usv_sim_full_share = get_package_share_directory('usv_sim_full')
     usv_vision_share = get_package_share_directory('usv_vision')
     map_streamer_share = get_package_share_directory('usv_map_rtsp_streamer')
+    ais_perception_share = get_package_share_directory('ais_perception')
 
     base_launch_file = os.path.join(
         usv_sim_full_share,
@@ -348,6 +404,38 @@ def generate_launch_description():
             description='true：启动 /dynamic_ship/tracked_ships -> /sim/ground_truth 转换节点',
         ),
         DeclareLaunchArgument(
+            'enable_ais_sim',
+            default_value='true',
+            description='true：启动 /sim/ground_truth 到 AIS 报文的仿真节点',
+        ),
+        DeclareLaunchArgument(
+            'ais_origin_latitude',
+            default_value='34.692120',
+            description='AIS 仿真 ENU 原点纬度（WGS84）',
+        ),
+        DeclareLaunchArgument(
+            'ais_origin_longitude',
+            default_value='119.481403',
+            description='AIS 仿真 ENU 原点经度（WGS84）',
+        ),
+        DeclareLaunchArgument(
+            'ais_location_period_sec',
+            default_value='1.0',
+            description='AIS 位置报告发布周期（秒）',
+        ),
+        DeclareLaunchArgument(
+            'enable_ais_aggregator',
+            default_value='true',
+            description='true：汇聚 AIS 报文并发布 snapshot/catalog/tracks',
+        ),
+        DeclareLaunchArgument(
+            'ais_aggregator_params_file',
+            default_value=os.path.join(
+                ais_perception_share, 'config', 'ais_params.yaml'
+            ),
+            description='ais_aggregator_node 参数文件',
+        ),
+        DeclareLaunchArgument(
             'enable_gazebo_camera_follow',
             default_value='true',
             description='Follow the CCS vessel in the Gazebo GUI; press Esc to release',
@@ -429,6 +517,8 @@ def generate_launch_description():
         OpaqueFunction(function=_ccs_map_to_odom_tf),
         OpaqueFunction(function=_gazebo_camera_follow),
         OpaqueFunction(function=_dynamic_ship_ground_truth_bridge),
+        OpaqueFunction(function=_sim_ais_node),
+        OpaqueFunction(function=_ais_aggregator_node),
         *camera_streams,
         OpaqueFunction(function=_safety_include),
         map_streamer,
