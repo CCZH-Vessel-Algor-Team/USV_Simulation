@@ -391,25 +391,14 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: Barrier (U-shaped barriers)
+      Name: COLREGS Decision (avoidance arrow + barrier lines)
       Namespaces: {}
       Topic:
         Depth: 10
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /barrier_markers
-      Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: Avoidance Point (avoidance arrows)
-      Namespaces: {}
-      Topic:
-        Depth: 10
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /avoidance_point_marker
+        Value: /usv_1/colregs_decision_markers
       Value: true
   Enabled: true
   Global Options:
