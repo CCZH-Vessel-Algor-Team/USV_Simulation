@@ -327,6 +327,36 @@ def launch_setup(context, *args, **kwargs):
         )
         launch_items.append(robot_launch)
 
+        for sensor in block.get('sensors', []):
+            if (
+                not sensor.get('enabled', True)
+                or str(sensor.get('type', '')).lower() != 'gimbal'
+            ):
+                continue
+            gimbal_name = str(sensor.get('name', 'payload_gimbal'))
+            limits = sensor.get('limits', {})
+            gimbal_node_kwargs = quiet_ros_node_kwargs(verbose_s)
+            # Keep optional-gimbal startup failures visible in the terminal.
+            gimbal_node_kwargs['output'] = 'screen'
+            launch_items.append(
+                Node(
+                    package='usv_sim_full',
+                    executable='gimbal_controller',
+                    name=f'gimbal_controller_{sanitized}_{gimbal_name}',
+                    parameters=[{
+                        'robot_name': ship['name'],
+                        'gimbal_name': gimbal_name,
+                        'control_topic': sensor.get('control_topic', ''),
+                        'roll_min_rad': limits.get('roll_min_rad', -0.785398),
+                        'roll_max_rad': limits.get('roll_max_rad', 0.785398),
+                        'pitch_min_rad': limits.get('pitch_min_rad', -2.35619),
+                        'pitch_max_rad': limits.get('pitch_max_rad', 0.7854),
+                        'use_sim_time': True,
+                    }],
+                    **gimbal_node_kwargs,
+                )
+            )
+
     enable_tf_relay_s = LaunchConfiguration('enable_tf_namespace_relay').perform(
         context
     )

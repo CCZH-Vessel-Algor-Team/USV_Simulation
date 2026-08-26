@@ -154,4 +154,4 @@ usv_sim_full/
 
 ## 更多信息
 
-USV 仿真与其它包的协作说明见工作区根目录 `README.md` 及 `src/usv_simulation/docs/` 下文档。
+USV 仿真与其它包的协作说明见工作区根目录 `README.md` 及 `src/usv_simulation/docs/` 下文档。三轴云台摄像头的模型、数据链路和 ROS 接口见 [docs/gimbal_camera.md](docs/gimbal_camera.md)。

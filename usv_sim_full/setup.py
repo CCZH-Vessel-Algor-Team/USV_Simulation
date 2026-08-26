@@ -69,6 +69,7 @@ setup(
             'nav2_tf_readiness_gate = usv_sim_full.scripts.nav2_tf_readiness_gate:main',
             'clearing_scan_publisher = usv_sim_full.scripts.clearing_scan_publisher:main',
             'dynamic_ship_manager_node = usv_sim_full.scripts.dynamic_ship_manager_node:main',
+            'gimbal_controller = usv_sim_full.scripts.gimbal_controller:main',
         ],
     },
 )

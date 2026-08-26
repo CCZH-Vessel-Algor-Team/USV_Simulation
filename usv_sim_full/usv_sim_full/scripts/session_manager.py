@@ -399,7 +399,15 @@ def generate_sensors_overlay(
             info_topic_ns = info_topic.lstrip('/')
             sensors_content += f'''
     <xacro:camera_macro name="$(arg namespace)/{sensor_name}" parent_link="$(arg namespace)/{parent_link}" xyz="{xyz}" rpy="{rpy}" topic="$(arg namespace)/{topic_ns}" info_topic="$(arg namespace)/{info_topic_ns}"/>
-'''
+    '''
+        elif sensor_type == 'gimbal':
+            image_topic = sensor.get('image_topic') or f'/sensors/camera/{sensor_name}/image_raw'
+            imu_topic = sensor.get('imu_topic') or f'/sensors/imu/{sensor_name}/data'
+            image_topic_ns = image_topic.lstrip('/')
+            imu_topic_ns = imu_topic.lstrip('/')
+            sensors_content += f'''
+    <xacro:gimbal_macro name="$(arg namespace)/{sensor_name}" parent_link="$(arg namespace)/{parent_link}" xyz="{xyz}" rpy="{rpy}" command_prefix="command/{sensor_name}" image_topic="/$(arg namespace)/{image_topic_ns}" imu_topic="/$(arg namespace)/{imu_topic_ns}"/>
+    '''
         elif sensor_type == 'imu':
             topic = sensor.get('override_topic') or '/sensors/imu/data'
             update_rate = sensor.get('update_rate', 100)
@@ -666,6 +674,9 @@ def generate_bridge_config(config_data):
     # Determine namespace/robot name for topics
     robot_name_for_bridge = config_data.get('robot', {}).get('name', 'wamv')
     sanitized_bridge_ns = re.sub(r"[^A-Za-z0-9_\-]", '_', str(robot_name_for_bridge))
+    world_name = config_data.get('environment', {}).get(
+        'world_name', 'sydney_regatta'
+    )
     
     # 尝试导入 topics 模块获取模板
     try:
@@ -686,8 +697,10 @@ def generate_bridge_config(config_data):
         
         # 添加关节状态桥接（命名空间化）
         bridges.append({
-            "ros_topic_name": f"/model/{sanitized_bridge_ns}/joint_state",
-            "gz_topic_name": f"/model/{sanitized_bridge_ns}/joint_state",
+            "ros_topic_name": f"/{sanitized_bridge_ns}/joint_states",
+            "gz_topic_name": (
+                f"/world/{world_name}/model/{sanitized_bridge_ns}/joint_state"
+            ),
             "ros_type_name": "sensor_msgs/msg/JointState",
             "gz_type_name": "gz.msgs.Model",
             "direction": "GZ_TO_ROS"
@@ -768,8 +781,6 @@ def generate_bridge_config(config_data):
     elif isinstance(sensors_input, list):
         sensors_list = sensors_input
         
-    world_name = config_data.get('environment', {}).get('world_name', 'sydney_regatta')
-
     # 类型映射定义 (ros_type_name, gz_type_name)
     type_mappings = {
         'LIDAR': ('sensor_msgs/msg/PointCloud2', 'gz.msgs.PointCloudPacked', '/points'),
@@ -803,6 +814,31 @@ def generate_bridge_config(config_data):
             
         sensor_name = sensor.get('name', 'sensor')
         sensor_type = str(sensor.get('type', '')).upper()
+
+        if sensor_type == 'GIMBAL':
+            image_topic = sensor.get('image_topic') or f'/sensors/camera/{sensor_name}/image_raw'
+            imu_topic = sensor.get('imu_topic') or f'/sensors/imu/{sensor_name}/data'
+            for axis in ('roll', 'pitch', 'yaw'):
+                bridges.append({
+                    "ros_topic_name": f"/{sanitized_bridge_ns}/gimbal/{sensor_name}/{axis}/cmd_pos",
+                    "gz_topic_name": f"/model/{sanitized_bridge_ns}/command/{sensor_name}/{axis}",
+                    "ros_type_name": "std_msgs/msg/Float64",
+                    "gz_type_name": "gz.msgs.Double",
+                    "direction": "ROS_TO_GZ"
+                })
+            for ros_topic, ros_type, gz_type in (
+                (image_topic, "sensor_msgs/msg/Image", "gz.msgs.Image"),
+                (image_topic.replace('image_raw', 'camera_info'), "sensor_msgs/msg/CameraInfo", "gz.msgs.CameraInfo"),
+                (imu_topic, "sensor_msgs/msg/Imu", "gz.msgs.IMU"),
+            ):
+                bridges.append({
+                    "ros_topic_name": f"/{sanitized_bridge_ns}{ros_topic}",
+                    "gz_topic_name": f"/{sanitized_bridge_ns}{ros_topic}",
+                    "ros_type_name": ros_type,
+                    "gz_type_name": gz_type,
+                    "direction": "GZ_TO_ROS"
+                })
+            continue
 
         if sensor_type in no_bridge_sensor_types:
             continue

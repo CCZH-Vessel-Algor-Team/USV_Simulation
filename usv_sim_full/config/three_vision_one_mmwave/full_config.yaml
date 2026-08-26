@@ -192,6 +192,22 @@ robot_1:
     - -0.7853981634
     override_topic: /sensors/camera/right_cam/image_raw
     enabled: true
+  # 独立三轴云台载荷，不参与三视觉固定相机的真值检测配置。
+  - name: payload_gimbal
+    type: gimbal
+    parent_link: base_link
+    xyz:
+    - 0.45
+    - 0.0
+    - 2.2
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    image_topic: /sensors/camera/payload_gimbal/image_raw
+    imu_topic: /sensors/imu/payload_gimbal/data
+    control_topic: /gimbal/payload_gimbal/control
+    enabled: true
   - name: imu_sensor
     type: imu
     parent_link: base_link

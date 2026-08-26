@@ -181,6 +181,16 @@ robot_1:
     - 3.14
     override_topic: /sensors/camera/rear_cam/image_raw
     enabled: true
+  # PX4-style three-axis payload. The controller accepts GimbalControl RPY in degrees.
+  - name: payload_gimbal
+    type: gimbal
+    parent_link: base_link
+    xyz: [0.45, 0.0, 2.2]
+    rpy: [0.0, 0.0, 0.0]
+    image_topic: /sensors/camera/payload_gimbal/image_raw
+    imu_topic: /sensors/imu/payload_gimbal/data
+    control_topic: /gimbal/payload_gimbal/control
+    enabled: true
   - name: imu_sensor
     type: imu
     parent_link: base_link

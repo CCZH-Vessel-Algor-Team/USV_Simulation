@@ -161,6 +161,83 @@
     </gazebo>
   </xacro:macro>
 
+  <!-- PX4-style three-axis payload: yaw (Z), roll (X), then pitch (Y). -->
+  <xacro:macro name="gimbal_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' command_prefix:=command/gimbal image_topic:=/image_raw imu_topic:=/imu/data
+                                            camera_update_rate:=30 camera_horizontal_fov:=1.047198 camera_width:=1280 camera_height:=720 camera_near_clip:=0.2 camera_far_clip:=300.0 imu_update_rate:=200">
+    <link name="${name}_mount_link">
+      <inertial><mass value="0.30"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial>
+      <visual><geometry><mesh filename="package://usv_sim_full/description/models/px4_gimbal/meshes/cgo3_mount_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="gray"><color rgba="0.25 0.25 0.25 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.09" length="0.05"/></geometry></collision>
+    </link>
+    <joint name="${name}_mount_joint" type="fixed">
+      <parent link="${parent_link}"/><child link="${name}_mount_link"/><origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <link name="${name}_yaw_link">
+      <inertial><mass value="0.20"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
+      <visual><geometry><mesh filename="package://usv_sim_full/description/models/px4_gimbal/meshes/cgo3_vertical_arm_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="dark_gray"><color rgba="0.15 0.15 0.15 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.06" length="0.07"/></geometry></collision>
+    </link>
+    <joint name="${name}_yaw_joint" type="continuous">
+      <parent link="${name}_mount_link"/><child link="${name}_yaw_link"/>
+      <origin xyz="0 0 -0.05" rpy="0 0 0"/><axis xyz="0 0 1"/><dynamics damping="0.1" friction="0"/>
+    </joint>
+
+    <link name="${name}_roll_link">
+      <inertial><mass value="0.15"/><inertia ixx="0.0005" ixy="0" ixz="0" iyy="0.0005" iyz="0" izz="0.0005"/></inertial>
+      <visual><geometry><mesh filename="package://usv_sim_full/description/models/px4_gimbal/meshes/cgo3_horizontal_arm_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="black"><color rgba="0.08 0.08 0.08 1"/></material></visual>
+      <collision><geometry><box size="0.12 0.05 0.05"/></geometry></collision>
+    </link>
+    <joint name="${name}_roll_joint" type="revolute">
+      <parent link="${name}_yaw_link"/><child link="${name}_roll_link"/>
+      <origin xyz="0 0 -0.06" rpy="0 0 0"/><axis xyz="1 0 0"/>
+      <limit lower="-0.785398" upper="0.785398" effort="5" velocity="1.5"/><dynamics damping="0.1" friction="0"/>
+    </joint>
+
+    <link name="${name}_pitch_link">
+      <inertial><mass value="0.20"/><inertia ixx="0.0008" ixy="0" ixz="0" iyy="0.0008" iyz="0" izz="0.0008"/></inertial>
+      <visual><geometry><box size="0.10 0.08 0.07"/></geometry><material name="black"><color rgba="0.05 0.05 0.05 1"/></material></visual>
+      <collision><geometry><box size="0.10 0.08 0.07"/></geometry></collision>
+    </link>
+    <joint name="${name}_pitch_joint" type="revolute">
+      <parent link="${name}_roll_link"/><child link="${name}_pitch_link"/>
+      <origin xyz="0.05 0 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/>
+      <limit lower="-2.35619" upper="0.7854" effort="5" velocity="1.5"/><dynamics damping="0.1" friction="0"/>
+    </joint>
+
+    <link name="${name}_camera_link">
+      <inertial><mass value="0.15"/><inertia ixx="0.0004" ixy="0" ixz="0" iyy="0.0004" iyz="0" izz="0.0004"/></inertial>
+      <visual><geometry><mesh filename="package://usv_sim_full/description/models/px4_gimbal/meshes/cgo3_camera_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="camera_black"><color rgba="0.02 0.02 0.02 1"/></material></visual>
+      <collision><geometry><box size="0.10 0.08 0.06"/></geometry></collision>
+    </link>
+    <joint name="${name}_camera_joint" type="fixed">
+      <parent link="${name}_pitch_link"/><child link="${name}_camera_link"/><origin xyz="0.06 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <gazebo reference="${name}_camera_link">
+      <sensor name="${name}_camera" type="camera">
+        <topic>${image_topic}</topic><gz_frame_id>${name}_camera_link</gz_frame_id><update_rate>${camera_update_rate}</update_rate>
+        <camera name="${name}_camera"><horizontal_fov>${camera_horizontal_fov}</horizontal_fov><image><width>${camera_width}</width><height>${camera_height}</height><format>R8G8B8</format></image><clip><near>${camera_near_clip}</near><far>${camera_far_clip}</far></clip></camera>
+        <always_on>true</always_on><visualize>true</visualize>
+      </sensor>
+      <sensor name="${name}_imu" type="imu">
+        <topic>${imu_topic}</topic><gz_frame_id>${name}_camera_link</gz_frame_id><update_rate>${imu_update_rate}</update_rate><always_on>true</always_on>
+      </sensor>
+    </gazebo>
+
+    <gazebo>
+      <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+        <joint_name>${name}_roll_joint</joint_name><sub_topic>${command_prefix}/roll</sub_topic><p_gain>0.8</p_gain><i_gain>0.035</i_gain><d_gain>0.02</d_gain><cmd_max>0.3</cmd_max><cmd_min>-0.3</cmd_min>
+      </plugin>
+      <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+        <joint_name>${name}_pitch_joint</joint_name><sub_topic>${command_prefix}/pitch</sub_topic><p_gain>0.8</p_gain><i_gain>0.01245</i_gain><d_gain>0.015</d_gain><cmd_max>0.3</cmd_max><cmd_min>-0.3</cmd_min>
+      </plugin>
+      <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+        <joint_name>${name}_yaw_joint</joint_name><sub_topic>${command_prefix}/yaw</sub_topic><p_gain>0.3</p_gain><i_gain>0.01245</i_gain><d_gain>0.015</d_gain><cmd_max>0.3</cmd_max><cmd_min>-0.3</cmd_min>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+
   <!-- IMU Macro for Gazebo Harmonic -->
   <xacro:macro name="imu_macro" params="name parent_link:='$(arg namespace)/base_link' xyz:='0 0 0' rpy:='0 0 0' topic:=/imu/data 
                                         update_rate:=${imu_update_rate}
