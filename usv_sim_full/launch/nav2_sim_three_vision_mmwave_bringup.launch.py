@@ -397,7 +397,9 @@ def generate_launch_description():
     default_localization_params = os.path.join(
         usv_sim_full_pkg, 'config', 'robot_localization_gps.yaml'
     )
-    default_map_yaml = os.path.join(usv_sim_full_pkg, 'maps', 'sydney_map2.yaml')
+    default_map_yaml = os.path.join(
+        usv_sim_full_pkg, 'maps', 'CN441122_enc_5km.yaml'
+    )
 
     _rviz_name = 'three_vision_one_mmwave.rviz'
     _rviz_share = os.path.join(usv_sim_full_pkg, 'rviz', _rviz_name)
@@ -960,7 +962,7 @@ def generate_launch_description():
             parameters=[{
                 'use_sim_time': use_sim_time,
                 'frame_id': 'map',
-                'tracked_ship_topic': '/dynamic_ship/tracked_ships',
+                'tracked_ship_topic': '/tracked_ship',
                 'names_topic': '/storm_field/names',
                 'storm_field_topic': '/storm_field/storms',
                 'clicked_point_topic': '/storm_field/clicked_point',

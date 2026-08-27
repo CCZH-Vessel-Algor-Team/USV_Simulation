@@ -56,4 +56,8 @@ navsat_transform_node:
     zero_altitude: true
     publish_filtered_gps: false
     use_odometry_yaw: true
-    wait_for_datum: false
+    # Humble navsat_transform_node manual datum syntax. The datum and local
+    # Cartesian frame match worlds/ccs_open_water_crop.sdf and the ENC map.
+    wait_for_datum: true
+    use_local_cartesian: true
+    datum: [34.692120, 119.481403, 0.0]

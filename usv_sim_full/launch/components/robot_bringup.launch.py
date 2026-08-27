@@ -217,6 +217,7 @@ def generate_launch_description():
     # 将 session_manager 输出的 model:// URI 还原为 RViz 可识别的 package:// URI
     def launch_robot_state_publisher(context, *args, **kwargs):
         actual_urdf_path = urdf_path.perform(context)
+        rn = robot_name.perform(context)
         use_sim_time_val = use_sim_time.perform(context).lower() == 'true'
         v = verbose_launch.perform(context)
         with open(actual_urdf_path, 'r') as f:
@@ -230,6 +231,9 @@ def generate_launch_description():
                 'robot_description': robot_desc,
                 'use_sim_time': use_sim_time_val
             }],
+            remappings=[
+                ('joint_states', f'/model/{rn}/joint_state'),
+            ],
             **kw,
         )
         return [node]

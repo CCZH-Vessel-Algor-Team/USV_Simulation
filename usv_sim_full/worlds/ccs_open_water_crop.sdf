@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.9">
-  <world name="ccs_open_water">
+  <world name="ccs_open_water_crop">
     <physics name="4ms" type="dart">
       <max_step_size>0.004</max_step_size>
       <real_time_factor>1.0</real_time_factor>
@@ -17,14 +17,21 @@
         <scene>scene</scene>
         <ambient_light>0.15 0.15 0.15</ambient_light>
         <background_color>0.8 0.8 0.8</background_color>
-        <camera_pose>0 0 140 0 1.2 0</camera_pose>
+        <camera_pose>0 0 40 0 1.2 0</camera_pose>
         <camera_clip>
           <near>0.25</near>
           <far>10000</far>
         </camera_clip>
       </plugin>
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu" />
       <plugin filename="GzSceneManager" name="Scene Manager" />
       <plugin filename="InteractiveViewControl" name="Interactive view control" />
+      <plugin filename="CameraTracking" name="Camera Tracking">
+        <follow_target>usv_1</follow_target>
+        <follow_offset>-20 -20 12</follow_offset>
+        <follow_pgain>0.05</follow_pgain>
+      </plugin>
+      <plugin filename="EntityTree" name="Entity tree" />
       <plugin filename="WorldControl" name="World control">
         <play_pause>true</play_pause>
         <step>true</step>
@@ -63,8 +70,8 @@
     <spherical_coordinates>
       <surface_model>EARTH_WGS84</surface_model>
       <world_frame_orientation>ENU</world_frame_orientation>
-      <latitude_deg>34.69149699539598</latitude_deg>
-      <longitude_deg>119.53601222131164</longitude_deg>
+      <latitude_deg>34.692120</latitude_deg>
+      <longitude_deg>119.481403</longitude_deg>
       <elevation>0.0</elevation>
       <heading_deg>0.0</heading_deg>
     </spherical_coordinates>
@@ -84,9 +91,15 @@
     </light>
 
     <include>
-      <name>Coast Waves</name>
+      <name>CCS Crop Waves</name>
       <pose>0 0 0 0 0 0</pose>
-      <uri>coast_waves</uri>
+      <uri>model://coast_waves/model_36km.sdf</uri>
+    </include>
+
+    <include>
+      <name>CCS ENC Chart Obstacles</name>
+      <pose>0 0 0 0 0 0</pose>
+      <uri>model://ccs_chart_obstacles_enc_5km</uri>
     </include>
 
     <plugin filename="libPublisherPlugin.so" name="vrx::PublisherPlugin">

@@ -1,0 +1,366 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="ccs_chart_obstacles_enc_5km">
+    <static>true</static>
+    <link name="chart_obstacle_001">
+      <pose>-1444.372646 1082.602142 0 0 0 0</pose>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_001.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.32 0.28 0.18 1</ambient>
+          <diffuse>0.42 0.36 0.22 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_001.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_002">
+      <pose>-2363.378606 -2361.534128 0 0 0 0</pose>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_002.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.32 0.28 0.18 1</ambient>
+          <diffuse>0.42 0.36 0.22 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_002.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_003">
+      <pose>1481.363891 2472.400333 0 0 0 0</pose>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_003.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.32 0.28 0.18 1</ambient>
+          <diffuse>0.42 0.36 0.22 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_003.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_004">
+      <pose>-2048.691670 -2486.928484 0 0 0 0</pose>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_004.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.32 0.28 0.18 1</ambient>
+          <diffuse>0.42 0.36 0.22 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_004.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_005">
+      <pose>-47.629930 42.000000 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_005.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_006">
+      <pose>-1004.790020 120.377649 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_006.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_007">
+      <pose>-800.116101 -13.573786 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_007.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_008">
+      <pose>393.573786 1336.116101 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_008.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_009">
+      <pose>-426.544574 -25.846768 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_009.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_010">
+      <pose>-1309.455426 45.846768 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_010.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_011">
+      <pose>-678.153232 -2481.455426 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_011.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_012">
+      <pose>-790.153232 48.544574 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_012.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_013">
+      <pose>451.455426 1262.153232 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_013.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_014">
+      <pose>-1062.292555 -2342.922693 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_014.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_015">
+      <pose>-1062.292555 125.077307 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_015.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+    <link name="chart_obstacle_016">
+      <pose>-816.000000 116.000000 0 0 0 0</pose>
+      <visual name="visual">
+        <pose>0 0 0 1.57079 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://mb_marker_buoy_red/meshes/mb_marker_buoy.dae</uri>
+            <scale>2 2 2</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.0 0.0 1</ambient>
+          <diffuse>1.0 0.0 0.0 1</diffuse>
+        </material>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/chart_obstacle_016.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

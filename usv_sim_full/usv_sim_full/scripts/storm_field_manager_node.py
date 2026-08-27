@@ -114,7 +114,7 @@ class StormFieldManager(Node):
         super().__init__('storm_field_manager')
 
         self.declare_parameter('frame_id', 'map')
-        self.declare_parameter('tracked_ship_topic', '/dynamic_ship/tracked_ships')
+        self.declare_parameter('tracked_ship_topic', '/tracked_ship')
         self.declare_parameter('names_topic', '/storm_field/names')
         self.declare_parameter('marker_topic', '/storm_field/markers')
         self.declare_parameter('storm_field_topic', '/storm_field/storms')
