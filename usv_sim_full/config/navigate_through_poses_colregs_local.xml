@@ -6,7 +6,10 @@
     - ComputePathThroughPoses 的 planner_id 为 "RRTStar"（colregs_local_planner_server
       内置 VO-RRT*，仅接受空或 "RRTStar"；/compute_path_through_poses 已实现：
       逐段规划 + 每段独立 TS 决策，段起点=前段路径终点）
-    - RemovePassedGoals radius 取一倍船长（约 5 m）：途经点半径内即视为通过
+    - RemovePassedGoals radius 取一倍船长（约 5 m）：途经点半径内即视为通过。
+      注意必须显式设置 robot_base_frame（默认值 "base_link" 在命名空间环境下
+      TF 查找失败 → RemovePassedGoals FAILURE → recovery 死循环，planner
+      永远不会被调用）。
     - 全局清图服务名由 global_costmap/... 改为 colregs_costmap/...
       （实测服务路径为 /usv_1/colregs_costmap/clear_entirely_colregs_costmap）
   注意：本 fork 的 BtServiceNode 在 BT 加载时即等待服务（默认 1s 超时抛异常），
@@ -23,7 +26,7 @@
         <RateController hz="0.3">
           <RecoveryNode number_of_retries="1" name="ComputePathThroughPoses">
             <ReactiveSequence name="ComputePathThroughPosesWithPruning">
-              <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="5.0"/>
+              <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="5.0" global_frame="map" robot_base_frame="usv_1/base_link"/>
               <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="RRTStar"/>
             </ReactiveSequence>
             <ClearEntireCostmap name="ClearColregsCostmap-Context" service_name="colregs_costmap/clear_entirely_colregs_costmap"/>
