@@ -1,20 +1,51 @@
 
 <!--
-  COLREGS Local Planner Server 版 NavigateThroughPoses 行为树（占位）。
-  colregs_local_planner_server 只提供 compute_path_to_pose action
-  （无 compute_path_through_poses），因此"途经多点"导航暂不支持：
-  收到 NavigateThroughPoses 目标后立即失败返回。
-
-  该文件存在的目的：bt_navigator 在 on_configure 时会同时预加载
-  navigate_to_pose 与 navigate_through_poses 两个默认 BT；若不覆盖后者，
-  将因默认 BT 中的 ComputePathThroughPoses action server 不存在而
-  configure 失败，导致整个导航栈 lifecycle 中止。
+  COLREGS Local Planner Server 版 NavigateThroughPoses 行为树
+  （派生自 navigate_to_pose_colregs_local.xml，替换原 AlwaysFailure 占位）。
+  差异：
+    - ComputePathThroughPoses 的 planner_id 为 "RRTStar"（colregs_local_planner_server
+      内置 VO-RRT*，仅接受空或 "RRTStar"；/compute_path_through_poses 已实现：
+      逐段规划 + 每段独立 TS 决策，段起点=前段路径终点）
+    - RemovePassedGoals radius 取一倍船长（约 5 m）：途经点半径内即视为通过
+    - 全局清图服务名由 global_costmap/... 改为 colregs_costmap/...
+      （实测服务路径为 /usv_1/colregs_costmap/clear_entirely_colregs_costmap）
+  注意：本 fork 的 BtServiceNode 在 BT 加载时即等待服务（默认 1s 超时抛异常），
+  因此 lifecycle 顺序上 colregs_local_planner_server 须先于 bt_navigator 激活
+  （colregs_local_stack.launch.py 的 node_names 顺序已保证）。
+  This Behavior Tree replans the global path periodically at 0.3 Hz through
+  the remaining viapoints and it also has recovery actions specific to
+  planning / control as well as general system issues.
 -->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <RecoveryNode number_of_retries="0" name="NavigateThroughPoses">
-      <AlwaysFailure name="ThroughPosesUnsupportedByColregsServer"/>
-      <AlwaysFailure name="NoRecovery"/>
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithReplanning">
+        <RateController hz="0.3">
+          <RecoveryNode number_of_retries="1" name="ComputePathThroughPoses">
+            <ReactiveSequence name="ComputePathThroughPosesWithPruning">
+              <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="5.0"/>
+              <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="RRTStar"/>
+            </ReactiveSequence>
+            <ClearEntireCostmap name="ClearColregsCostmap-Context" service_name="colregs_costmap/clear_entirely_colregs_costmap"/>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          <FollowPath path="{path}" controller_id="FollowPath"/>
+          <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated/>
+        <RoundRobin name="RecoveryActions">
+          <Sequence name="ClearingActions">
+            <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <ClearEntireCostmap name="ClearColregsCostmap-Subtree" service_name="colregs_costmap/clear_entirely_colregs_costmap"/>
+          </Sequence>
+          <Spin spin_dist="1.57"/>
+          <Wait wait_duration="5"/>
+          <BackUp backup_dist="0.30" backup_speed="0.05"/>
+        </RoundRobin>
+      </ReactiveFallback>
     </RecoveryNode>
   </BehaviorTree>
 </root>

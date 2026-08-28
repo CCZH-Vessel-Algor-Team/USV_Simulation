@@ -9,7 +9,7 @@ import uuid
 import yaml
 
 import rclpy
-from geometry_msgs.msg import PointStamped, Pose, Twist
+from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Twist
 from rclpy.node import Node
 from std_msgs.msg import String
 from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
@@ -198,6 +198,7 @@ class DynamicShipManager(Node):
         if not self.config_base_dir:
             self.config_base_dir = os.path.dirname(os.path.abspath(__file__))
 
+        self.declare_parameter('spawn_pose_topic', '/usv_1/initialpose')
         self.declare_parameter('heading_deg', 0.0)
         self.declare_parameter('speed', 3.0)
         self.declare_parameter('shape', 'mesh_profile')
@@ -220,8 +221,15 @@ class DynamicShipManager(Node):
 
         self._ship_counter = 0
 
-        self.click_sub = self.create_subscription(
-            PointStamped, '/clicked_point', self.on_clicked_point, 10)
+        spawn_pose_topic = self.get_parameter(
+            'spawn_pose_topic').get_parameter_value().string_value
+        # RViz "2D Pose Estimate" interaction: click-drag provides both the
+        # spawn position and the initial heading (drag direction), replacing
+        # the former PublishPoint (/clicked_point) spawn which had no heading.
+        # PublishPoint is thereby released for general debugging.
+        self.spawn_pose_sub = self.create_subscription(
+            PoseWithCovarianceStamped, spawn_pose_topic,
+            self.on_spawn_pose, 10)
 
         self.config_srv = self.create_service(
             SetDynamicShipConfig, '/dynamic_ship/set_config',
@@ -257,14 +265,24 @@ class DynamicShipManager(Node):
             response.message = str(e)
         return response
 
-    def on_clicked_point(self, msg):
-        heading_deg, speed, shape, half_dist = self._read_config()
-        heading = math.pi / 2.0 - math.radians(heading_deg)
+    def on_spawn_pose(self, msg):
+        _, speed, shape, half_dist = self._read_config()
+
+        pose = msg.pose.pose
+        # Heading from the drag direction of the RViz pose tool (ENU yaw
+        # extracted from the quaternion). The heading_deg parameter remains
+        # available for service-driven configuration but is no longer used
+        # on the interactive spawn path.
+        heading = math.atan2(
+            2.0 * (pose.orientation.w * pose.orientation.z +
+                   pose.orientation.x * pose.orientation.y),
+            1.0 - 2.0 * (pose.orientation.y * pose.orientation.y +
+                         pose.orientation.z * pose.orientation.z))
 
         self._ship_counter += 1
         name = f'dyn_target_{self._ship_counter}'
 
-        self._spawn_ship_at(name, msg.point.x, msg.point.y, heading,
+        self._spawn_ship_at(name, pose.position.x, pose.position.y, heading,
                             half_dist, shape, speed)
 
     def _spawn_ship_at(self, name, x, y, yaw, half_dist, shape, speed):
@@ -298,7 +316,7 @@ class DynamicShipManager(Node):
 
         self.ships[name] = ship
         self.get_logger().info(
-            f'clicked at ({x:.2f},{y:.2f}) heading={math.degrees(yaw):.0f}deg '
+            f'spawn pose ({x:.2f},{y:.2f}) heading={math.degrees(yaw):.0f}deg '
             f'-> spawned {name} speed={speed}m/s')
 
     def on_spawn(self, request, response):

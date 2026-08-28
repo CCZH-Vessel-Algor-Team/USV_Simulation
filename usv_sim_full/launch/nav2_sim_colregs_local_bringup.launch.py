@@ -419,6 +419,7 @@ def generate_launch_description():
             'lifecycle_manager_navigation|lifecycle_manager_map|map_server|cmd_vel_to_thruster.py|'
             'ekf_node|navsat_transform_node|radar_gz_bridge|'
             'adaptive_radar_grid_map_node|usv_sim_wrapper|scenario_manager_node|'
+            'dynamic_ship_manager_node|'
             'nav2_tf_readiness_gate|'
             'sim_vision_node|sim_mmwave_node|late_fusion_node|'
             'target_snapshot_to_tracked_ship|'
