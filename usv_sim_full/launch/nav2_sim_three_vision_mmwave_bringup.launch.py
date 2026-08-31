@@ -76,6 +76,7 @@ def _colregs_bringup_available() -> bool:
 
 
 def _dynamic_ship_manager_node(context, *args, **kwargs):
+    enable_buoy = LaunchConfiguration('enable_dynamic_buoy_manager').perform(context).strip().lower()
     cfg_path = LaunchConfiguration('config_path').perform(context)
     usv_sim_full_pkg = get_package_share_directory('usv_sim_full')
     world_name = 'sydney_regatta'
@@ -86,22 +87,26 @@ def _dynamic_ship_manager_node(context, *args, **kwargs):
     except Exception:
         pass
 
-    return [
-        Node(
-            package='usv_sim_full',
-            executable='dynamic_ship_manager_node',
-            name='dynamic_ship_manager',
-            output='screen',
-            parameters=[{
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'world_name': world_name,
-                'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
-                'default_mesh_profile': os.path.join(
-                    usv_sim_full_pkg, 'description', 'models',
-                    'target_ship', '10m_mesh_profile.yaml'),
-            }],
-        ),
-    ]
+    node_kwargs = {
+        'package': 'usv_sim_full',
+        'executable': 'dynamic_ship_manager_node',
+        'name': 'dynamic_ship_manager',
+        'output': 'screen',
+        'parameters': [{
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'world_name': world_name,
+            'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
+            'default_mesh_profile': os.path.join(
+                usv_sim_full_pkg, 'description', 'models',
+                'target_ship', '10m_mesh_profile.yaml'),
+        }],
+    }
+    if enable_buoy in ('true', '1', 'yes'):
+        node_kwargs['remappings'] = [
+            ('/dynamic_ship/tracked_ships', '/dynamic_ship/tracked_ships/_internal'),
+        ]
+
+    return [Node(**node_kwargs)]
 
 
 _NAV2_INSTALL_HINT = (
@@ -478,6 +483,7 @@ def generate_launch_description():
             'rviz_config_path_override': rviz_config_path,
             'verbose_launch': verbose_launch,
             'nav2_namespace': nav2_namespace,
+            'enable_dynamic_buoy_manager': LaunchConfiguration('enable_dynamic_buoy_manager'),
         }.items(),
     )
 
@@ -738,6 +744,11 @@ def generate_launch_description():
             'convert_to_trackship_params_file',
             default_value=default_convert_to_trackship_params,
             description='convert_to_trackship 参数（input/output topic 等）',
+        ),
+        DeclareLaunchArgument(
+            'enable_dynamic_buoy_manager',
+            default_value='true',
+            description='true：启动动态浮标管理、COLREGS/GT 合并链（默认开启）',
         ),
         DeclareLaunchArgument(
             'enable_maritime_situation_monitor',

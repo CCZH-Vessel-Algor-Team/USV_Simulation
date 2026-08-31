@@ -70,6 +70,8 @@ setup(
             'clearing_scan_publisher = usv_sim_full.scripts.clearing_scan_publisher:main',
             'dynamic_ship_manager_node = usv_sim_full.scripts.dynamic_ship_manager_node:main',
             'storm_field_manager_node = usv_sim_full.scripts.storm_field_manager_node:main',
+            'dynamic_buoy_manager_node = usv_sim_full.scripts.dynamic_buoy_manager_node:main',
+            'tracked_ship_list_merger = usv_sim_full.scripts.tracked_ship_list_merger:main',
         ],
     },
 )

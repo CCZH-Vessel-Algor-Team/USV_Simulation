@@ -32,6 +32,8 @@ Panels:
     Namespace: usv_1
   - Class: env_panel/VrxEnvPanel
     Name: VrxEnvPanel
+  - Class: env_panel/StaticBuoyConfig
+    Name: StaticBuoyConfig
 Visualization Manager:
   Class: ""
   Displays:
@@ -64,6 +66,18 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /sim/ground_truth_markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Static Buoys
+      Namespaces:
+        {}
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_buoy/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
@@ -524,6 +538,14 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /storm_field/clicked_point
+    - Class: env_panel/StaticBuoyPoint
+      Single click: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_buoy/clicked_point
   Transformation:
     Current:
       Class: rviz_default_plugins/TF

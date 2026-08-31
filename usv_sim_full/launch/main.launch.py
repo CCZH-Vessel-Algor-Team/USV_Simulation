@@ -156,6 +156,10 @@ def launch_setup(context, *args, **kwargs):
     localization_start_delay = LaunchConfiguration('localization_start_delay').perform(
         context
     )
+    enable_dynamic_buoy_manager = LaunchConfiguration(
+        'enable_dynamic_buoy_manager'
+    ).perform(context).strip().lower()
+    buoy_gt_merge_enabled = enable_dynamic_buoy_manager in ('true', '1', 'yes')
 
     with open(config_path, 'r') as f:
         user_config = yaml.safe_load(f)
@@ -390,13 +394,18 @@ def launch_setup(context, *args, **kwargs):
             gt_params = [{'use_sim_time': True}, gt_gen_path]
             if gt_user_path:
                 gt_params.append(gt_user_path)
+            gt_node_kwargs = quiet_ros_node_kwargs(verbose_s)
+            if buoy_gt_merge_enabled:
+                gt_node_kwargs['remappings'] = [
+                    ('/sim/ground_truth', '/sim/ground_truth/_src/scenario'),
+                ]
             launch_items.append(
                 Node(
                     package='ground_truth_sim',
                     executable='ground_truth_node',
                     name='scenario_ground_truth_node',
                     parameters=gt_params,
-                    **quiet_ros_node_kwargs(verbose_s),
+                    **gt_node_kwargs,
                 )
             )
 
@@ -537,6 +546,23 @@ def launch_setup(context, *args, **kwargs):
             )
             launch_items.append(radar_launch)
 
+    if buoy_gt_merge_enabled:
+        launch_items.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([
+                    get_package_share_directory('usv_sim_full'),
+                    '/launch/components/dynamic_buoy_bringup.launch.py',
+                ]),
+                launch_arguments={
+                    'enable_dynamic_buoy_manager': 'true',
+                    'enable_dynamic_buoy_gt_bridge': 'true',
+                    'remap_dynamic_ship_tracked': 'false',
+                    'config_path': config_path,
+                    'use_sim_time': use_sim_time,
+                }.items(),
+            )
+        )
+
     return launch_items
 
 
@@ -614,6 +640,11 @@ def generate_launch_description():
             'gz_headless',
             default_value='false',
             description='true 时 Gazebo 以 server-only 运行，不启动 GUI 渲染窗口'
+        ),
+        DeclareLaunchArgument(
+            'enable_dynamic_buoy_manager',
+            default_value='true',
+            description='true：启动动态浮标管理、COLREGS/GT 合并链（默认开启）',
         ),
         OpaqueFunction(function=launch_setup)
     ])

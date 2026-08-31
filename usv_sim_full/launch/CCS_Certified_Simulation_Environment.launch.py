@@ -47,7 +47,7 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
     return [
         LogInfo(
-            msg='启动 dynamic_ship_to_ground_truth（/dynamic_ship/tracked_ships -> /sim/ground_truth）。'
+            msg='启动 dynamic_ship_to_ground_truth（/dynamic_ship/tracked_ships/_internal -> /sim/ground_truth/_src/dynamic_ships）。'
         ),
         Node(
             package='ground_truth_sensor_sim',
@@ -56,8 +56,8 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
             output='log',
             parameters=[{
                 'use_sim_time': use_sim_time,
-                'input_topic': '/dynamic_ship/tracked_ships',
-                'output_topic': '/sim/ground_truth',
+                'input_topic': '/dynamic_ship/tracked_ships/_internal',
+                'output_topic': '/sim/ground_truth/_src/dynamic_ships',
                 'frame_id': 'map',
                 'size_w': 3.6,
                 'size_l': 10.0,

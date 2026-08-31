@@ -34,4 +34,22 @@
       Publish a storm-field center point on /storm_field/clicked_point.
     </description>
   </class>
+
+  <class
+      name="env_panel/StaticBuoyConfig"
+      type="env_panel::StaticBuoyPanel"
+      base_class_type="rviz_common::Panel">
+    <description>
+      Static VRX light buoy spawn config panel (type, radius, list management).
+    </description>
+  </class>
+
+  <class
+      name="env_panel/StaticBuoyPoint"
+      type="env_panel::StaticBuoyPointTool"
+      base_class_type="rviz_common::Tool">
+    <description>
+      Publish a static buoy spawn point on /dynamic_buoy/clicked_point.
+    </description>
+  </class>
 </library>
