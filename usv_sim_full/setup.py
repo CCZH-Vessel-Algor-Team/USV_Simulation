@@ -19,10 +19,7 @@ setup(
             os.path.join('share', package_name, 'config', 'certificate_case'),
             glob('config/certificate_case/*'),
         ),
-        (
-            os.path.join('share', package_name, 'config', 'generated'),
-            glob('config/generated/*') or ['config/generated/.gitkeep'],
-        ),
+
         (
             os.path.join('share', package_name, 'config', 'three_vision_one_mmwave'),
             glob('config/three_vision_one_mmwave/*'),
