@@ -204,7 +204,8 @@ def generate_launch_description():
         default_value=os.path.join(
             get_package_share_directory('usv_sim_full'),
             'config',
-            'full_config.yaml'
+            'three_vision_one_mmwave',
+            'full_config.yaml',
         ),
         description='用户配置文件路径'
     )

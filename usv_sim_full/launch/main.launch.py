@@ -542,7 +542,9 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('usv_sim_full')
-    default_config_path = os.path.join(pkg_share, 'config', 'full_config.yaml')
+    default_config_path = os.path.join(
+        pkg_share, 'config', 'three_vision_one_mmwave', 'full_config.yaml'
+    )
     default_localization_params = os.path.join(
         pkg_share, 'config', 'robot_localization_gps.yaml'
     )

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!-- Load sensor configuration from YAML file -->
-  <xacro:property name="sensor_config" value="${load_yaml('$(find usv_sim_full)/config/sensor_config.yaml')}"/>
+  <xacro:property name="sensor_config" value="${load_yaml('$(find usv_sim_full)/config/three_vision_one_mmwave/sensor_config.yaml')}"/>
 
   <!-- LIDAR Parameters -->
   <xacro:property name="lidar_update_rate" value="${sensor_config['lidar']['vlp16']['update_rate']}"/>

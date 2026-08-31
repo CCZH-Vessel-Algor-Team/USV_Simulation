@@ -135,10 +135,12 @@ def resolve_sensor_config_path(config_data, user_config_path):
 
     Priority:
     1) full_config top-level `sensor_config_path`
-    2) default package config `config/sensor_config.yaml`
+    2) default package config `config/three_vision_one_mmwave/sensor_config.yaml`
     """
     package_dir = resolve_ros_package_root()
-    candidate = config_data.get('sensor_config_path', 'config/sensor_config.yaml')
+    candidate = config_data.get(
+        'sensor_config_path', 'config/three_vision_one_mmwave/sensor_config.yaml'
+    )
 
     if os.path.isabs(candidate):
         resolved = candidate
@@ -182,7 +184,7 @@ def generate_session_sensor_params_xacro(config_data, user_config_path, session_
 
     session_sensor_params_xacro = os.path.join(session_dir, 'sensor_params.xacro')
     sensor_params_session = sensor_params_tpl.replace(
-        "$(find usv_sim_full)/config/sensor_config.yaml",
+        "$(find usv_sim_full)/config/three_vision_one_mmwave/sensor_config.yaml",
         session_sensor_cfg
     )
     with open(session_sensor_params_xacro, 'w') as f:

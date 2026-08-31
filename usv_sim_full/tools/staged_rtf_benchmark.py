@@ -21,10 +21,18 @@ def _default_usv_sim_full_config() -> str:
         from ament_index_python.packages import get_package_share_directory
 
         share = get_package_share_directory('usv_sim_full')
-        return os.path.join(share, 'config', 'full_config.yaml')
+        return os.path.join(
+            share, 'config', 'three_vision_one_mmwave', 'full_config.yaml'
+        )
     except Exception:
         return os.path.normpath(
-            os.path.join(os.path.dirname(__file__), '..', 'config', 'full_config.yaml')
+            os.path.join(
+                os.path.dirname(__file__),
+                '..',
+                'config',
+                'three_vision_one_mmwave',
+                'full_config.yaml',
+            )
         )
 
 
