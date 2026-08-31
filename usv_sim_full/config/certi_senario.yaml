@@ -3,7 +3,7 @@
 # override_topic（传感器内）：不含机器人名前缀；最终话题为 /{robot.name}/ + 去掉首 / 后的路径。
 #   毫米波示例 /sensors/mmwave/.../points；海事雷达为 ROS 扇区话题（非 gz …/spokes）。
 environment:
-  world_name: sydney_regatta_open_water
+  world_name: ccs_open_water_crop
 # 传感器内参 YAML（相对本文件目录）；session_manager 拷入会话目录参与 URDF/桥接/mmwave 节点。
 sensor_config_path: three_vision_one_mmwave/sensor_config.yaml
 # 静态障碍 → 会话 obstacle_layout.json → obstacle_spawner。

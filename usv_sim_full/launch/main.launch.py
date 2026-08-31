@@ -548,6 +548,9 @@ def generate_launch_description():
     default_localization_params = os.path.join(
         pkg_share, 'config', 'robot_localization_gps.yaml'
     )
+    default_rviz_config_path = os.path.join(
+        pkg_share, 'rviz', 'three_vision_one_mmwave.rviz'
+    )
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -598,10 +601,10 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'rviz_config_path_override',
-            default_value='',
+            default_value=default_rviz_config_path,
             description=(
-                '非空时：以此 RViz 配置为底稿（复制到临时文件后再追加雷达栅格/前相机显示），'
-                '不再使用 session_manager 生成的 session.rviz。'
+                'RViz 配置底稿；默认使用 rviz/three_vision_one_mmwave.rviz。'
+                '非空时不使用 session_manager 生成的 session.rviz。'
             ),
         ),
         DeclareLaunchArgument(

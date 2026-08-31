@@ -42,7 +42,8 @@ def parse_args():
         type=Path,
         default=(
             package_dir
-            / "worlds"
+            / "description"
+            / "world"
             / "models"
             / "ccs_chart_obstacles_enc_5km"
         ),

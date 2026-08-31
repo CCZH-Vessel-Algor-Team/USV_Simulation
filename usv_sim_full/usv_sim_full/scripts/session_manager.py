@@ -915,7 +915,7 @@ def generate_rviz_config(config_data, session_dir):
         str: 生成的RViz配置文件路径
     """
     # 读取RViz模板
-    template_path = resolve_package_asset(os.path.join('description', 'rviz', 'default.rviz'))
+    template_path = resolve_package_asset(os.path.join('rviz', 'default.rviz'))
     
     with open(template_path, 'r') as f:
         rviz_config = yaml.safe_load(f)

@@ -39,9 +39,6 @@ setup(
     ] + [
         (os.path.join('share', package_name, root), [os.path.join(root, f) for f in files])
         for root, dirs, files in os.walk('description')
-    ] + [
-        (os.path.join('share', package_name, root), [os.path.join(root, f) for f in files])
-        for root, dirs, files in os.walk('worlds')
     ],
     install_requires=['setuptools'],
     zip_safe=True,

@@ -21,7 +21,7 @@ def generate_launch_description():
     pkg_share = get_package_share_directory("usv_sim_full")
     verbose_launch = LaunchConfiguration("verbose_launch")
 
-    worlds_path = os.path.join(pkg_share, "worlds")
+    worlds_path = os.path.join(pkg_share, "description", "world")
     worlds_models_path = os.path.join(worlds_path, "models")
     description_path = os.path.join(pkg_share, "description")
     description_models_path = os.path.join(description_path, "models")

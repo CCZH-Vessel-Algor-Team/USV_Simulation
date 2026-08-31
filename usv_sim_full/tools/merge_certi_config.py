@@ -44,6 +44,20 @@ def resolve_mesh_profile_rel(base_path: str, out_path: str) -> str:
     return rel.replace('\\', '/')
 
 
+def resolve_sensor_config_rel(base_path: str, out_path: str, sensor_config_path: str) -> str:
+    """Keep a base-config-relative sensor path valid in the merged YAML."""
+    if os.path.isabs(sensor_config_path):
+        return sensor_config_path
+
+    base_dir = os.path.dirname(os.path.abspath(base_path))
+    sensor_abs = os.path.normpath(os.path.join(base_dir, sensor_config_path))
+    if not os.path.isfile(sensor_abs):
+        raise FileNotFoundError(f'sensor_config not found: {sensor_abs}')
+
+    out_dir = os.path.dirname(os.path.abspath(out_path))
+    return os.path.relpath(sensor_abs, out_dir).replace('\\', '/')
+
+
 def deep_merge(base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
     out = deepcopy(base)
     for key, val in overlay.items():
@@ -547,6 +561,13 @@ def merge_configs(
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, f'{case_id}.merged.yaml')
 
+    sensor_config_path = merged.get('sensor_config_path')
+    if sensor_config_path:
+        merged['sensor_config_path'] = resolve_sensor_config_rel(
+            base_path,
+            out_path,
+            str(sensor_config_path),
+        )
     mesh_profile_rel = resolve_mesh_profile_rel(base_path, out_path)
     apply_certificate_case(merged, parsed, mesh_profile_rel)
 
