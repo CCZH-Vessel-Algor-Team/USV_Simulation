@@ -1,0 +1,51 @@
+material mb_marker_buoy/Red
+{
+  technique
+  {
+    pass ambient
+    {
+      ambient 0.7921 0.0039 0.0274
+      diffuse 0.7921 0.0039 0.0274
+      specular 0.7921 0.0039 0.0274 1 1
+    }
+  }
+}
+
+material mb_marker_buoy/Green
+{
+  technique
+  {
+    pass ambient
+    {
+      ambient 0.0627 0.4392 0.2588
+      diffuse 0.0627 0.4392 0.2588
+      specular 0.0627 0.4392 0.2588 1 1
+    }
+  }
+}
+
+material mb_marker_buoy/Black
+{
+  technique
+  {
+    pass ambient
+    {
+      ambient 0.0392 0.0392 0.0392
+      diffuse 0.0392 0.0392 0.0392
+      specular 0.0392 0.0392 0.0392 1 1
+    }
+  }
+}
+
+material mb_marker_buoy/White
+{
+  technique
+  {
+    pass ambient
+    {
+      ambient 0.9412 0.9412 0.9412
+      diffuse 0.9412 0.9412 0.9412
+      specular 0.9412 0.9412 0.9412 1 1
+    }
+  }
+}

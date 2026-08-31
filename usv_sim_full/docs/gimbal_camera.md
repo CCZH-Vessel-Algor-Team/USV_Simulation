@@ -91,6 +91,9 @@ flowchart LR
 |---|---|---|---|
 | 高层控制 | `/usv_1/gimbal/payload_gimbal/control` | `usv_interfaces/msg/GimbalControl` | ROS -> controller |
 | 云台状态 | `/usv_1/gimbal/payload_gimbal/state` | `usv_interfaces/msg/GimbalState` | controller -> ROS |
+| Roll 目标 | `/usv_1/gimbal/payload_gimbal/roll/cmd_pos` | `std_msgs/msg/Float64` | controller -> GZ bridge |
+| Pitch 目标 | `/usv_1/gimbal/payload_gimbal/pitch/cmd_pos` | `std_msgs/msg/Float64` | controller -> GZ bridge |
+| Yaw 目标 | `/usv_1/gimbal/payload_gimbal/yaw/cmd_pos` | `std_msgs/msg/Float64` | controller -> GZ bridge |
 | RGB 图像 | `/usv_1/sensors/camera/payload_gimbal/image_raw` | `sensor_msgs/msg/Image` | GZ bridge -> ROS |
 | 相机内参 | `/usv_1/sensors/camera/payload_gimbal/camera_info` | `sensor_msgs/msg/CameraInfo` | GZ bridge -> ROS |
 | 云台 IMU | `/usv_1/sensors/imu/payload_gimbal/data` | `sensor_msgs/msg/Imu` | GZ bridge -> ROS |
@@ -153,8 +156,8 @@ ros2 topic pub -r 10 /usv_1/gimbal/payload_gimbal/control \
 |---|---|
 | `description/urdf/sensor_macros.xacro` | `gimbal_macro`、三轴关节、传感器和 Gazebo 关节控制器。 |
 | `description/urdf/wamv_no_battery.urdf.xacro` | 模型级 Gazebo `JointStatePublisher`。 |
-| `description/models/px4_gimbal/meshes/` | 复制自 PX4 CGO3 云台的四个 STL 外观资源。 |
-| `description/models/px4_gimbal/README.md` | PX4 资源来源和 BSD-3-Clause 许可说明。 |
+| `vrx_gz/models/px4_gimbal/meshes/` | 复制自 PX4 CGO3 云台的四个 STL 外观资源。 |
+| `vrx_gz/models/px4_gimbal/README.md` | PX4 资源来源和 BSD-3-Clause 许可说明。 |
 | `config/full_config.yaml` | 默认全量仿真的云台实例。 |
 | `config/three_vision_one_mmwave/full_config.yaml` | 三视觉毫米波入口使用的云台实例。 |
 | `usv_sim_full/scripts/session_manager.py` | gimbal YAML 解析、Xacro 叠加层和 bridge YAML 生成。 |
@@ -177,7 +180,7 @@ ros2 topic pub -r 10 /usv_1/gimbal/payload_gimbal/control \
 | 控制节点退出 | 使用 `verbose_launch:=true` 启动；检查终端和 `~/.ros/log` 中 `gimbal_controller` 的 traceback。 |
 | RQt 有图像但 RViz 丢图 | 检查 `/usv_1/joint_states` 是否包含三个云台关节，并检查 `base_link` 到 `payload_gimbal_camera_link` 的 TF。 |
 | 云台不运动 | 检查三个 `cmd_pos` ROS 话题、对应 GZ command topic 和 `gz-sim-joint-position-controller-system` 插件加载日志。 |
-| PX4 mesh 未显示 | 确认重新构建，且 `GZ_SIM_RESOURCE_PATH` 由 `infra_sim.launch.py` 包含 `description/models`。 |
+| PX4 mesh 未显示 | 确认重新构建，且 `GZ_SIM_RESOURCE_PATH` 由 `infra_sim.launch.py` 包含 `vrx_gz/models`。 |
 
 ## 当前限制
 

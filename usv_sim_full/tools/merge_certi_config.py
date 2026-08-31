@@ -27,7 +27,7 @@ DEFAULT_LATERAL_SPAN_M = 100.0
 DEFAULT_DCPA_SAFE_M = 50.0
 DCPA_TOLERANCE_M = 2.0
 
-MESH_PROFILE_REL = '../description/models/target_ship/10m_mesh_profile.yaml'
+MESH_PROFILE_URI = 'package://vrx_gz/models/target_ship/10m_mesh_profile.yaml'
 
 CASE_SKIP_KEYS = frozenset({
     'meta', 'encounter', 'scenario_id', 'description', 'own_ship', 'target_ships',
@@ -35,13 +35,7 @@ CASE_SKIP_KEYS = frozenset({
 
 
 def resolve_mesh_profile_rel(base_path: str, out_path: str) -> str:
-    base_dir = os.path.dirname(os.path.abspath(base_path))
-    mesh_abs = os.path.normpath(os.path.join(base_dir, MESH_PROFILE_REL))
-    if not os.path.isfile(mesh_abs):
-        raise FileNotFoundError(f'mesh_profile not found: {mesh_abs}')
-    out_dir = os.path.dirname(os.path.abspath(out_path))
-    rel = os.path.relpath(mesh_abs, out_dir)
-    return rel.replace('\\', '/')
+    return MESH_PROFILE_URI
 
 
 def deep_merge(base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:

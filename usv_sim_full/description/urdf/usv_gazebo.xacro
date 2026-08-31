@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-  <!-- Include macros for dynamics plugins -->
-  <xacro:include filename="$(arg macros_file)" />
   <!-- Macro to create a USV with dynamics plugins and a customizeable thruster layout -->
   <xacro:macro name="usv_gazebo" params="thruster_layout">
     <!-- Defines the base vehicle -->

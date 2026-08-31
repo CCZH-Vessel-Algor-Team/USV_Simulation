@@ -44,9 +44,8 @@ source "$ROOT/install/setup.bash"
 set -u
 
 echo "==> Setting simulation resource paths"
-# Make sure we include the 'share' directory so model://usv_sim_full references work
-export GZ_SIM_RESOURCE_PATH="$ROOT/install/usv_sim_full/share:$ROOT/install/usv_sim_full/share/usv_sim_full/description:$ROOT/install/vrx_gz/share/vrx_gz/models:$ROOT/install/vrx_gazebo/share/vrx_gazebo/models:$ROOT/install/wamv_description/share/wamv_description/models:${GZ_SIM_RESOURCE_PATH:-}"
-export GAZEBO_MODEL_PATH="$ROOT/install/wamv_description/share/wamv_description/models:$ROOT/install/vrx_gazebo/share/vrx_gazebo/models:$ROOT/install/usv_sim_full/share/usv_sim_full/description:${GAZEBO_MODEL_PATH:-}"
+export GZ_SIM_RESOURCE_PATH="$ROOT/install/vrx_gz/share/vrx_gz/worlds:$ROOT/install/vrx_gz/share/vrx_gz/models:${GZ_SIM_RESOURCE_PATH:-}"
+export GAZEBO_MODEL_PATH="$ROOT/install/vrx_gz/share/vrx_gz/models:${GAZEBO_MODEL_PATH:-}"
 
 echo "GZ_SIM_RESOURCE_PATH=$GZ_SIM_RESOURCE_PATH"
 echo "GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH"
@@ -55,7 +54,7 @@ LOG="$ROOT/usv_sim_start.log"
 PIDFILE="$ROOT/.usv_sim_pid"
 
 echo "==> Launching simulation (output -> $LOG)"
-ros2 launch usv_sim_full main.launch.py config_path:='./src/usv_sim_full/config/full_config.yaml' &> "$LOG" &
+ros2 launch usv_sim_full main.launch.py config_path:="$ROOT/src/usv_simulation/usv_sim_full/config/full_config.yaml" &> "$LOG" &
 echo $! > "$PIDFILE"
 echo "Launched. PID=$(cat $PIDFILE)"
 

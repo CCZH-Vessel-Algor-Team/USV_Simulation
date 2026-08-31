@@ -11,7 +11,7 @@
 # -----------------------------------------------------------------------------
 # environment — Gazebo 世界
 # -----------------------------------------------------------------------------
-# world_name: 与 usv_sim_full/worlds/<name>.sdf 或 .world 文件名（无后缀）一致；
+# world_name: 与 vrx_gz/worlds/<name>.sdf 或 .world 文件名（无后缀）一致；
 #             同时用于 scenario_manager_node 的 /world/<world_name>/create 服务名。
 environment:
   world_name: sydney_regatta
@@ -104,7 +104,7 @@ scenario:
   dynamic_obstacles:
     - name: target_ship_1
       shape: mesh_profile
-      mesh_profile: ../description/models/target_ship/10m_mesh_profile.yaml
+       mesh_profile: package://vrx_gz/models/target_ship/10m_mesh_profile.yaml
       color: Yellow
       speed: 2.0
       loop: true
@@ -181,7 +181,7 @@ robot_1:
     enabled: true
   spawn_pose: [0.0, 0.0, 0.5, 0.0, 0.0, 0.0]
   overrides:
-    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
+    visual_mesh: package://vrx_gz/models/body-Base/mesh/M5_body.dae
     mass: 500.0
     inertia: [100.0, 100.0, 200.0]
     thruster_positions:
@@ -294,7 +294,7 @@ robot_2:
     enabled: true
   spawn_pose: [0.0, 5.0, 0.5, 0.0, 0.0, 0.0]
   overrides:
-    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
+    visual_mesh: package://vrx_gz/models/body-Base/mesh/M5_body.dae
     mass: 500.0
     inertia: [100.0, 100.0, 200.0]
     thruster_positions:

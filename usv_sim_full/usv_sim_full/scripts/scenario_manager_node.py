@@ -138,6 +138,16 @@ class ScenarioManager(Node):
         p = str(path_text or '').strip()
         if not p:
             return ''
+        if p.startswith('package://vrx_gz/models/'):
+            try:
+                from ament_index_python.packages import get_package_share_directory
+                return os.path.join(
+                    get_package_share_directory('vrx_gz'),
+                    'models',
+                    p.removeprefix('package://vrx_gz/models/'),
+                )
+            except Exception:
+                return ''
         if os.path.isabs(p):
             return p
         base = os.path.dirname(os.path.abspath(

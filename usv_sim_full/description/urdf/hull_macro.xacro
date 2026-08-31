@@ -5,7 +5,7 @@
     name 
     mass:=180.0 
     ixx:=100.0 iyy:=100.0 izz:=200.0
-    visual_mesh:=package://usv_sim_full/description/models/WAM-V-Base/mesh/WAM-V-Base.dae
+    visual_mesh:=package://vrx_gz/models/body-Base/mesh/M5_body.dae
     xyz:='0 0 0'
     rpy:='0 0 0'">
 

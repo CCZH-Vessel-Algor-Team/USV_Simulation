@@ -21,8 +21,8 @@
   <xacro:arg name="shooter_namespace" default="shooters/"/>
   <!-- 注意：这只用于一些没有正确使用robotNamespace参数的传感器 -->
   <xacro:arg name="namespace" default="wamv"/>
-  <!-- VRX 场景：将船系在 platform 上；多船自航仿真应关闭，避免争抢同一 child_model 导致只成功 spawn 一艘 -->
-  <xacro:arg name="enable_detachable_joint" default="true"/>
+  <!-- 当前场景不包含 VRX platform；仅在显式请求时才启用系泊关节。 -->
+  <xacro:arg name="enable_detachable_joint" default="false"/>
   <xacro:arg name="has_extra_sensors" default="false"/>
   <xacro:arg name="extra_sensors" default=""/>
   
@@ -61,7 +61,6 @@
   <xacro:arg name="thruster_xacro_file" default = ""/>
 
   <!-- === WAM-V平台 === -->
-  <xacro:arg name="macros_file" default="$(find wamv_gazebo)/urdf/macros.xacro"/>
   <xacro:include filename="$(find usv_sim_full)/description/urdf/usv_gazebo.xacro"/>
 
   <!-- === 电池已移除 === -->
@@ -76,21 +75,6 @@
   <xacro:unless value="$(arg yaml_thruster_generation)">
     <xacro:property name="thruster_conf" value="$(arg thruster_config)"/>
 
-    <!-- 默认WAM-V，带有两个后部推进器 -->
-    <xacro:if value="${thruster_conf == 'H'}">
-       <xacro:usv_gazebo thruster_layout="$(find wamv_gazebo)/urdf/thruster_layouts/wamv_aft_thrusters.xacro"/>
-    </xacro:if>
-
-    <!-- "T"型推进器配置的WAMV -->
-    <xacro:if value="${thruster_conf == 'T'}">
-      <xacro:usv_gazebo thruster_layout="$(find wamv_gazebo)/urdf/thruster_layouts/wamv_t_thrusters.xacro"/>
-    </xacro:if>
-
-    <!-- "X"型推进器配置的WAMV -->
-    <xacro:if value="${thruster_conf == 'X'}">
-      <xacro:usv_gazebo thruster_layout="$(find wamv_gazebo)/urdf/thruster_layouts/wamv_x_thrusters.xacro"/>
-    </xacro:if>
-    
     <!-- 自定义推进器配置 -->
     <xacro:if value="${thruster_conf == 'CUSTOM'}">
       <xacro:usv_gazebo thruster_layout="$(find usv_sim_full)/description/urdf/custom_thrusters.xacro"/>
@@ -145,75 +129,16 @@
     <xacro:cpu_cases position="-0.15 0 1.53" orientation="0 0 0"/>
   </xacro:if>
 
-  <!-- 否则，根据启用变量添加传感器 -->
-  <xacro:unless value="$(arg yaml_component_generation)">
-    <!-- 添加前摄像头 -->
-    <xacro:if value="$(arg camera_enabled)">
-      <xacro:wamv_camera name="front_camera" y="0.3" x="0.75" P="${radians(15)}" />
-    </xacro:if>
-
-    <!-- 添加模拟GPS -->
-    <xacro:if value="$(arg gps_enabled)">
-      <xacro:wamv_gps name="gps_wamv" x="-0.85" />
-    </xacro:if>
-
-    <!-- 添加模拟IMU -->
-    <xacro:if value="$(arg imu_enabled)">
-      <xacro:wamv_imu name="imu_wamv" y="-0.2" />
-    </xacro:if>
-
-    <!-- 添加3D激光雷达 -->
-    <xacro:if value="$(arg lidar_enabled)">
-      <xacro:lidar name="lidar_wamv" y="-0.3" type="16_beam"/>
-    </xacro:if>
-
-    <!-- 添加P3D真实值 -->
-    <xacro:if value="$(arg ground_truth_enabled)">
-      <xacro:wamv_p3d name="p3d_wamv"/>
-    </xacro:if>
-
-    <!-- 添加声学信标 -->
-    <xacro:if value="$(arg pinger_enabled)">
-      <xacro:wamv_pinger sensor_name="receiver" position="-528 191 -2.0" />
-    </xacro:if>
-
-    <!-- 添加球发射器（默认俯仰角：~-60度） -->
-    <xacro:if value="$(arg ball_shooter_enabled)">
-      <xacro:wamv_ball_shooter name="ball_shooter" x="0.54" y="0.30" z="1.296" pitch="-1.04"/>
-    </xacro:if>
-
-    <!-- ==== VRX传感器配置 ==== -->
-    <xacro:if value="$(arg vrx_sensors_enabled)">
-
-      <!-- 添加CPU外壳 -->
-      <xacro:include filename="$(find usv_sim_full)/description/urdf/cpu_cases.xacro" />
-      <xacro:cpu_cases position="-0.15 0 1.53" orientation="0 0 0"/>
-
-      <!-- 添加一个立体相机对 -->
-      <xacro:wamv_camera name="front_left_camera" y="0.1" x="0.75" P="${radians(15)}" />
-      <xacro:wamv_camera name="front_right_camera" y="-0.1" x="0.75" P="${radians(15)}" />
-
-      <!-- 添加一个朝右的相机 -->
-      <xacro:wamv_camera name="middle_right_camera" y="-0.45" P="${radians(15)}" Y="${radians(-90)}" post_Y="${radians(-90)}" />
-
-      <!-- 添加模拟GPS -->
-      <xacro:wamv_gps name="gps_wamv" x="-0.85" />
-
-      <!-- 添加模拟IMU -->
-      <xacro:wamv_imu name="imu_wamv" y="-0.2" />
-
-      <!-- 添加3D激光雷达 -->
-      <xacro:lidar name="lidar_wamv" type="16_beam"/>
-
-      <!-- 添加声学信标 -->
-      <xacro:wamv_pinger sensor_name="receiver" position="-528 191 -2.0" />
-
-      <!-- 添加球发射器（默认俯仰角：~-60度） -->
-      <xacro:wamv_ball_shooter name="ball_shooter" x="0.54" y="0.30" z="1.296" pitch="-1.04"/>
-
-    </xacro:if>
-
-  </xacro:unless>
+  <xacro:if value="$(arg ground_truth_enabled)">
+    <gazebo>
+      <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+        <dimensions>3</dimensions>
+        <odom_publish_frequency>30.0</odom_publish_frequency>
+        <odom_frame>$(arg namespace)/odom</odom_frame>
+        <robot_base_frame>$(arg namespace)/base_link</robot_base_frame>
+      </plugin>
+    </gazebo>
+  </xacro:if>
 
   <!-- === 包含额外传感器配置 === -->
   <xacro:if value="$(arg has_extra_sensors)">

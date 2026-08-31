@@ -30,22 +30,12 @@ def _convert_model_uri_to_package_uri(urdf_content):
     model_to_pkg = {}
 
     try:
-        wamv_desc_share = get_package_share_directory('wamv_description')
-        wamv_models_dir = os.path.join(wamv_desc_share, 'models')
-        if os.path.isdir(wamv_models_dir):
-            for name in os.listdir(wamv_models_dir):
-                if os.path.isdir(os.path.join(wamv_models_dir, name)):
-                    model_to_pkg[name] = f'package://wamv_description/models/{name}/'
-    except Exception:
-        pass
-
-    try:
-        usv_sim_share = get_package_share_directory('usv_sim_full')
-        usv_models_dir = os.path.join(usv_sim_share, 'description', 'models')
-        if os.path.isdir(usv_models_dir):
-            for name in os.listdir(usv_models_dir):
-                if os.path.isdir(os.path.join(usv_models_dir, name)):
-                    model_to_pkg[name] = f'package://usv_sim_full/description/models/{name}/'
+        vrx_share = get_package_share_directory('vrx_gz')
+        vrx_models_dir = os.path.join(vrx_share, 'models')
+        if os.path.isdir(vrx_models_dir):
+            for name in os.listdir(vrx_models_dir):
+                if os.path.isdir(os.path.join(vrx_models_dir, name)):
+                    model_to_pkg[name] = f'package://vrx_gz/models/{name}/'
     except Exception:
         pass
 

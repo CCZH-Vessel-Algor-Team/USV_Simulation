@@ -28,7 +28,7 @@ scenario:
     truth_velocity_lowpass_tau: 0.2
     # 真值 Gazebo 外形：采用 10m.dae 的 mesh_profile，由 ground_truth_gazebo_entity_node 生成实体
     gazebo_target_geometry: mesh_profile
-    gazebo_mesh_profile: ../description/models/target_ship/10m_mesh_profile.yaml
+    gazebo_mesh_profile: package://vrx_gz/models/target_ship/10m_mesh_profile.yaml
     cylinder_radius_cap_m: 4.0
     cylinder_height_cap_m: 5.0
     # 围栏（map 轴对齐矩形）：越界则从真值话题消失；开 gazebo_visual 时 Gazebo 模型同步被 remove
@@ -85,7 +85,7 @@ robot_1:
   - 0.0
   - 0.0
   overrides:
-    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
+    visual_mesh: package://vrx_gz/models/body-Base/mesh/M5_body.dae
     mass: 500.0
     inertia:
     - 100.0

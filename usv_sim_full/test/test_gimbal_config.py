@@ -4,6 +4,7 @@ import os
 import tempfile
 
 import yaml
+from ament_index_python.packages import get_package_share_directory
 from usv_interfaces.msg import GimbalState
 
 from usv_sim_full.scripts.session_manager import (
@@ -81,9 +82,7 @@ def test_three_vision_config_enables_the_payload_gimbal():
 
 def test_px4_gimbal_visual_meshes_are_packaged():
     mesh_dir = os.path.join(
-        os.path.dirname(__file__),
-        '..',
-        'description',
+        get_package_share_directory('vrx_gz'),
         'models',
         'px4_gimbal',
         'meshes',

@@ -47,19 +47,12 @@ def generate_launch_description():
 
     # 设置GZ_SIM_RESOURCE_PATH环境变量，确保能找到模型文件
     usv_sim_path = get_package_share_directory('usv_sim_full')
-    usv_worlds_path = os.path.join(usv_sim_path, 'worlds')
-    usv_world_models_dir = os.path.join(usv_sim_path, 'worlds', 'models')
-    usv_models_path = os.path.join(usv_sim_path, 'description')
-    usv_models_dir = os.path.join(usv_sim_path, 'description', 'models')
-    
-    # 尝试获取 wamv_description 包路径的父目录，以便解决 model://wamv_description/... 报错
-    extra_paths = [usv_worlds_path, usv_world_models_dir, usv_models_path, usv_models_dir]
-    try:
-        wamv_desc_path = get_package_share_directory('wamv_description')
-        wamv_share_base = os.path.dirname(wamv_desc_path)
-        extra_paths.append(wamv_share_base)
-    except Exception:
-        pass
+    vrx_share_path = get_package_share_directory('vrx_gz')
+    vrx_worlds_path = os.path.join(vrx_share_path, 'worlds')
+    vrx_models_path = os.path.join(vrx_share_path, 'models')
+
+    # 所有 Gazebo 世界与模型由 vrx_gz 统一提供，usv_sim_full 只负责启动编排。
+    extra_paths = [vrx_worlds_path, vrx_models_path]
     
     # 获取当前环境变量
     gz_resource_path = os.environ.get('GZ_SIM_RESOURCE_PATH', '')
@@ -151,7 +144,7 @@ def generate_launch_description():
     def launch_gazebo_with_selected_world(context, *args, **kwargs):
         selected_world_name = world_name.perform(context)
         headless = gz_headless.perform(context).lower() in ('true', '1', 'yes')
-        worlds_dir = os.path.join(usv_sim_path, "worlds")
+        worlds_dir = vrx_worlds_path
         world_file_sdf = os.path.join(worlds_dir, f"{selected_world_name}.sdf")
         world_file_world = os.path.join(worlds_dir, f"{selected_world_name}.world")
 
@@ -217,7 +210,7 @@ def generate_launch_description():
 
     def launch_sun_light_bridge(context, *args, **kwargs):
         selected_world_name = world_name.perform(context)
-        worlds_dir = os.path.join(usv_sim_path, 'worlds')
+        worlds_dir = vrx_worlds_path
         world_file = next(
             (
                 path for path in (

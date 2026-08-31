@@ -110,8 +110,7 @@ def resolve_xacro_executable():
     解析 xacro 可执行文件路径。
 
     必须使用「直接调用 xacro」的方式，而不要用 ``ros2 run xacro xacro``：
-    后者会按 xacro 包自身依赖重建环境，AMENT_PREFIX_PATH 中往往没有
-    wamv_gazebo 等工作区包，导致模板里 ``$(find wamv_gazebo)`` 报错。
+    后者会按 xacro 包自身依赖重建环境，可能丢失当前工作区资源包。
     """
     exe = shutil.which('xacro')
     if exe:
@@ -488,7 +487,7 @@ def compile_xacro_to_urdf(
     robot_config = config_data.get('robot', {})
     
     # 获取要使用的xacro模板名称
-    xacro_template = robot_config.get('xacro_template', 'wamv_gazebo.urdf.xacro')
+    xacro_template = robot_config.get('xacro_template', 'wamv_no_battery.urdf.xacro')
     
     # 判断是否使用本地模板（例如无电池版本）
     if xacro_template == 'wamv_no_battery.urdf.xacro':
@@ -505,7 +504,7 @@ def compile_xacro_to_urdf(
         xacro_input = os.path.join(usv_sim_path, 'description', 'urdf', xacro_template)
         if not os.path.exists(xacro_input):
             # 回退到原来的查找方式
-            package_name = robot_config.get('package_name', 'wamv_gazebo')
+            package_name = robot_config.get('package_name', 'usv_sim_full')
             xacro_relative_path = robot_config.get('xacro_relative_path', f'urdf/{xacro_template}')
             try:
                 pkg_path = get_package_share_directory(package_name)
@@ -621,21 +620,17 @@ def post_process_urdf_for_gazebo(urdf_path, verbose=False):
     with open(urdf_path, 'r') as f:
         urdf_content = f.read()
     
-    # 替换package://wamv_description/models/ 以及 package://usv_sim_full/description/models/ 为model://
+    # 将资源包模型 URI 转为 Gazebo 可解析的 model:// URI。
     # 这样Gazebo就能在模型路径中找到文件
-    # 例如: package://usv_sim_full/description/models/WAM-V-Base/mesh/M5_body.dae
-    # 变为: model://WAM-V-Base/mesh/M5_body.dae
+    # 例如: package://vrx_gz/models/body-Base/mesh/M5_body.dae
+    # 变为: model://body-Base/mesh/M5_body.dae
     modified_content = urdf_content.replace(
-        'package://wamv_description/models/', 
-        'model://'
-    )
-    modified_content = modified_content.replace(
-        'package://usv_sim_full/description/models/', 
+        'package://vrx_gz/models/',
         'model://'
     )
     
     # 特别处理PNG纹理文件路径
-    # 将 model://WAM-V-Base/mesh/WAM-V_Albedo.png 等替换为相对路径
+    # 保留 model://body-Base/mesh/WAM-V_Albedo.png 等资源 URI
     # 或者使用正确的model://路径格式
     import re
     
@@ -644,7 +639,7 @@ def post_process_urdf_for_gazebo(urdf_path, verbose=False):
     def replace_png_path(match):
         model_name = match.group(1)
         texture_name = match.group(2)
-        # 使用相对路径或者从wamv_description包中正确引用
+        # 保留 model:// URI，由 Gazebo 资源搜索路径解析。
         return f'model://{model_name}/mesh/{texture_name}'
     
     modified_content = re.sub(png_pattern, replace_png_path, modified_content)
@@ -948,7 +943,7 @@ def generate_rviz_config(config_data, session_dir):
         str: 生成的RViz配置文件路径
     """
     # 读取RViz模板
-    template_path = resolve_package_asset(os.path.join('description', 'rviz', 'default.rviz'))
+    template_path = resolve_package_asset(os.path.join('rviz', 'default.rviz'))
     
     with open(template_path, 'r') as f:
         rviz_config = yaml.safe_load(f)

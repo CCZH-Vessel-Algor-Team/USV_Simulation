@@ -4,7 +4,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PKG_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 WS_DIR="$(cd "${PKG_DIR}/../../.." && pwd)"
-WORLD_FILE="${PKG_DIR}/worlds/ocean.world"
 LOG_FILE="/tmp/ocean_world_check.log"
 TIMEOUT_SEC="${TIMEOUT_SEC:-20}"
 
@@ -22,6 +21,9 @@ else
   echo "[WARN] install/setup.bash not found under ${WS_DIR}, continuing with current environment"
 fi
 
+VRX_SHARE="$(ros2 pkg prefix vrx_gz)/share/vrx_gz"
+WORLD_FILE="${VRX_SHARE}/worlds/ocean.world"
+
 prepend_path() {
   local var_name="$1"
   local new_path="$2"
@@ -33,15 +35,10 @@ prepend_path() {
   fi
 }
 
-prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/worlds"
-prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/worlds/models"
-prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/description"
-prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/description/models"
+prepend_path GZ_SIM_RESOURCE_PATH "${VRX_SHARE}/worlds"
+prepend_path GZ_SIM_RESOURCE_PATH "${VRX_SHARE}/models"
 
-prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/worlds"
-prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/worlds/models"
-prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/description"
-prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/description/models"
+prepend_path GAZEBO_MODEL_PATH "${VRX_SHARE}/models"
 
 export GZ_SIM_RESOURCE_PATH
 export GAZEBO_MODEL_PATH

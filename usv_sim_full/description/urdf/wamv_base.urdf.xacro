@@ -7,7 +7,7 @@
   <xacro:arg name="ixx" default="1200"/>
   <xacro:arg name="iyy" default="4000"/>
   <xacro:arg name="izz" default="4500"/>
-  <xacro:arg name="visual_mesh" default="package://usv_sim_full/description/models/WAM-V-Base/mesh/M5_body.dae"/>
+  <xacro:arg name="visual_mesh" default="package://vrx_gz/models/body-Base/mesh/M5_body.dae"/>
   <xacro:property name="namespace" value="$(arg namespace)" scope="global" />
   <!-- Macro for creating the main collisions as simple shapes. -->
   <xacro:macro name="main_collisions" params="prefix reflect:=1">
@@ -108,7 +108,6 @@
         <mesh filename="$(arg visual_mesh)"/>
       </geometry>
     </visual>
-    <!-- <mesh filename="package://usv_sim_full/description/models/WAM-V-Base/mesh/WAM-V-Base.dae"/> -->
 <!-- src/my_wamv/blade_R.dae -->
     <!-- Left base collisions -->
     <xacro:main_collisions prefix="left" reflect="1" />

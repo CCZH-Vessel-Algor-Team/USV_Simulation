@@ -26,7 +26,7 @@ def test_merge_entity_params_includes_mesh_profile():
         "enabled": True,
         "gazebo_visual": True,
         "gazebo_target_geometry": "mesh_profile",
-        "gazebo_mesh_profile": "../description/models/target_ship/10m_mesh_profile.yaml",
+        "gazebo_mesh_profile": "package://vrx_gz/models/target_ship/10m_mesh_profile.yaml",
         "model_mass_kg": 50.0,
     }
     params = merge_ground_truth_gazebo_entity_params(
@@ -55,7 +55,7 @@ def test_write_entity_params_yaml_includes_mesh_profile():
     )
     scen_gt_cfg = {
         "gazebo_target_geometry": "mesh_profile",
-        "gazebo_mesh_profile": "../description/models/target_ship/10m_mesh_profile.yaml",
+        "gazebo_mesh_profile": "package://vrx_gz/models/target_ship/10m_mesh_profile.yaml",
     }
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         dest = f.name

@@ -40,6 +40,16 @@ def _resolve_profile_path(path_text, config_base_dir):
     p = str(path_text or '').strip()
     if not p:
         return ''
+    if p.startswith('package://vrx_gz/models/'):
+        try:
+            from ament_index_python.packages import get_package_share_directory
+            return os.path.join(
+                get_package_share_directory('vrx_gz'),
+                'models',
+                p.removeprefix('package://vrx_gz/models/'),
+            )
+        except Exception:
+            return ''
     if os.path.isabs(p):
         return p
     return os.path.normpath(os.path.join(config_base_dir, p))

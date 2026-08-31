@@ -166,7 +166,7 @@
                                             camera_update_rate:=30 camera_horizontal_fov:=1.047198 camera_width:=1280 camera_height:=720 camera_near_clip:=0.2 camera_far_clip:=300.0 imu_update_rate:=200">
     <link name="${name}_mount_link">
       <inertial><mass value="0.30"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial>
-      <visual><geometry><mesh filename="package://usv_sim_full/description/models/px4_gimbal/meshes/cgo3_mount_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="gray"><color rgba="0.25 0.25 0.25 1"/></material></visual>
+      <visual><geometry><mesh filename="package://vrx_gz/models/px4_gimbal/meshes/cgo3_mount_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="gray"><color rgba="0.25 0.25 0.25 1"/></material></visual>
       <collision><geometry><cylinder radius="0.09" length="0.05"/></geometry></collision>
     </link>
     <joint name="${name}_mount_joint" type="fixed">
@@ -175,7 +175,7 @@
 
     <link name="${name}_yaw_link">
       <inertial><mass value="0.20"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
-      <visual><geometry><mesh filename="package://usv_sim_full/description/models/px4_gimbal/meshes/cgo3_vertical_arm_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="dark_gray"><color rgba="0.15 0.15 0.15 1"/></material></visual>
+      <visual><geometry><mesh filename="package://vrx_gz/models/px4_gimbal/meshes/cgo3_vertical_arm_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="dark_gray"><color rgba="0.15 0.15 0.15 1"/></material></visual>
       <collision><geometry><cylinder radius="0.06" length="0.07"/></geometry></collision>
     </link>
     <joint name="${name}_yaw_joint" type="continuous">
@@ -185,7 +185,7 @@
 
     <link name="${name}_roll_link">
       <inertial><mass value="0.15"/><inertia ixx="0.0005" ixy="0" ixz="0" iyy="0.0005" iyz="0" izz="0.0005"/></inertial>
-      <visual><geometry><mesh filename="package://usv_sim_full/description/models/px4_gimbal/meshes/cgo3_horizontal_arm_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="black"><color rgba="0.08 0.08 0.08 1"/></material></visual>
+      <visual><geometry><mesh filename="package://vrx_gz/models/px4_gimbal/meshes/cgo3_horizontal_arm_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="black"><color rgba="0.08 0.08 0.08 1"/></material></visual>
       <collision><geometry><box size="0.12 0.05 0.05"/></geometry></collision>
     </link>
     <joint name="${name}_roll_joint" type="revolute">
@@ -207,7 +207,7 @@
 
     <link name="${name}_camera_link">
       <inertial><mass value="0.15"/><inertia ixx="0.0004" ixy="0" ixz="0" iyy="0.0004" iyz="0" izz="0.0004"/></inertial>
-      <visual><geometry><mesh filename="package://usv_sim_full/description/models/px4_gimbal/meshes/cgo3_camera_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="camera_black"><color rgba="0.02 0.02 0.02 1"/></material></visual>
+      <visual><geometry><mesh filename="package://vrx_gz/models/px4_gimbal/meshes/cgo3_camera_remeshed_v1.stl" scale="0.001 0.001 0.001"/></geometry><material name="camera_black"><color rgba="0.02 0.02 0.02 1"/></material></visual>
       <collision><geometry><box size="0.10 0.08 0.06"/></geometry></collision>
     </link>
     <joint name="${name}_camera_joint" type="fixed">

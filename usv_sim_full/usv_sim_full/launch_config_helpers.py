@@ -32,8 +32,8 @@ def session_manager_executable_path():
     """返回已安装的 ``session_manager`` 可执行文件路径。
 
     勿使用 ``ros2 run usv_sim_full session_manager`` 启动会话生成：该方式会收窄
-    子进程 ``AMENT_PREFIX_PATH``，其内再调 xacro 时无法 ``$(find wamv_gazebo)`` 等
-    工作区包。直接执行本路径并继承 ``ros2 launch`` 的环境即可。
+    子进程 ``AMENT_PREFIX_PATH`` 可能缺少工作区资源包。直接执行本路径并继承
+    ``ros2 launch`` 的环境即可。
     """
     prefix = get_package_prefix('usv_sim_full')
     exe = os.path.join(prefix, 'lib', 'usv_sim_full', 'session_manager')
@@ -385,6 +385,15 @@ GROUND_TRUTH_SIM_META_KEYS = GROUND_TRUTH_SIM_NODE_EXCLUDE_KEYS
 
 def _resolve_gazebo_mesh_profile(v, full_config_path: str):
     vp = str(v).strip()
+    if vp.startswith('package://vrx_gz/models/'):
+        try:
+            return os.path.join(
+                get_package_share_directory('vrx_gz'),
+                'models',
+                vp.removeprefix('package://vrx_gz/models/'),
+            )
+        except Exception:
+            return vp
     if vp and full_config_path and not os.path.isabs(vp):
         base = os.path.dirname(os.path.abspath(full_config_path))
         return os.path.normpath(os.path.join(base, vp))

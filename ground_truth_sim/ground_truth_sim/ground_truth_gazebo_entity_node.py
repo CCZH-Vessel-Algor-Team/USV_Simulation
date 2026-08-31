@@ -392,6 +392,19 @@ class GroundTruthGazeboEntityNode(Node):
             raise RuntimeError("gazebo_target_geometry=mesh_profile 时必须提供 gazebo_mesh_profile")
         if os.path.isabs(path_text) and os.path.isfile(path_text):
             return path_text
+        if path_text.startswith("package://vrx_gz/models/"):
+            try:
+                from ament_index_python.packages import get_package_share_directory
+
+                package_path = os.path.join(
+                    get_package_share_directory("vrx_gz"),
+                    "models",
+                    path_text.removeprefix("package://vrx_gz/models/"),
+                )
+                if os.path.isfile(package_path):
+                    return package_path
+            except Exception:
+                pass
         cand = os.path.abspath(path_text)
         if os.path.isfile(cand):
             return cand
@@ -399,8 +412,7 @@ class GroundTruthGazeboEntityNode(Node):
             from ament_index_python.packages import get_package_share_directory
 
             share_cand = os.path.join(
-                get_package_share_directory("usv_sim_full"),
-                "description",
+                get_package_share_directory("vrx_gz"),
                 "models",
                 "target_ship",
                 "10m_mesh_profile.yaml",

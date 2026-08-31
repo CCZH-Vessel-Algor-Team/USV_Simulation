@@ -39,7 +39,7 @@ ros2 launch usv_sim_full nav2_sim_three_vision_mmwave_bringup.launch.py
 
 ```bash
 # Gazebo 资源路径
-export GZ_SIM_RESOURCE_PATH="$(ros2 pkg prefix wamv_description)/share/wamv_description/models:${GZ_SIM_RESOURCE_PATH:-}"
+export GZ_SIM_RESOURCE_PATH="$(ros2 pkg prefix vrx_gz)/share/vrx_gz/models:${GZ_SIM_RESOURCE_PATH:-}"
 
 # 依赖
 rosdep install --from-paths src/usv_interfaces src/usv_simulation --ignore-src -r -y

@@ -33,7 +33,7 @@ scenario:
     attitude_respawn_cooldown_sec: 2.0
     world_service_wait_sec: 2.0
     gazebo_target_geometry: mesh_profile
-    gazebo_mesh_profile: ../description/models/target_ship/10m_mesh_profile.yaml
+    gazebo_mesh_profile: package://vrx_gz/models/target_ship/10m_mesh_profile.yaml
     gazebo_model_prefix: gt_ctrv_
     fence_enabled: true
     fence_min_x: -180.0

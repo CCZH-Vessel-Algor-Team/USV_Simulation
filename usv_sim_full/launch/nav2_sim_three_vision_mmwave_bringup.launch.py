@@ -313,6 +313,7 @@ def _maritime_situation_monitor_node(context, *args, **kwargs):
 
 def generate_launch_description():
     usv_sim_full_pkg = get_package_share_directory('usv_sim_full')
+    vrx_gz_pkg = get_package_share_directory('vrx_gz')
     main_launch_file = os.path.join(usv_sim_full_pkg, 'launch', 'main.launch.py')
     nav2_thruster_launch_file = os.path.join(
         usv_sim_full_pkg, 'launch', 'nav2_thruster_bringup.launch.py'
@@ -921,8 +922,7 @@ def generate_launch_description():
                 'world_name': 'sydney_regatta',
                 'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
                 'default_mesh_profile': os.path.join(
-                    usv_sim_full_pkg, 'description', 'models',
-                    'target_ship', '10m_mesh_profile.yaml'),
+                    vrx_gz_pkg, 'models', 'target_ship', '10m_mesh_profile.yaml'),
             }],
         ),
         OpaqueFunction(function=_maritime_situation_monitor_node),

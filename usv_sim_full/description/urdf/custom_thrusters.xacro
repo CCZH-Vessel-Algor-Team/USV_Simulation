@@ -18,8 +18,28 @@
     prefix="right" 
     position="$(arg thruster_pos_x) $(arg thruster_pos_y_right) $(arg thruster_pos_z)" />
 
-  <xacro:include filename="$(find wamv_gazebo)/urdf/thruster_layouts/wamv_gazebo_thruster_config.xacro" />
-  <xacro:wamv_gazebo_thruster_config name="left" />
-  <xacro:wamv_gazebo_thruster_config name="right" />
+  <xacro:macro name="thruster_plugin" params="name">
+    <gazebo>
+      <plugin filename="gz-sim-thruster-system" name="gz::sim::systems::Thruster">
+        <joint_name>${namespace}/${name}_engine_propeller_joint</joint_name>
+        <thrust_coefficient>0.004422</thrust_coefficient>
+        <fluid_density>1000</fluid_density>
+        <propeller_diameter>0.2</propeller_diameter>
+        <velocity_control>true</velocity_control>
+        <max_thrust_cmd>853.95</max_thrust_cmd>
+        <namespace>${namespace}</namespace>
+        <topic>thrusters/${name}/thrust</topic>
+        <name>${name}</name>
+      </plugin>
+      <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+        <joint_name>${namespace}/${name}_chassis_engine_joint</joint_name>
+        <use_velocity_commands>true</use_velocity_commands>
+        <topic>${namespace}/thrusters/${name}/pos</topic>
+        <name>${name}</name>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+  <xacro:thruster_plugin name="left" />
+  <xacro:thruster_plugin name="right" />
 
 </robot>

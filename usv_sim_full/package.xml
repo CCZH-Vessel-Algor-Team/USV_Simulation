@@ -24,9 +24,7 @@
   <depend>ros_gz_interfaces</depend>
   <depend>robot_localization</depend>
   <depend>usv_mmwave_sim</depend>
-  <depend>wamv_gazebo</depend>
-  <exec_depend>vrx_ros</exec_depend>
-  <exec_depend>vrx_gz</exec_depend>
+  <depend>vrx_gz</depend>
   <depend>usv_interfaces</depend>
   <exec_depend>ground_truth_sim</exec_depend>
   <exec_depend>ground_truth_sensor_sim</exec_depend>

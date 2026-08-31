@@ -18,27 +18,17 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    pkg_share = get_package_share_directory("usv_sim_full")
+    vrx_share = get_package_share_directory("vrx_gz")
     verbose_launch = LaunchConfiguration("verbose_launch")
 
-    worlds_path = os.path.join(pkg_share, "worlds")
-    worlds_models_path = os.path.join(worlds_path, "models")
-    description_path = os.path.join(pkg_share, "description")
-    description_models_path = os.path.join(description_path, "models")
+    worlds_path = os.path.join(vrx_share, "worlds")
+    models_path = os.path.join(vrx_share, "models")
     world_file = os.path.join(worlds_path, "target_ship_scale_test.sdf")
 
     extra_paths = [
         worlds_path,
-        worlds_models_path,
-        description_path,
-        description_models_path,
+        models_path,
     ]
-
-    try:
-        wamv_desc_path = get_package_share_directory("wamv_description")
-        extra_paths.append(os.path.dirname(wamv_desc_path))
-    except Exception:
-        pass
 
     gz_resource_path = os.environ.get("GZ_SIM_RESOURCE_PATH", "")
     new_resource_path = ":".join(extra_paths + ([gz_resource_path] if gz_resource_path else []))

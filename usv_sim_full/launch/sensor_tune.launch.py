@@ -23,28 +23,16 @@ def _convert_model_uri_to_package_uri(urdf_content):
     session_manager.py 在生成 URDF 时会将 package:// 替换成 model:// 以供
     Gazebo 使用，此函数执行逆操作，以便在纯 RViz 环境中正确加载网格。
     """
-    # 动态扫描两个 package 下的 models 子目录，构建 (目录名 -> package://) 映射表
-    # usv_sim_full 的自定义模型优先级高于 wamv_description
+    # 动态扫描 vrx_gz 的模型目录，构建 (目录名 -> package://) 映射表。
     model_to_pkg = {}
-    
-    try:
-        wamv_desc_share = get_package_share_directory('wamv_description')
-        wamv_models_dir = os.path.join(wamv_desc_share, 'models')
-        if os.path.isdir(wamv_models_dir):
-            for name in os.listdir(wamv_models_dir):
-                if os.path.isdir(os.path.join(wamv_models_dir, name)):
-                    model_to_pkg[name] = f'package://wamv_description/models/{name}/'
-    except Exception:
-        pass
 
     try:
-        usv_sim_share = get_package_share_directory('usv_sim_full')
-        usv_models_dir = os.path.join(usv_sim_share, 'description', 'models')
-        if os.path.isdir(usv_models_dir):
-            for name in os.listdir(usv_models_dir):
-                if os.path.isdir(os.path.join(usv_models_dir, name)):
-                    # usv_sim_full 自定义模型覆盖同名的 wamv_description 模型
-                    model_to_pkg[name] = f'package://usv_sim_full/description/models/{name}/'
+        vrx_share = get_package_share_directory('vrx_gz')
+        vrx_models_dir = os.path.join(vrx_share, 'models')
+        if os.path.isdir(vrx_models_dir):
+            for name in os.listdir(vrx_models_dir):
+                if os.path.isdir(os.path.join(vrx_models_dir, name)):
+                    model_to_pkg[name] = f'package://vrx_gz/models/{name}/'
     except Exception:
         pass
 
