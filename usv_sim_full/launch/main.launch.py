@@ -90,19 +90,22 @@ def _append_displays_to_rviz_config(rviz_config_path: str, primary_name: str) ->
         displays = _ensure_list(displays)
         vm['Displays'] = displays
 
-    def has_display(name: str) -> bool:
+    def has_display_for_topic(topic_value: str) -> bool:
         for d in displays:
-            if isinstance(d, dict) and d.get('Name') == name:
-                return True
+            if isinstance(d, dict):
+                t = d.get('Topic')
+                if isinstance(t, dict) and t.get('Value') == topic_value:
+                    return True
         return False
 
-    # Radar occupancy grid
-    if not has_display('Radar OccupancyGrid'):
+    # Radar occupancy grid（模板 default.rviz 已含同 topic 的 Map 显示时不再追加）
+    radar_topic = f'/{primary_name}/map/navradar/occupancy_grid'
+    if not has_display_for_topic(radar_topic):
         displays.append({
             'Class': 'rviz_default_plugins/Map',
             'Name': 'Radar OccupancyGrid',
             'Topic': {
-                'Value': f'/{primary_name}/map/navradar/occupancy_grid',
+                'Value': radar_topic,
                 'Depth': 5,
             },
             'Update Topic': {
@@ -113,19 +116,6 @@ def _append_displays_to_rviz_config(rviz_config_path: str, primary_name: str) ->
             'Color Scheme': 'map',
             'Draw Behind': False,
             'Use Timestamp': False,
-        })
-
-    # Front camera (a simpler, always-on view separate from the per-sensor Image displays)
-    if not has_display('Front Camera'):
-        displays.append({
-            'Class': 'rviz_default_plugins/Image',
-            'Name': 'Front Camera',
-            'Topic': {
-                'Value': f'/{primary_name}/sensors/camera/front_cam/image_raw',
-                'Depth': 5,
-            },
-            'Enabled': True,
-            'Normalize Range': False,
         })
 
     try:

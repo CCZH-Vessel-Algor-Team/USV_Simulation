@@ -297,20 +297,6 @@ Visualization Manager:
         Reliability Policy: Best Effort
         Value: /usv_1/sensors/camera/right_cam/image_raw
       Value: true
-    - Class: rviz_default_plugins/Image
-      Enabled: true
-      Max Value: 1
-      Median window: 5
-      Min Value: 0
-      Name: "Camera: rear_cam"
-      Normalize Range: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Best Effort
-        Value: /usv_1/sensors/camera/rear_cam/image_raw
-      Value: true
     - Acceleration properties:
         Acc. vector alpha: 1
         Acc. vector color: 255; 0; 0
@@ -428,8 +414,6 @@ Window Geometry:
   "Camera: front_cam":
     collapsed: false
   "Camera: left_cam":
-    collapsed: false
-  "Camera: rear_cam":
     collapsed: false
   "Camera: right_cam":
     collapsed: false

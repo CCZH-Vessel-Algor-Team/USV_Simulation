@@ -997,6 +997,29 @@ def generate_rviz_config(config_data, session_dir):
     elif isinstance(sensors_input, list):
         sensors_list = sensors_input
 
+    # 模板（default.rviz）已含部分传感器 Display，追加前按 Name 与 Topic 去重，
+    # 避免同一传感器在 RViz 中出现多个重复画面（如三视觉相机显示 2~3 份）。
+    existing_names = {
+        d.get('Name') for d in displays if isinstance(d, dict) and d.get('Name')
+    }
+    existing_topics = {
+        d.get('Topic', {}).get('Value')
+        for d in displays
+        if isinstance(d, dict) and isinstance(d.get('Topic'), dict)
+    }
+
+    def _append_display(display_config):
+        name = display_config.get('Name')
+        topic = display_config.get('Topic', {}).get('Value') if isinstance(
+            display_config.get('Topic'), dict) else None
+        if (name and name in existing_names) or (topic and topic in existing_topics):
+            return
+        displays.append(display_config)
+        if name:
+            existing_names.add(name)
+        if topic:
+            existing_topics.add(topic)
+
     for sensor in sensors_list:
         if not sensor.get('enabled', True):
             continue
@@ -1033,7 +1056,7 @@ def generate_rviz_config(config_data, session_dir):
                 'Size (m)': 0.009999999776482582,
                 'Style': 'Points'
             }
-            displays.append(display_config)
+            _append_display(display_config)
 
         elif sensor_type == 'mmwave_radar' or sensor_type == 'mmwave':
             # 与 usv_mmwave_sim/rviz/4d_radar_minimal.rviz 一致：用 rcs 字段做 Intensity 彩虹着色
@@ -1058,7 +1081,7 @@ def generate_rviz_config(config_data, session_dir):
                 'Size (m)': 0.02,
                 'Style': 'Points'
             }
-            displays.append(display_config)
+            _append_display(display_config)
 
         elif sensor_type == 'camera':
             display_config = {
@@ -1073,7 +1096,7 @@ def generate_rviz_config(config_data, session_dir):
                     'Reliability Policy': 'Best Effort'
                 }
             }
-            displays.append(display_config)
+            _append_display(display_config)
             
         elif sensor_type == 'imu':
             display_config = {
@@ -1092,7 +1115,7 @@ def generate_rviz_config(config_data, session_dir):
                 'Queue Size': 10,
                 'Style': 'Axes'
             }
-            displays.append(display_config)
+            _append_display(display_config)
             
         elif sensor_type == 'gps':
             display_config = {
@@ -1104,7 +1127,7 @@ def generate_rviz_config(config_data, session_dir):
                 'Head Length': 0.5,
                 'Shaft Radius': 0.25
             }
-            displays.append(display_config)
+            _append_display(display_config)
 
     # scenario.ground_truth_sim：CTRV 真值 Marker（Gazebo 另由 ground_truth_gazebo_models_node）
     displays.append({
