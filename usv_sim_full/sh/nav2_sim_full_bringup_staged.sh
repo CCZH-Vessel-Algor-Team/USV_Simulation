@@ -79,10 +79,10 @@ done
 # 解析 config_path / nav2_start_delay / nav2_namespace（与 launch 默认值对齐）
 DEFAULT_CONFIG_SHARE=""
 if command -v ros2 &>/dev/null; then
-  DEFAULT_CONFIG_SHARE="$(ros2 pkg prefix "${LAUNCH_PKG}" 2>/dev/null)/share/${LAUNCH_PKG}/config/full_config.yaml" || true
+  DEFAULT_CONFIG_SHARE="$(ros2 pkg prefix "${LAUNCH_PKG}" 2>/dev/null)/share/${LAUNCH_PKG}/config/three_vision_one_mmwave/full_config.yaml" || true
 fi
 if [[ ! -f "${DEFAULT_CONFIG_SHARE:-}" ]]; then
-  DEFAULT_CONFIG_SHARE="$(cd "$SCRIPT_DIR/.." && pwd)/config/full_config.yaml"
+  DEFAULT_CONFIG_SHARE="$(cd "$SCRIPT_DIR/.." && pwd)/config/three_vision_one_mmwave/full_config.yaml"
 fi
 
 CONFIG_PATH="${DEFAULT_CONFIG_SHARE}"

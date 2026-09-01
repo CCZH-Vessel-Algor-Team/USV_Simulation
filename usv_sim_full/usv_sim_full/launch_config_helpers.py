@@ -155,7 +155,9 @@ def parse_session_json_from_stdout(stdout: str) -> dict:
 def _resolve_sensor_config_path(full_config_path: str, user_config: dict) -> str:
     """解析 full_config 引用的 sensor_config.yaml 绝对路径。"""
     cfg_dir = os.path.dirname(os.path.abspath(full_config_path))
-    rel = user_config.get('sensor_config_path', 'config/sensor_config.yaml')
+    rel = user_config.get(
+        'sensor_config_path', 'config/three_vision_one_mmwave/sensor_config.yaml'
+    )
     if os.path.isabs(rel):
         candidate = rel
     else:

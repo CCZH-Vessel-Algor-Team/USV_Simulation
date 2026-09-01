@@ -27,7 +27,7 @@
 
 | 文件 | 用途摘要 |
 |------|-----------|
-| **`infra_sim.launch.py`** | **基础设施层**：设置 `GZ_SIM_RESOURCE_PATH` / `GAZEBO_MODEL_PATH` / `GZ_SIM_SYSTEM_PLUGIN_PATH`，按 `world_name` 选择 `usv_sim_full/worlds` 下 `.sdf`/`.world`，**`Include` → `ros_gz_sim/gz_sim.launch.py`**；并启动全局 **`ros_gz_bridge`**（`global_bridge.yaml`）。 |
+| **`infra_sim.launch.py`** | **基础设施层**：设置 `GZ_SIM_RESOURCE_PATH` / `GAZEBO_MODEL_PATH` / `GZ_SIM_SYSTEM_PLUGIN_PATH`，按 `world_name` 选择 `usv_sim_full/description/world` 下 `.sdf`/`.world`，**`Include` → `ros_gz_sim/gz_sim.launch.py`**；并启动全局 **`ros_gz_bridge`**（`global_bridge.yaml`）。 |
 | **`robot_bringup.launch.py`** | **单船容器**：命名空间下 spawn 实体、`ros_gz_bridge`、传感器桥、可选 maritime 雷达桥、`odom_tf_broadcaster`、定位相关节点等。被 **`main.launch.py`**、**`test_hull.launch.py`** 等引用。 |
 | **`visualization.launch.py`** | **仅 RViz2**：参数 `rviz_config_path` 传入配置文件路径。被 **`main.launch.py`** 等引用。 |
 
@@ -260,5 +260,4 @@ ros2 launch usv_sim_full nav2_sim_full_bringup.launch.py
 ```
 
 参数以各文件内 `DeclareLaunchArgument` 为准；`config_path` 多为核心开关。
-
 

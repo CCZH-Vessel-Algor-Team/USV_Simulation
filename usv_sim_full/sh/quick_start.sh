@@ -55,7 +55,7 @@ LOG="$ROOT/usv_sim_start.log"
 PIDFILE="$ROOT/.usv_sim_pid"
 
 echo "==> Launching simulation (output -> $LOG)"
-ros2 launch usv_sim_full main.launch.py config_path:='./src/usv_sim_full/config/full_config.yaml' &> "$LOG" &
+ros2 launch usv_sim_full main.launch.py config_path:='./src/usv_sim_full/config/three_vision_one_mmwave/full_config.yaml' &> "$LOG" &
 echo $! > "$PIDFILE"
 echo "Launched. PID=$(cat $PIDFILE)"
 

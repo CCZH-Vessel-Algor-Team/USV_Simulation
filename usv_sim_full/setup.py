@@ -19,10 +19,7 @@ setup(
             os.path.join('share', package_name, 'config', 'certificate_case'),
             glob('config/certificate_case/*'),
         ),
-        (
-            os.path.join('share', package_name, 'config', 'generated'),
-            glob('config/generated/*') or ['config/generated/.gitkeep'],
-        ),
+
         (
             os.path.join('share', package_name, 'config', 'three_vision_one_mmwave'),
             glob('config/three_vision_one_mmwave/*'),
@@ -42,9 +39,6 @@ setup(
     ] + [
         (os.path.join('share', package_name, root), [os.path.join(root, f) for f in files])
         for root, dirs, files in os.walk('description')
-    ] + [
-        (os.path.join('share', package_name, root), [os.path.join(root, f) for f in files])
-        for root, dirs, files in os.walk('worlds')
     ],
     install_requires=['setuptools'],
     zip_safe=True,

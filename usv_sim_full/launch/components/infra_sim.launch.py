@@ -47,8 +47,8 @@ def generate_launch_description():
 
     # 设置GZ_SIM_RESOURCE_PATH环境变量，确保能找到模型文件
     usv_sim_path = get_package_share_directory('usv_sim_full')
-    usv_worlds_path = os.path.join(usv_sim_path, 'worlds')
-    usv_world_models_dir = os.path.join(usv_sim_path, 'worlds', 'models')
+    usv_worlds_path = os.path.join(usv_sim_path, 'description', 'world')
+    usv_world_models_dir = os.path.join(usv_worlds_path, 'models')
     usv_models_path = os.path.join(usv_sim_path, 'description')
     usv_models_dir = os.path.join(usv_sim_path, 'description', 'models')
     
@@ -151,7 +151,7 @@ def generate_launch_description():
     def launch_gazebo_with_selected_world(context, *args, **kwargs):
         selected_world_name = world_name.perform(context)
         headless = gz_headless.perform(context).lower() in ('true', '1', 'yes')
-        worlds_dir = os.path.join(usv_sim_path, "worlds")
+        worlds_dir = usv_worlds_path
         world_file_sdf = os.path.join(worlds_dir, f"{selected_world_name}.sdf")
         world_file_world = os.path.join(worlds_dir, f"{selected_world_name}.world")
 
@@ -217,7 +217,7 @@ def generate_launch_description():
 
     def launch_sun_light_bridge(context, *args, **kwargs):
         selected_world_name = world_name.perform(context)
-        worlds_dir = os.path.join(usv_sim_path, 'worlds')
+        worlds_dir = usv_worlds_path
         world_file = next(
             (
                 path for path in (

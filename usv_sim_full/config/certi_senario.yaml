@@ -1,12 +1,11 @@
 # 认证仿真基底（单船本船）；会遇局面由 certificate_case/*.yaml + merge_certi_config.py 合并生成。
 # 启动：ros2 launch usv_sim_full certifi_launch.launch.py case_config:=.../certificate_case/C1-001.yaml
-# 字段详解见同目录 full_config.reference.yaml。
 # override_topic（传感器内）：不含机器人名前缀；最终话题为 /{robot.name}/ + 去掉首 / 后的路径。
 #   毫米波示例 /sensors/mmwave/.../points；海事雷达为 ROS 扇区话题（非 gz …/spokes）。
 environment:
-  world_name: sydney_regatta_open_water
+  world_name: ccs_open_water_crop
 # 传感器内参 YAML（相对本文件目录）；session_manager 拷入会话目录参与 URDF/桥接/mmwave 节点。
-sensor_config_path: config/sensor_config.yaml
+sensor_config_path: three_vision_one_mmwave/sensor_config.yaml
 # 静态障碍 → 会话 obstacle_layout.json → obstacle_spawner。
 obstacles:
   fixed_list: []
@@ -30,9 +29,9 @@ robot_1:
   - 0.0
   # - -8932.79
   # - -4677.27
-  - 0.5
+  - -0.2
   - 0.0
-  - 0.0
+  - 0.05
   - 0.0
   overrides:
     visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae

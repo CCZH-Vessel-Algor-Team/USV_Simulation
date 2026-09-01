@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PKG_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 WS_DIR="$(cd "${PKG_DIR}/../../.." && pwd)"
-WORLD_FILE="${PKG_DIR}/worlds/ocean.world"
+WORLD_FILE="${PKG_DIR}/description/world/ocean.world"
 LOG_FILE="/tmp/ocean_world_check.log"
 TIMEOUT_SEC="${TIMEOUT_SEC:-20}"
 
@@ -33,13 +33,13 @@ prepend_path() {
   fi
 }
 
-prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/worlds"
-prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/worlds/models"
+prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/description/world"
+prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/description/world/models"
 prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/description"
 prepend_path GZ_SIM_RESOURCE_PATH "${PKG_DIR}/description/models"
 
-prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/worlds"
-prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/worlds/models"
+prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/description/world"
+prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/description/world/models"
 prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/description"
 prepend_path GAZEBO_MODEL_PATH "${PKG_DIR}/description/models"
 

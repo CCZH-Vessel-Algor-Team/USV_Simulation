@@ -432,7 +432,7 @@ src/usv_simulation/usv_sim_full/config/robot_localization_gps.yaml
 src/usv_simulation/usv_sim_full/launch/CCS_Certified_Simulation_Environment.launch.py
 src/usv_simulation/usv_sim_full/rviz/three_vision_one_mmwave.rviz
 src/usv_simulation/usv_sim_full/usv_sim_full/scripts/session_manager.py
-src/usv_simulation/usv_sim_full/worlds/ccs_open_water.sdf
+src/usv_simulation/usv_sim_full/description/world/ccs_open_water.sdf
 src/usv_simulation/usv_sim_full/docs/utm_enu_alignment_plan_a.md
 /home/cat/cc_enc/src/usv_route_planner/config/route_planner.yaml
 ```
