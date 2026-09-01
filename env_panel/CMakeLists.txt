@@ -30,10 +30,14 @@ add_library(${PROJECT_NAME} SHARED
   include/env_panel/dynamic_ship_panel.hpp
   include/env_panel/storm_field_panel.hpp
   include/env_panel/storm_point_tool.hpp
+  include/env_panel/static_buoy_panel.hpp
+  include/env_panel/static_buoy_point_tool.hpp
   src/vrx_env_panel.cpp
   src/dynamic_ship_panel.cpp
   src/storm_field_panel.cpp
   src/storm_point_tool.cpp
+  src/static_buoy_panel.cpp
+  src/static_buoy_point_tool.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

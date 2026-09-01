@@ -20,6 +20,8 @@ Panels:
     Splitter Ratio: 0.5
   - Class: nav2_rviz_plugins/Navigation 2
     Name: Navigation 2
+  - Class: env_panel/StaticBuoyConfig
+    Name: StaticBuoyConfig
 Visualization Manager:
   Class: ""
   Displays:
@@ -56,6 +58,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /sim/ground_truth_markers
       Queue Size: 10
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Static Buoys
+      Namespaces:
+        {}
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_buoy/markers
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
@@ -397,6 +411,14 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /clicked_point
+    - Class: env_panel/StaticBuoyPoint
+      Single click: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_buoy/clicked_point
   Transformation:
     Current:
       Class: rviz_default_plugins/TF

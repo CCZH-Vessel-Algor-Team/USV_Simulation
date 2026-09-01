@@ -11,6 +11,10 @@ sim_vision_front:
   ros__parameters:
     input_topic: "/sim/ground_truth"
     detection_topic: "/vision/front/detections"
+    publish_ai_objects: true
+    ai_objects_topic: "/perception/camera/front/objects"
+    image_width_px: 640
+    image_height_px: 480
     marker_topic: "/vision/front/markers"
     frame_id: "usv_1/front_cam_link"
     body_frame: "usv_1/base_link"
@@ -39,6 +43,10 @@ sim_vision_left:
   ros__parameters:
     input_topic: "/sim/ground_truth"
     detection_topic: "/vision/left/detections"
+    publish_ai_objects: true
+    ai_objects_topic: "/perception/camera/left/objects"
+    image_width_px: 640
+    image_height_px: 480
     marker_topic: "/vision/left/markers"
     frame_id: "usv_1/left_cam_link"
     body_frame: "usv_1/base_link"
@@ -67,6 +75,10 @@ sim_vision_right:
   ros__parameters:
     input_topic: "/sim/ground_truth"
     detection_topic: "/vision/right/detections"
+    publish_ai_objects: true
+    ai_objects_topic: "/perception/camera/right/objects"
+    image_width_px: 640
+    image_height_px: 480
     marker_topic: "/vision/right/markers"
     frame_id: "usv_1/right_cam_link"
     body_frame: "usv_1/base_link"
