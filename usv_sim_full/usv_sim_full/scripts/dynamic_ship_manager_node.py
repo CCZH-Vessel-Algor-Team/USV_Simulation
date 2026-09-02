@@ -10,10 +10,9 @@ import yaml
 
 import rclpy
 from geometry_msgs.msg import PointStamped, Pose, Twist
+from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
 from rclpy.node import Node
 from std_msgs.msg import String
-from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
-from usv_sim_full.ais_mmsi import simulated_ais_mmsi
 from usv_interfaces.srv import (
     SpawnDynamicShip, DeleteDynamicShip, ClearDynamicShips,
     SetDynamicShipConfig,
@@ -678,7 +677,6 @@ class DynamicShipManager(Node):
             ts.pose = ship.get_current_pose()
             ts.twist = ship.get_current_twist()
             ts.radius = 5.0
-            ts.ais_mmsi = simulated_ais_mmsi(ship.target_id)
             msg.ships.append(ts)
             names.append(ship.model_name)
 
