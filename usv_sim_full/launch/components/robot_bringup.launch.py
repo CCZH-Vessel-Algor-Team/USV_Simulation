@@ -306,6 +306,7 @@ def generate_launch_description():
                 name=f'odom_tf_broadcaster_{safe}',
                 parameters=[{
                     'odom_topic': f'/{rn}/odom',
+                    'robot_namespace': rn,
                     'use_sim_time': use_sim_time_val,
                 }],
                 **odom_kw,
