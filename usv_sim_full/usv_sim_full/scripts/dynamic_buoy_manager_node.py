@@ -2,9 +2,11 @@
 
 import json
 import os
+import queue
 import re
 import subprocess
 import tempfile
+import threading
 import uuid
 
 import rclpy
@@ -82,6 +84,11 @@ class DynamicBuoyManager(Node):
         self.buoys = {}
         self._buoy_counter = 0
         self._last_names_json = '[]'
+        self._spawn_queue = queue.Queue()
+        self._spawn_worker_stop = threading.Event()
+        self._spawn_worker = threading.Thread(
+            target=self._spawn_worker_loop, name='buoy_spawn_worker', daemon=True)
+        self._spawn_worker.start()
 
         self.buoy_pub = self.create_publisher(BuoyArray, '/dynamic_buoy/buoys', 10)
         self.tracked_pub = self.create_publisher(
@@ -135,7 +142,36 @@ class DynamicBuoyManager(Node):
         buoy_type, radius_m = self._read_config()
         self._buoy_counter += 1
         name = f'dyn_buoy_{self._buoy_counter}'
-        self._spawn_buoy_at(name, msg.point.x, msg.point.y, buoy_type, radius_m)
+        self._enqueue_spawn(name, msg.point.x, msg.point.y, buoy_type, radius_m)
+
+    def _enqueue_spawn(self, name, x, y, buoy_type, radius_m, done_event=None, result_box=None):
+        self._spawn_queue.put((name, x, y, buoy_type, radius_m, done_event, result_box))
+
+    def _spawn_worker_loop(self):
+        while not self._spawn_worker_stop.is_set():
+            try:
+                item = self._spawn_queue.get(timeout=0.2)
+            except queue.Empty:
+                continue
+            name, x, y, buoy_type, radius_m, done_event, result_box = item
+            if name is None:
+                self._spawn_queue.task_done()
+                break
+            try:
+                self._spawn_buoy_at(name, x, y, buoy_type, radius_m)
+                if result_box is not None:
+                    result_box['success'] = True
+                    result_box['message'] = f"Buoy '{name}' spawned successfully"
+                    result_box['model_name'] = name
+            except Exception as exc:
+                self.get_logger().error(f'Spawn worker failed for {name}: {exc}')
+                if result_box is not None:
+                    result_box['success'] = False
+                    result_box['message'] = f'Spawn failed: {exc}'
+            finally:
+                if done_event is not None:
+                    done_event.set()
+                self._spawn_queue.task_done()
 
     def on_spawn(self, request, response):
         try:
@@ -155,16 +191,25 @@ class DynamicBuoyManager(Node):
                 buoy_type = 'rgb'
             radius_m = request.radius_m if request.radius_m > 0.0 else self._read_config()[1]
 
-            self._spawn_buoy_at(
+            done_event = threading.Event()
+            result_box = {}
+            self._enqueue_spawn(
                 name,
                 request.pose.position.x,
                 request.pose.position.y,
                 buoy_type,
                 radius_m,
+                done_event,
+                result_box,
             )
-            response.success = True
-            response.model_name = name
-            response.message = f"Buoy '{name}' spawned successfully"
+            if not done_event.wait(timeout=30.0):
+                response.success = False
+                response.message = f"Spawn timed out for '{name}'"
+                return response
+
+            response.success = result_box.get('success', False)
+            response.message = result_box.get('message', '')
+            response.model_name = result_box.get('model_name', name)
         except Exception as exc:
             response.success = False
             response.message = f'Spawn failed: {exc}'
@@ -360,6 +405,10 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
+        if hasattr(node, '_spawn_worker_stop'):
+            node._spawn_worker_stop.set()
+            node._spawn_queue.put((None, 0.0, 0.0, 'rgb', 0.0, None, None))
+            node._spawn_worker.join(timeout=2.0)
         for p in getattr(node, '_retained_spawn_sdf_paths', []):
             if p and os.path.isfile(p):
                 try:
