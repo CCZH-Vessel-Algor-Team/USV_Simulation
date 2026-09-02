@@ -344,7 +344,7 @@ class DynamicBuoyManager(Node):
         self.buoy_pub.publish(buoy_msg)
         self.tracked_pub.publish(tracked_msg)
 
-        names_json = json.dumps([buoy.model_name for buoy in buoy_msg.buoys])
+        names_json = json.dumps([b.name for b in buoy_msg.buoys])
         if names_json != self._last_names_json:
             self._last_names_json = names_json
             self.names_pub.publish(String(data=names_json))
