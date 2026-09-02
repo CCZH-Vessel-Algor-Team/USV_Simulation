@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-等待 Gazebo 世界与仿真时钟就绪后，再调用 ros_gz_sim create 生成船体。
+等待 Gazebo 世界与仿真时钟就绪后，再生成船体。
+
+ros_gz_sim create 对 /world/.../create 的请求默认约 5s 超时；CCS 等重载世界
+加载常超过该时间，导致 spawn 失败却被误判为成功。此处改用 blocking create
+服务并校验模型是否出现在世界中。
 """
 
 from __future__ import annotations
@@ -37,7 +41,9 @@ class GzSpawnRobotWhenReady(Node):
         self.declare_parameter('spawn_stagger_sec', 0.0)
         self.declare_parameter('wait_timeout_sec', 120.0)
         self.declare_parameter('poll_period_sec', 0.5)
-        self.declare_parameter('create_cli_timeout_sec', 60.0)
+        self.declare_parameter('create_service_timeout_ms', 120000)
+        self.declare_parameter('max_spawn_attempts', 8)
+        self.declare_parameter('spawn_retry_delay_sec', 3.0)
 
         self._world = str(self.get_parameter('world_name').value).strip()
         self._entity = str(self.get_parameter('entity_name').value).strip()
@@ -47,9 +53,11 @@ class GzSpawnRobotWhenReady(Node):
         self._stagger = max(0.0, float(self.get_parameter('spawn_stagger_sec').value))
         self._timeout = max(5.0, float(self.get_parameter('wait_timeout_sec').value))
         self._poll_period = max(0.1, float(self.get_parameter('poll_period_sec').value))
-        self._create_timeout = max(
-            10.0, float(self.get_parameter('create_cli_timeout_sec').value)
+        self._create_timeout_ms = max(
+            5000, int(self.get_parameter('create_service_timeout_ms').value)
         )
+        self._max_attempts = max(1, int(self.get_parameter('max_spawn_attempts').value))
+        self._retry_delay = max(0.5, float(self.get_parameter('spawn_retry_delay_sec').value))
 
         if not self._entity or not self._sdf_file:
             raise RuntimeError('entity_name and sdf_file must be non-empty')
@@ -59,8 +67,10 @@ class GzSpawnRobotWhenReady(Node):
         self._world_svc_ok: Optional[bool] = None
         self._spawned = False
         self._failed = False
+        self._spawn_attempts = 0
         self._t0 = time.monotonic()
         self._ready_at: Optional[float] = None
+        self._next_spawn_at: Optional[float] = None
 
         self.create_subscription(Clock, '/clock', self._on_clock, 10)
         self._timer = self.create_timer(self._poll_period, self._poll)
@@ -68,7 +78,9 @@ class GzSpawnRobotWhenReady(Node):
         self.get_logger().info(
             f"等待仿真就绪后 spawn '{self._entity}' "
             f"(world={self._world or 'default'}, file={self._sdf_file}, "
-            f"stagger={self._stagger:.1f}s, timeout={self._timeout:.0f}s)"
+            f"stagger={self._stagger:.1f}s, timeout={self._timeout:.0f}s, "
+            f'create_timeout={self._create_timeout_ms}ms, '
+            f'max_attempts={self._max_attempts})'
         )
 
     def _on_clock(self, msg: Clock) -> None:
@@ -81,6 +93,7 @@ class GzSpawnRobotWhenReady(Node):
         if self._world_svc_ok is True:
             return True
         svc = f'/world/{self._world}/create'
+        blocking_svc = f'{svc}/blocking'
         try:
             out = subprocess.run(
                 ['gz', 'service', '-l'],
@@ -90,9 +103,11 @@ class GzSpawnRobotWhenReady(Node):
                 check=False,
             )
             text = (out.stdout or '') + (out.stderr or '')
-            if svc in text:
+            if svc in text or blocking_svc in text:
                 self._world_svc_ok = True
-                self.get_logger().info(f'Gazebo create 服务已就绪: {svc}')
+                self.get_logger().info(
+                    f'Gazebo create 服务已就绪: {blocking_svc if blocking_svc in text else svc}'
+                )
                 return True
             self._world_svc_ok = False
         except Exception as exc:
@@ -105,6 +120,28 @@ class GzSpawnRobotWhenReady(Node):
             return False
         return self._max_sim_t >= self._min_sim_t
 
+    def _model_exists_in_world(self) -> bool:
+        if not self._world:
+            return True
+        try:
+            out = subprocess.run(
+                ['gz', 'model', '--list'],
+                capture_output=True,
+                text=True,
+                timeout=10.0,
+                check=False,
+            )
+            text = (out.stdout or '') + (out.stderr or '')
+            for line in text.splitlines():
+                stripped = line.strip()
+                if stripped.startswith('- '):
+                    model_name = stripped[2:].strip()
+                    if model_name == self._entity:
+                        return True
+        except Exception as exc:
+            self.get_logger().debug(f'gz model --list 检查失败: {exc}')
+        return False
+
     def _poll(self) -> None:
         if self._spawned or self._failed:
             return
@@ -115,7 +152,7 @@ class GzSpawnRobotWhenReady(Node):
             self.get_logger().error(
                 f'等待 Gazebo/仿真时钟超时 ({self._timeout:.0f}s): '
                 f'clock_msgs={self._clock_count}, max_sim_t={self._max_sim_t:.3f}, '
-                f'world_svc={self._world_svc_ok}'
+                f'world_svc={self._world_svc_ok}, spawn_attempts={self._spawn_attempts}'
             )
             rclpy.shutdown()
             return
@@ -142,9 +179,31 @@ class GzSpawnRobotWhenReady(Node):
         if self._stagger > 0 and (time.monotonic() - self._ready_at) < self._stagger:
             return
 
+        if self._next_spawn_at is not None and time.monotonic() < self._next_spawn_at:
+            return
+
+        if self._model_exists_in_world():
+            self._spawned = True
+            self.get_logger().info(
+                f"船体 '{self._entity}' 已存在于 Gazebo 世界 '{self._world}'"
+            )
+            self._timer.cancel()
+            rclpy.shutdown()
+            return
+
+        if self._spawn_attempts >= self._max_attempts:
+            self._failed = True
+            self.get_logger().error(
+                f"spawn 失败：已尝试 {self._spawn_attempts} 次，"
+                f"模型 '{self._entity}' 仍未出现在世界中"
+            )
+            rclpy.shutdown()
+            return
+
         self._spawn_entity()
 
     def _spawn_entity(self) -> None:
+        self._spawn_attempts += 1
         x = float(self.get_parameter('x').value)
         y = float(self.get_parameter('y').value)
         z = float(self.get_parameter('z').value)
@@ -152,55 +211,112 @@ class GzSpawnRobotWhenReady(Node):
         pitch = float(self.get_parameter('pitch').value)
         yaw = float(self.get_parameter('yaw').value)
 
-        cmd = ['ros2', 'run', 'ros_gz_sim', 'create']
-        if self._world:
-            cmd.extend(['-world', self._world])
-        cmd.extend([
-            '-name', self._entity,
-            '-file', self._sdf_file,
-            '-x', str(x),
-            '-y', str(y),
-            '-z', str(z),
-            '-R', str(roll),
-            '-P', str(pitch),
-            '-Y', str(yaw),
-        ])
+        if not self._world:
+            self._failed = True
+            self.get_logger().error('world_name 为空，无法调用 Gazebo create 服务')
+            rclpy.shutdown()
+            return
 
-        self.get_logger().info(f"调用 ros_gz_sim create: {' '.join(cmd)}")
+        service = f'/world/{self._world}/create/blocking'
+        req = (
+            f'sdf_filename: "{self._sdf_file}"\n'
+            f'name: "{self._entity}"\n'
+            'pose {\n'
+            f'  position {{ x: {x} y: {y} z: {z} }}\n'
+            f'  orientation {{ x: 0.0 y: 0.0 z: 0.0 w: 1.0 }}\n'
+            '}\n'
+            'allow_renaming: false\n'
+        )
+        if abs(roll) > 1e-9 or abs(pitch) > 1e-9 or abs(yaw) > 1e-9:
+            import math
+
+            cr = math.cos(roll * 0.5)
+            sr = math.sin(roll * 0.5)
+            cp = math.cos(pitch * 0.5)
+            sp = math.sin(pitch * 0.5)
+            cy = math.cos(yaw * 0.5)
+            sy = math.sin(yaw * 0.5)
+            qw = cr * cp * cy + sr * sp * sy
+            qx = sr * cp * cy - cr * sp * sy
+            qy = cr * sp * cy + sr * cp * sy
+            qz = cr * cp * sy - sr * sp * cy
+            req = (
+                f'sdf_filename: "{self._sdf_file}"\n'
+                f'name: "{self._entity}"\n'
+                'pose {\n'
+                f'  position {{ x: {x} y: {y} z: {z} }}\n'
+                f'  orientation {{ x: {qx} y: {qy} z: {qz} w: {qw} }}\n'
+                '}\n'
+                'allow_renaming: false\n'
+            )
+
+        cmd = [
+            'gz', 'service',
+            '-s', service,
+            '--reqtype', 'gz.msgs.EntityFactory',
+            '--reptype', 'gz.msgs.Boolean',
+            '--timeout', str(self._create_timeout_ms),
+            '--req', req,
+        ]
+
+        self.get_logger().info(
+            f"第 {self._spawn_attempts}/{self._max_attempts} 次 spawn "
+            f"'{self._entity}' via {service} (timeout={self._create_timeout_ms}ms)"
+        )
         try:
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=self._create_timeout,
+                timeout=(self._create_timeout_ms / 1000.0) + 10.0,
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            self._failed = True
-            self.get_logger().error(
-                f'ros_gz_sim create 超时 ({self._create_timeout:.0f}s): {self._entity}'
-            )
-            rclpy.shutdown()
+            detail = f'Gazebo create 服务调用超时 ({self._create_timeout_ms}ms)'
+            self.get_logger().warn(detail)
+            self._schedule_retry(detail)
             return
 
         detail = (result.stderr or result.stdout or '').strip()
-        if result.returncode != 0:
-            self._failed = True
-            self.get_logger().error(
-                f'spawn 失败 (code={result.returncode}): {detail}'
+        if result.returncode != 0 or 'data: true' not in detail.lower():
+            self.get_logger().warn(
+                f'spawn 尝试失败 (code={result.returncode}): {detail or "(无输出)"}'
             )
-            rclpy.shutdown()
+            self._schedule_retry(detail)
+            return
+
+        if not self._model_exists_in_world():
+            self.get_logger().warn(
+                f"create 服务返回成功，但模型 '{self._entity}' 尚未出现在世界中"
+            )
+            self._schedule_retry(detail)
             return
 
         self._spawned = True
-        self.get_logger().info(f"船体 '{self._entity}' 已成功插入 Gazebo")
+        self.get_logger().info(
+            f"船体 '{self._entity}' 已成功插入 Gazebo 世界 '{self._world}'"
+        )
         if detail:
             self.get_logger().info(detail)
         self._timer.cancel()
         rclpy.shutdown()
 
+    def _schedule_retry(self, detail: str) -> None:
+        if self._spawn_attempts >= self._max_attempts:
+            self._failed = True
+            self.get_logger().error(
+                f"spawn 最终失败 ({self._spawn_attempts} 次): {detail}"
+            )
+            rclpy.shutdown()
+            return
+        self._next_spawn_at = time.monotonic() + self._retry_delay
+        self.get_logger().info(
+            f'{self._retry_delay:.1f}s 后重试 spawn ({self._spawn_attempts}/'
+            f'{self._max_attempts})'
+        )
 
-def main(args=None) -> None:
+
+def main(args=None):
     rclpy.init(args=args)
     node = GzSpawnRobotWhenReady()
     try:
