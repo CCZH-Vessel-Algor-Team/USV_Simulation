@@ -455,10 +455,20 @@ def generate_launch_description():
         kill_pattern = (
             'nav2_thruster_bringup.launch.py|'
             'navigation_launch.py|'
-            'main.launch.py|'
             'gz sim|'
+            'gz_spawn_robot_when_ready|'
             'ros_gz_bridge/parameter_bridge|'
             'odom_tf_broadcaster|'
+            'robot_state_publisher|'
+            'tf_namespace_relay|'
+            'ccs_map_to_odom_tf|'
+            'ccs_base_link_compat_tf|'
+            'rviz2|'
+            'dynamic_buoy_manager|'
+            'dynamic_ship_manager|'
+            'tracked_ship_list_merger|'
+            'storm_field_manager|'
+            'hull_draft_publisher|'
             'controller_server|planner_server|bt_navigator|behavior_server|'
             'waypoint_follower|velocity_smoother|smoother_server|'
             'lifecycle_manager_navigation|lifecycle_manager_map|map_server|cmd_vel_to_thruster.py|'
@@ -468,7 +478,9 @@ def generate_launch_description():
             'sim_vision_node|sim_mmwave_node|late_fusion_node|'
             'target_snapshot_to_tracked_ship|'
             'vector_object_server|keepout_costmap_filter_info_server|lifecycle_manager_keepout_zone|'
-            'scenario_ground_truth_node|ground_truth_gazebo_entity|ground_truth_gazebo_models'
+            'scenario_ground_truth_node|ground_truth_gazebo_entity|ground_truth_gazebo_models|'
+            'maritime_situation_monitor|ais_aggregator_node|sim_ais_node|'
+            'depth_provider_node|grounding_warning_node|route_planner_node'
         )
         subprocess.run(
             ['bash', '-lc', f'pkill -9 -f "{kill_pattern}" || true; sleep 1'],
