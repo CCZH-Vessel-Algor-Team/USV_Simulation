@@ -1,0 +1,12 @@
+usv_engine:
+  maximum_engine_speed_rpm: 5000
+  throttle_deadband_percent: 5
+
+wind_wave_level:
+  wind_resistence_level: 3
+  wave_resistence_level: 1.5
+
+usv_static_info:
+  ship_length_m: 5.0
+  ship_width_m: 2.0
+  displacement_t: 1.5
