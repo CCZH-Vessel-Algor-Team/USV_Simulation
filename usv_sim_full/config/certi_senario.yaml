@@ -38,9 +38,9 @@ robot_1:
     visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
     mass: 500.0
     inertia:
-    - 100.0
-    - 100.0
-    - 200.0
+    - 300.0
+    - 1000.0
+    - 1200.0
     thruster_positions:
       thruster_pos_x: -2.373776
       # 左右须关于船体中心线对称，否则等推力也会产生偏航力矩（表现为绕圈）

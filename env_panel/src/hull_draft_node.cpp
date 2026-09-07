@@ -22,8 +22,8 @@ public:
     draft_topic_ = declare_parameter<std::string>("draft_topic", "~/draft");
     fluid_level_ = declare_parameter<double>("fluid_level", 0.0);
     hull_radius_ = declare_parameter<double>("hull_radius", 0.213);
-    front_x_ = declare_parameter<double>("front_x", 0.6);
-    aft_x_ = declare_parameter<double>("aft_x", -1.4);
+    front_x_ = declare_parameter<double>("front_x", 1.0);
+    aft_x_ = declare_parameter<double>("aft_x", -1.0);
     port_y_ = declare_parameter<double>("port_y", 1.03);
     starboard_y_ = declare_parameter<double>("starboard_y", -1.03);
 
@@ -92,8 +92,8 @@ private:
   std::string draft_topic_;
   double fluid_level_{0.0};
   double hull_radius_{0.213};
-  double front_x_{0.6};
-  double aft_x_{-1.4};
+  double front_x_{1.0};
+  double aft_x_{-1.0};
   double port_y_{1.03};
   double starboard_y_{-1.03};
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;

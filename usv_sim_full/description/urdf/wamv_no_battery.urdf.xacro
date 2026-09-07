@@ -229,10 +229,11 @@
       <hull_radius>$(arg hull_radius)</hull_radius>
       <fluid_level>$(arg fluid_level)</fluid_level>
       <points>
-        <point>0.6 1.03 0</point>
-        <point>-1.4 1.03 0</point>
-        <point>0.6 -1.03 0</point>
-        <point>-1.4 -1.03 0</point>
+        <!-- 关于 CoM(x≈0) 前后对称，避免浮心偏后导致静艏倾 -->
+        <point>1.0 1.03 0</point>
+        <point>-1.0 1.03 0</point>
+        <point>1.0 -1.03 0</point>
+        <point>-1.0 -1.03 0</point>
       </points>
       <wavefield>
         <topic>/vrx/wavefield/parameters</topic>

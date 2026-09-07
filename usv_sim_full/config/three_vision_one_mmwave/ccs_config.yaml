@@ -81,9 +81,9 @@ robot_1:
     visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
     mass: 500.0
     inertia:
-    - 100.0
-    - 100.0
-    - 200.0
+    - 300.0
+    - 1000.0
+    - 1200.0
     thruster_positions:
       thruster_pos_x: -2.373776
       thruster_pos_y_left: 0.7
