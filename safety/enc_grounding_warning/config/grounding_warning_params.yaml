@@ -9,13 +9,13 @@ ukc:
   trim_allowance_m: 0.03
   wave_allowance_m: 0.0
   ukc_required_abs_m: 0.3
-  ukc_required_pct: 0.10
+  ukc_required_pct: 0.1
   u_depth_m: 0.1
   u_tide_m: 0.0
   u_draft_m: 0.02
   u_squat_m: 0.02
   u_wave_m: 0.0
-  safety_factor: 1.0
+  safety_factor: 15.0
   water_level_m: 0.0
   margin_safe_m: 0.1
   hysteresis_m: 0.1
