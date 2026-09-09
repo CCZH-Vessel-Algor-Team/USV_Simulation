@@ -1,51 +1,59 @@
-# USV_Simulation - 无人水面航行器仿真平台
+# USV 仿真
 
-[![ROS 2](https://img.shields.io/badge/ROS-2_Humble-blue.svg)](https://docs.ros.org/en/humble/)
-[![Gazebo](https://img.shields.io/badge/Gazebo-Harmonic-orange.svg)](https://gazebosim.org/docs/harmonic/)
-[![VRX](https://img.shields.io/badge/VRX-Competition-green.svg)](https://github.com/osrf/vrx)
-[![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](../LICENSE)
+基于 ROS 2 Humble、Gazebo Sim 和 VRX 的无人水面艇仿真功能包集合。
 
-本目录是工作区 **[USV_ROS](../README.md)** 中的仿真栈。支持矩阵与发版说明以仓库根 [README.md](../README.md)、[CHANGELOG.md](../CHANGELOG.md)、[docs/RELEASE_VERSIONING.md](../docs/RELEASE_VERSIONING.md) 为准。
+本文档是目录入口，覆盖除 `third_party/` 外的功能包。外部依赖说明见 [third_party/README.md](third_party/README.md)。
 
-基于 **ROS 2 Humble + Gazebo Harmonic（gz）+ VRX** 的无人水面航行器（USV）高保真度仿真平台。
+## 构建
 
-## 📚 文档导航（权威入口）
-
-| 读者 | 文档 |
-|------|------|
-| **日常使用者（推荐）** | [docs/docs_v4/QUICK_START.md](docs/docs_v4/QUICK_START.md) |
-| **构建细节** | [docs/docs_v4/BUILD.md](docs/docs_v4/BUILD.md) |
-| **Demo 参数** | [docs/docs_v4/DEMO_RUN.md](docs/docs_v4/DEMO_RUN.md) |
-| **架构与目录** | [docs/docs_v3/仿真仓库结构说明.md](docs/docs_v3/仿真仓库结构说明.md) |
-| **全栈架构** | [usv_sim_full/docs/nav2_sim_three_vision_mmwave_architecture.md](usv_sim_full/docs/nav2_sim_three_vision_mmwave_architecture.md) |
-| **仿真安全能力** | [safety/README.md](safety/README.md) |
-
-历史文档（v1/v2/v3，可能含旧版 Docker 表述）：[docs/docs_v1](docs/docs_v1/)、[docs/docs_v2](docs/docs_v2/)、[docs/docs_v3](docs/docs_v3/)。
-
-## 🚀 快速开始
-
-在工作区根目录 `<ws>`（包含 `src/`）：
+在工作区根目录执行：
 
 ```bash
-./scripts/build_demo.sh
 source /opt/ros/humble/setup.bash
-source src/usv_nav/install/setup.bash
+rosdep install --from-paths src/usv_simulation --ignore-src -r -y
+colcon build --packages-up-to usv_sim_full --symlink-install
 source install/setup.bash
-ros2 launch usv_sim_full nav2_sim_three_vision_mmwave_bringup.launch.py
 ```
 
-环境依赖与分步构建见 [docs/docs_v4/QUICK_START.md](docs/docs_v4/QUICK_START.md)。
+完整仿真还依赖工作区中的 `usv_interfaces`、`usv_nav` 和 `usv_perception` 等包。
 
-## 🐛 常见问题
+## 常用启动
 
 ```bash
-# Gazebo 资源路径
-export GZ_SIM_RESOURCE_PATH="$(ros2 pkg prefix wamv_description)/share/wamv_description/models:${GZ_SIM_RESOURCE_PATH:-}"
+# 完整仿真
+ros2 launch usv_sim_full main.launch.py
 
-# 依赖
-rosdep install --from-paths src/usv_interfaces src/usv_simulation --ignore-src -r -y
+# 完整仿真并启动 Nav2
+ros2 launch usv_sim_full nav2_sim_full_bringup.launch.py
+
+# CCS 认证仿真
+ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py
+
+# 使用指定配置
+ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 ```
 
-## 📄 许可证
+## 功能包
 
-工作区默认以 [Apache 2.0](../LICENSE) 分发；第三方组件见 [third_party/README.md](third_party/README.md)。
+| 功能包 | 作用 | 启动或使用 | 文档 |
+| --- | --- | --- | --- |
+| [`usv_sim_full`](usv_sim_full/README.md) | 统一启动世界、船舶、桥接、传感器和后处理组件。 | `ros2 launch usv_sim_full main.launch.py` | [架构](usv_sim_full/docs/ARCHITECTURE.md) · [数据流](usv_sim_full/docs/DATA_FLOW.md) · [变更](usv_sim_full/CHANGELOG.md) |
+| [`ground_truth_sim`](ground_truth_sim/README.md) | 生成运动目标或 Gazebo 实体真值。 | `ros2 launch ground_truth_sim ground_truth_sim.launch.py` | [架构](ground_truth_sim/docs/ARCHITECTURE.md) · [数据流](ground_truth_sim/docs/DATA_FLOW.md) · [变更](ground_truth_sim/CHANGELOG.md) |
+| [`usv_route_planner`](usv_route_planner/README.md) | 根据地图和任务航点生成候选航线。 | `ros2 launch usv_route_planner route_planner.launch.py use_sim_time:=true` | [架构](usv_route_planner/docs/ARCHITECTURE.md) · [数据流](usv_route_planner/docs/DATA_FLOW.md) · [变更](usv_route_planner/CHANGELOG.md) |
+| [`gz_maritime_radar_plugin`](sensor_plugins/gz_maritime_radar_plugin/README.md) | 生成 Gazebo 海事雷达扇区数据。 | 由 `usv_sim_full` 在启用海事雷达时加载。 | [架构](sensor_plugins/gz_maritime_radar_plugin/docs/ARCHITECTURE.md) · [数据流](sensor_plugins/gz_maritime_radar_plugin/docs/DATA_FLOW.md) · [变更](sensor_plugins/gz_maritime_radar_plugin/CHANGELOG.md) |
+| [`radar_gz_bridge`](sensor_plugins/radar_gz_bridge/README.md) | 将 Gazebo 雷达数据转换为 ROS `RadarSector`。 | `ros2 launch radar_gz_bridge radar_bridge.launch.py` | [架构](sensor_plugins/radar_gz_bridge/docs/ARCHITECTURE.md) · [数据流](sensor_plugins/radar_gz_bridge/docs/DATA_FLOW.md) · [变更](sensor_plugins/radar_gz_bridge/CHANGELOG.md) |
+| [`usv_mmwave_sim`](sensor_plugins/usv_mmwave_sim/README.md) | 生成毫米波 4D 点云和可选目标列表。 | 启用毫米波配置后由 `usv_sim_full` 启动。 | [架构](sensor_plugins/usv_mmwave_sim/docs/ARCHITECTURE.md) · [数据流](sensor_plugins/usv_mmwave_sim/docs/DATA_FLOW.md) · [变更](sensor_plugins/usv_mmwave_sim/CHANGELOG.md) |
+| [`env_panel`](env_panel/README.md) | 提供环境、目标船和风暴场 RViz 配置面板。 | 在 RViz 中加载相应面板。 | [架构](env_panel/docs/ARCHITECTURE.md) · [数据流](env_panel/docs/DATA_FLOW.md) · [变更](env_panel/CHANGELOG.md) |
+| [`enc_grounding_warning_msgs`](safety/enc_grounding_warning_msgs/README.md) | 定义搁浅预警消息和服务。 | 接口包，无独立运行节点。 | [架构](safety/enc_grounding_warning_msgs/docs/ARCHITECTURE.md) · [数据流](safety/enc_grounding_warning_msgs/docs/DATA_FLOW.md) · [变更](safety/enc_grounding_warning_msgs/CHANGELOG.md) |
+| [`enc_grounding_warning`](safety/enc_grounding_warning/README.md) | 计算龙骨下净空和搁浅风险。 | `ros2 launch enc_grounding_warning enc_grounding_warning.launch.py namespace:=usv_1 use_sim_time:=true` | [架构](safety/enc_grounding_warning/docs/ARCHITECTURE.md) · [数据流](safety/enc_grounding_warning/docs/DATA_FLOW.md) · [变更](safety/enc_grounding_warning/CHANGELOG.md) |
+| [`enc_grounding_warning_rviz`](safety/enc_grounding_warning_rviz/README.md) | 提供搁浅预警 RViz 面板。 | 在 RViz 中加载 `GroundingWarningPanel`。 | [架构](safety/enc_grounding_warning_rviz/docs/ARCHITECTURE.md) · [数据流](safety/enc_grounding_warning_rviz/docs/DATA_FLOW.md) · [变更](safety/enc_grounding_warning_rviz/CHANGELOG.md) |
+| [`sim_test`](sim_test/README.md) | 检查节点状态、预期话题和话题频率。 | 仿真运行后执行 `ros2 run sim_test sim_monitor`。 | [架构](sim_test/docs/ARCHITECTURE.md) · [数据流](sim_test/docs/DATA_FLOW.md) · [变更](sim_test/CHANGELOG.md) |
+| [`vrx_ros`](vrx/vrx_ros/README.md) | 提供 VRX 的 ROS 接口和资源。 | 通常由 `vrx_gz` 或 `usv_sim_full` 使用。 | [架构](vrx/vrx_ros/docs/ARCHITECTURE.md) · [数据流](vrx/vrx_ros/docs/DATA_FLOW.md) · [变更](vrx/vrx_ros/CHANGELOG.md) |
+| [`vrx_gz`](vrx/vrx_gz/README.md) | 提供 VRX 的 Gazebo 世界和生成入口。 | `ros2 launch vrx_gz vrx_environment.launch.py` | [架构](vrx/vrx_gz/docs/ARCHITECTURE.md) · [数据流](vrx/vrx_gz/docs/DATA_FLOW.md) · [变更](vrx/vrx_gz/CHANGELOG.md) |
+| [`vrx_gazebo`](vrx/vrx_urdf/vrx_gazebo/README.md) | 生成 WAM-V 模型。 | `ros2 launch vrx_gazebo generate_wamv.launch.py` | [架构](vrx/vrx_urdf/vrx_gazebo/docs/ARCHITECTURE.md) · [数据流](vrx/vrx_urdf/vrx_gazebo/docs/DATA_FLOW.md) · [变更](vrx/vrx_urdf/vrx_gazebo/CHANGELOG.md) |
+| [`wamv_description`](vrx/vrx_urdf/wamv_description/README.md) | 提供 WAM-V 描述和模型资源。 | 由下游包生成或加载。 | [架构](vrx/vrx_urdf/wamv_description/docs/ARCHITECTURE.md) · [数据流](vrx/vrx_urdf/wamv_description/docs/DATA_FLOW.md) · [变更](vrx/vrx_urdf/wamv_description/CHANGELOG.md) |
+| [`wamv_gazebo`](vrx/vrx_urdf/wamv_gazebo/README.md) | 提供 WAM-V Gazebo 模板和配置。 | 由 `vrx_gz` 或 `usv_sim_full` 使用。 | [架构](vrx/vrx_urdf/wamv_gazebo/docs/ARCHITECTURE.md) · [数据流](vrx/vrx_urdf/wamv_gazebo/docs/DATA_FLOW.md) · [变更](vrx/vrx_urdf/wamv_gazebo/CHANGELOG.md) |
+
+## 文档维护
+
+每个功能包均在包目录内维护 `README.md`、`docs/ARCHITECTURE.md`、`docs/DATA_FLOW.md` 和 `CHANGELOG.md`。修改功能、配置或文档时，应同步更新该包 `CHANGELOG.md` 的 `Unreleased` 条目。

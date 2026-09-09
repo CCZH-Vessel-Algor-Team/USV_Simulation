@@ -76,6 +76,7 @@ def _colregs_bringup_available() -> bool:
 
 
 def _dynamic_ship_manager_node(context, *args, **kwargs):
+    enable_buoy = LaunchConfiguration('enable_dynamic_buoy_manager').perform(context).strip().lower()
     cfg_path = LaunchConfiguration('config_path').perform(context)
     usv_sim_full_pkg = get_package_share_directory('usv_sim_full')
     world_name = 'sydney_regatta'
@@ -86,22 +87,26 @@ def _dynamic_ship_manager_node(context, *args, **kwargs):
     except Exception:
         pass
 
-    return [
-        Node(
-            package='usv_sim_full',
-            executable='dynamic_ship_manager_node',
-            name='dynamic_ship_manager',
-            output='screen',
-            parameters=[{
-                'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'world_name': world_name,
-                'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
-                'default_mesh_profile': os.path.join(
-                    usv_sim_full_pkg, 'description', 'models',
-                    'target_ship', '10m_mesh_profile.yaml'),
-            }],
-        ),
-    ]
+    node_kwargs = {
+        'package': 'usv_sim_full',
+        'executable': 'dynamic_ship_manager_node',
+        'name': 'dynamic_ship_manager',
+        'output': 'screen',
+        'parameters': [{
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'world_name': world_name,
+            'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
+            'default_mesh_profile': os.path.join(
+                usv_sim_full_pkg, 'description', 'models',
+                'target_ship', '10m_mesh_profile.yaml'),
+        }],
+    }
+    if enable_buoy in ('true', '1', 'yes'):
+        node_kwargs['remappings'] = [
+            ('/dynamic_ship/tracked_ships', '/dynamic_ship/tracked_ships/_internal'),
+        ]
+
+    return [Node(**node_kwargs)]
 
 
 _NAV2_INSTALL_HINT = (
@@ -218,23 +223,31 @@ def _late_fusion_node(context, *args, **kwargs):
         LaunchConfiguration('nav2_namespace').perform(context), cfg_path
     )
     output_frame_id = f'{resolved_ns}/base_link'
+    odom_topic = f'/{resolved_ns}/odom'
 
     return [
         LogInfo(
-            msg=f'启动 usv_late_fusion late_fusion_node（output_frame_id={output_frame_id}）'
+            msg=(
+                f'启动 usv_late_fusion late_fusion_node（output_frame_id={output_frame_id}，'
+                f'ego_rotation_comp=true，odom={odom_topic}）'
+            )
         ),
         Node(
             package='usv_late_fusion',
             executable='late_fusion_node',
             name='late_fusion_node',
             output=output,
-            parameters=param_files + [{'output_frame_id': output_frame_id}],
+            parameters=param_files + [{
+                'output_frame_id': output_frame_id,
+                'odom_topic': odom_topic,
+                'enable_ego_rotation_compensation': True,
+            }],
         ),
     ]
 
 
 def _convert_to_trackship_node(context, *args, **kwargs):
-    """启动 convert_to_trackship：/fusion/snapshot → /fusion/tracked_ship。"""
+    """启动 convert_to_trackship：/fusion/snapshot → /tracked_ship（map 系）。"""
     enable = LaunchConfiguration('enable_convert_to_trackship').perform(context)
     if enable.lower() != 'true':
         return [
@@ -249,14 +262,14 @@ def _convert_to_trackship_node(context, *args, **kwargs):
     resolved_ns, _, _ = _resolve_nav2_namespace(
         LaunchConfiguration('nav2_namespace').perform(context), cfg_path
     )
-    frame_id = f'{resolved_ns}/base_link'
+    source_frame = f'{resolved_ns}/base_link'
     params_file = LaunchConfiguration('convert_to_trackship_params_file').perform(context)
 
     return [
         LogInfo(
             msg=(
-                '启动 convert_to_trackship（/fusion/snapshot → /fusion/tracked_ship，'
-                f'frame_id={frame_id}）'
+                '启动 convert_to_trackship（/fusion/snapshot → /tracked_ship，'
+                f'{source_frame} → map）'
             )
         ),
         Node(
@@ -267,7 +280,10 @@ def _convert_to_trackship_node(context, *args, **kwargs):
             parameters=[
                 {'use_sim_time': use_sim},
                 params_file,
-                {'frame_id': frame_id},
+                {
+                    'frame_id': source_frame,
+                    'output_frame_id': 'map',
+                },
             ],
         ),
     ]
@@ -386,7 +402,9 @@ def generate_launch_description():
     default_localization_params = os.path.join(
         usv_sim_full_pkg, 'config', 'robot_localization_gps.yaml'
     )
-    default_map_yaml = os.path.join(usv_sim_full_pkg, 'maps', 'sydney_map2.yaml')
+    default_map_yaml = os.path.join(
+        usv_sim_full_pkg, 'maps', 'CN441122_enc_5km.yaml'
+    )
 
     _rviz_name = 'three_vision_one_mmwave.rviz'
     _rviz_share = os.path.join(usv_sim_full_pkg, 'rviz', _rviz_name)
@@ -437,10 +455,20 @@ def generate_launch_description():
         kill_pattern = (
             'nav2_thruster_bringup.launch.py|'
             'navigation_launch.py|'
-            'main.launch.py|'
             'gz sim|'
+            'gz_spawn_robot_when_ready|'
             'ros_gz_bridge/parameter_bridge|'
             'odom_tf_broadcaster|'
+            'robot_state_publisher|'
+            'tf_namespace_relay|'
+            'ccs_map_to_odom_tf|'
+            'ccs_base_link_compat_tf|'
+            'rviz2|'
+            'dynamic_buoy_manager|'
+            'dynamic_ship_manager|'
+            'tracked_ship_list_merger|'
+            'storm_field_manager|'
+            'hull_draft_publisher|'
             'controller_server|planner_server|bt_navigator|behavior_server|'
             'waypoint_follower|velocity_smoother|smoother_server|'
             'lifecycle_manager_navigation|lifecycle_manager_map|map_server|cmd_vel_to_thruster.py|'
@@ -450,7 +478,9 @@ def generate_launch_description():
             'sim_vision_node|sim_mmwave_node|late_fusion_node|'
             'target_snapshot_to_tracked_ship|'
             'vector_object_server|keepout_costmap_filter_info_server|lifecycle_manager_keepout_zone|'
-            'scenario_ground_truth_node|ground_truth_gazebo_entity|ground_truth_gazebo_models'
+            'scenario_ground_truth_node|ground_truth_gazebo_entity|ground_truth_gazebo_models|'
+            'maritime_situation_monitor|ais_aggregator_node|sim_ais_node|'
+            'depth_provider_node|grounding_warning_node|route_planner_node'
         )
         subprocess.run(
             ['bash', '-lc', f'pkill -9 -f "{kill_pattern}" || true; sleep 1'],
@@ -478,6 +508,7 @@ def generate_launch_description():
             'rviz_config_path_override': rviz_config_path,
             'verbose_launch': verbose_launch,
             'nav2_namespace': nav2_namespace,
+            'enable_dynamic_buoy_manager': LaunchConfiguration('enable_dynamic_buoy_manager'),
         }.items(),
     )
 
@@ -571,7 +602,7 @@ def generate_launch_description():
             ts_subsystem_launch = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(ts_subsystem_launch_file),
                 launch_arguments={
-                    'tracked_ship_topic': '/dynamic_ship/tracked_ships',
+                    'tracked_ship_topic': '/tracked_ship',
                     'robot_base_frame': f'{resolved_ns}/base_link',
                     'odom_topic': f'/{resolved_ns}/odom',
                     'use_sim_time': use_sim_time.perform(context),
@@ -740,6 +771,11 @@ def generate_launch_description():
             description='convert_to_trackship 参数（input/output topic 等）',
         ),
         DeclareLaunchArgument(
+            'enable_dynamic_buoy_manager',
+            default_value='true',
+            description='true：启动动态浮标管理、COLREGS/GT 合并链（默认开启）',
+        ),
+        DeclareLaunchArgument(
             'enable_maritime_situation_monitor',
             default_value='true',
             description='false：不启动 maritime_situation_monitor（态势评估报告）',
@@ -751,7 +787,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'monitor_tracked_ship_topic',
-            default_value='/dynamic_ship/tracked_ships',
+            default_value='/tracked_ship',
             description='maritime_situation_monitor 订阅的 TrackedShipList 话题',
         ),
         DeclareLaunchArgument(
@@ -949,7 +985,7 @@ def generate_launch_description():
             parameters=[{
                 'use_sim_time': use_sim_time,
                 'frame_id': 'map',
-                'tracked_ship_topic': '/dynamic_ship/tracked_ships',
+                'tracked_ship_topic': '/tracked_ship',
                 'names_topic': '/storm_field/names',
                 'storm_field_topic': '/storm_field/storms',
                 'clicked_point_topic': '/storm_field/clicked_point',

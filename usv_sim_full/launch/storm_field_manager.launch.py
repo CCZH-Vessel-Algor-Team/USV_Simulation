@@ -15,7 +15,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'tracked_ship_topic',
-            default_value='/dynamic_ship/tracked_ships',
+            default_value='/tracked_ship',
             description='TrackedShipList output topic for the storm hazard.'),
         DeclareLaunchArgument(
             'names_topic',

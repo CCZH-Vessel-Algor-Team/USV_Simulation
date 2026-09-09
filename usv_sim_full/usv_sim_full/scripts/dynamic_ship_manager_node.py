@@ -10,9 +10,9 @@ import yaml
 
 import rclpy
 from geometry_msgs.msg import PointStamped, Pose, Twist
+from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
 from rclpy.node import Node
 from std_msgs.msg import String
-from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
 from usv_interfaces.srv import (
     SpawnDynamicShip, DeleteDynamicShip, ClearDynamicShips,
     SetDynamicShipConfig,

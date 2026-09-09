@@ -16,11 +16,11 @@ class TfNamespaceRelay(Node):
         tf_topic_out = f'/{self.namespace}/tf'
         tf_static_topic_out = f'/{self.namespace}/tf_static'
 
-        # Upstream /tf is commonly best-effort in sim pipelines.
+        # Upstream /tf uses reliable QoS from odom_tf_broadcaster and robot_state_publisher.
         tf_sub_qos = QoSProfile(
             history=HistoryPolicy.KEEP_LAST,
             depth=100,
-            reliability=ReliabilityPolicy.BEST_EFFORT,
+            reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.VOLATILE,
         )
 

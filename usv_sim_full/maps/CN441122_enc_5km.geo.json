@@ -1,0 +1,40 @@
+{
+  "type": "FeatureCollection",
+  "name": "CN441122_enc_5km",
+  "crs": "EPSG:4326",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "description": "Gazebo and ROS ENU origin; center pixel is (0, 0).",
+        "enu_origin_longitude": 119.481403,
+        "enu_origin_latitude": 34.69212,
+        "pixel": [
+          1250,
+          1250
+        ],
+        "resolution_m": 2.0,
+        "pixels": 2501,
+        "source_enc": "CN441122.000",
+        "layer_counts": {
+          "LNDARE": 6,
+          "COALNE": 8,
+          "OBSTRN": 3,
+          "UWTROC": 1,
+          "WRECKS": 0,
+          "BOYLAT": 4,
+          "BOYCAR": 0,
+          "BCNCAR": 0,
+          "BCNSPP": 15
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          119.481403,
+          34.69212
+        ]
+      }
+    }
+  ]
+}
