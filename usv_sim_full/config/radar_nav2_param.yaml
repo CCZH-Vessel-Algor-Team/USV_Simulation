@@ -198,28 +198,30 @@ planner_server:
     GridBased:
       plugin: "nav2_rrt_star_planner::RRTStarPlanner"
       tolerance: 0.5
-      step_size: 2.0
+      step_size: 4.0
       max_iterations: 5000
       goal_bias: 0.1
       goal_threshold: 2.0
       safety_dist: 1.5
       cost_weight: 0.3
-      max_optimize_iters: 100
-      eta: 3.0
+      max_optimize_iters: 5000
+      eta: 50.0
       prune_path: true
+      use_informed_sampling: true
 
     VORRTStar:
       plugin: "nav2_colregs_vo_rrt_star_planner::VORRTStarPlanner"
       tolerance: 0.5
-      step_size: 2.0
+      step_size: 4.0
       max_iterations: 5000
       goal_bias: 0.1
-      goal_threshold: 2.0
+      goal_threshold: 5.0
       safety_dist: 1.5
       cost_weight: 0.3
-      max_optimize_iters: 100
-      eta: 3.0
+      max_optimize_iters: 5000
+      eta: 50.0
       prune_path: true
+      use_informed_sampling: true
 #控制器配置，很难调，我勉强让他跑的可以了
 controller_server:
   ros__parameters:
