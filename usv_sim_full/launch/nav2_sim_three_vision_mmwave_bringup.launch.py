@@ -602,7 +602,7 @@ def generate_launch_description():
             ts_subsystem_launch = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(ts_subsystem_launch_file),
                 launch_arguments={
-                    'tracked_ship_topic': '/tracked_ship',
+                    'tracked_ship_topic': '/dynamic_ship/tracked_ships',
                     'robot_base_frame': f'{resolved_ns}/base_link',
                     'odom_topic': f'/{resolved_ns}/odom',
                     'use_sim_time': use_sim_time.perform(context),
