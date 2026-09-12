@@ -20,8 +20,10 @@ obstacles:
 scenario:
   dynamic_obstacles: []
   ground_truth_sim:
-    enabled: true
+    enabled: false
     gazebo_visual:  true
+    # 未写 fixed_targets 时必须用 ctrv；否则 entity 节点会因空航路直接退出
+    motion_mode: ctrv
     spawn_delay_sec: 10.0
     update_dt: 0.02
     model_mass_kg: 50.0
