@@ -49,7 +49,8 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
     return [
         LogInfo(
-            msg='启动 dynamic_ship_to_ground_truth（/dynamic_ship/tracked_ships/_internal -> /sim/ground_truth/_src/dynamic_ships）。'
+            msg='启动 dynamic_ship_to_ground_truth（/_internal -> /sim/ground_truth/_src/dynamic_ships）；'
+                '合并与 markers 由 ground_truth_track_merger 负责。'
         ),
         Node(
             package='ground_truth_sensor_sim',
@@ -68,6 +69,25 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
                 'is_ais_matched': False,
                 'matched_mmsi': 0,
                 'source_model_name': 'dynamic_ship',
+            }],
+        ),
+        # 浮标栈未启时仍需 merger，把 _src/dynamic_ships 汇到 /sim/ground_truth 并发 markers。
+        Node(
+            package='ground_truth_sensor_sim',
+            executable='ground_truth_track_merger',
+            name='ccs_ground_truth_track_merger',
+            output='log',
+            parameters=[{
+                'use_sim_time': use_sim_time,
+                'input_topics': [
+                    '/sim/ground_truth/_src/scenario',
+                    '/sim/ground_truth/_src/dynamic_ships',
+                    '/sim/ground_truth/_src/dynamic_buoys',
+                ],
+                'output_topic': '/sim/ground_truth',
+                'markers_topic': '/sim/ground_truth_markers',
+                'publish_markers': True,
+                'frame_id': 'map',
             }],
         ),
     ]
@@ -293,6 +313,9 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             # CCS publishes the map -> odom transform below.
             'use_static_map_odom_tf': 'false',
+            'nav2_min_wait_sec': LaunchConfiguration('nav2_min_wait_sec'),
+            'nav2_readiness_timeout_sec': LaunchConfiguration('nav2_readiness_timeout_sec'),
+            'enable_nav2': LaunchConfiguration('enable_nav2'),
         }.items(),
     )
 
@@ -382,6 +405,21 @@ def generate_launch_description():
             'use_sim_time',
             default_value='true',
             description='Use simulation clock; forwarded to the base simulation and safety nodes',
+        ),
+        DeclareLaunchArgument(
+            'enable_nav2',
+            default_value='true',
+            description='false：仅仿真，不启动 Nav2',
+        ),
+        DeclareLaunchArgument(
+            'nav2_min_wait_sec',
+            default_value='8.0',
+            description='Nav2 readiness gate 最短等待（秒）',
+        ),
+        DeclareLaunchArgument(
+            'nav2_readiness_timeout_sec',
+            default_value='180.0',
+            description='Nav2 readiness gate 总超时（秒）',
         ),
         DeclareLaunchArgument(
             'ccs_map_to_odom_x',
