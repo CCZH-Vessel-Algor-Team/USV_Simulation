@@ -7,9 +7,10 @@ target_ships:
 - id: TS1
   type: crossing_right
   is_dangerous: true
-  target_tcpa_seconds: 10.0
+  target_tcpa_seconds: 30.0
   speed_knots: 14.0
-  encounter_range_max_m: 50.0
+  encounter_range_max_m: 250.0
+  past_cpa_m: 200.0
   target_dcpa_meters: 0.0
   crossing_angle_deg: 90.0
-  lateral_span_m: 90.0
+  lateral_span_m: 200.0

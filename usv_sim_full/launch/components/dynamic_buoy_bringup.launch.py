@@ -91,6 +91,8 @@ def _dynamic_buoy_stack(context, *args, **kwargs):
                         '/sim/ground_truth/_src/dynamic_buoys',
                     ],
                     'output_topic': '/sim/ground_truth',
+                    'markers_topic': '/sim/ground_truth_markers',
+                    'publish_markers': True,
                     'frame_id': 'map',
                 }],
             ),
