@@ -8,18 +8,22 @@ target_ships:
 - id: TS1
   type: overtaking
   is_dangerous: true
-  target_tcpa_seconds: 10.0
+  target_tcpa_seconds: 30.0
   speed_knots: 8.0
-  encounter_range_max_m: 50.0
+  encounter_range_max_m: 250.0
+  past_cpa_m: 200.0
   target_dcpa_meters: 0.0
-  encounter_range_m: 50.0
+  encounter_range_m: 150.0
+  track_length_m: 300.0
 - id: TS2
   type: overtaken
   is_dangerous: true
-  target_tcpa_seconds: 10.0
+  target_tcpa_seconds: 30.0
   speed_knots: 16.0
-  encounter_range_max_m: 50.0
+  encounter_range_max_m: 250.0
+  past_cpa_m: 200.0
   target_dcpa_meters: 0.0
-  encounter_range_m: 50.0
+  encounter_range_m: 150.0
+  track_length_m: 350.0
   spawn_delay_sec: 95.0
   sequence_index: 1

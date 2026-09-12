@@ -30,13 +30,16 @@ target_ships:
     type: head_on              # head_on | crossing_right | crossing_left | overtaking | overtaken
     is_dangerous: true
     target_dcpa_meters: 5.0
-    target_tcpa_seconds: 10.0
+    target_tcpa_seconds: 30.0
     speed_knots: 14.0
-    encounter_range_max_m: 50.0
+    encounter_range_max_m: 250.0
+    past_cpa_m: 200.0          # 对遇：过 CPA 后再驶过的距离
+    # lateral_span_m / track_length_m：交叉 / 追越航路长度
     # 多船（C3/C4）：第二艘常用 sequence_index: 1；C3 依次会遇可加 spawn_delay_sec
 ```
 
-默认初始距离：`min((本船速+目标速)×target_tcpa_seconds, encounter_range_max_m)`。
+默认初始距离：`clamp((本船速+目标速)×target_tcpa_seconds, encounter_range_min_m, encounter_range_max_m)`。
+对遇航路约 `range + past_cpa_m`；交叉约 `2×lateral_span_m`；追越/被追越由 `track_length_m` 控制。
 
 合并脚本写入 `scenario.dynamic_obstacles`（含 `spawn_heading_deg`、`spawn_delay_sec`）；`scenario_manager_node` 对延迟项使用一次性定时器生成。
 
@@ -51,7 +54,19 @@ target_ships:
 | C3 | C3-001～015 | 两艘危险船**依次**会遇（TS2 `spawn_delay_sec`≈95s） |
 | C4 | C4-001～011 | 两艘危险船**同时**会遇 |
 
-## 合并与启动
+## CCS + Nav2 认证会遇（完整栈，待测）
+
+场景生成测完后可用：
+
+```bash
+ros2 launch usv_sim_full ccs_certificate_encounter.launch.py \
+  case_config:=src/usv_simulation/usv_sim_full/config/certificate_case/C1-001.yaml
+```
+
+会把 case 合并进 `ccs_config.yaml`，再 Include `CCS_Certified_Simulation_Environment`：
+本船航速由 Nav2 接管；目标船经 `/certificate_case/tracked_ships` 进入 CCS GT merger / 感知 / 融合。
+
+## 合并与启动（仅场景生成）
 
 ```bash
 colcon build --packages-select usv_sim_full --symlink-install
@@ -60,5 +75,11 @@ source install/setup.bash
 ros2 launch usv_sim_full certifi_launch.launch.py \
   case_config:=src/usv_simulation/usv_sim_full/config/certificate_case/C1-001.yaml
 ```
+
+默认会挂感知/融合链（`enable_perception_fusion:=true`）：
+
+`scenario_manager` → `/dynamic_ship/tracked_ships` → `dynamic_ship_to_ground_truth` → `/sim/ground_truth` → `perception_sim` → `late_fusion`
+
+不启 `dynamic_ship_manager`（会遇实体已由 scenario_manager 驱动）。仅测几何时可 `enable_perception_fusion:=false`。
 
 合并产物：`config/generated/<scenario_id>.merged.yaml`（`*.merged.yaml` 已 gitignore）。
