@@ -21,6 +21,7 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    LogInfo,
     OpaqueFunction,
     SetEnvironmentVariable,
 )
@@ -42,6 +43,7 @@ from usv_sim_full.launch_config_helpers import (
     mmwave_cluster_topics,
     parse_session_json_from_stdout,
     ground_truth_gazebo_visual_enabled,
+    ground_truth_use_gazebo_entity_node,
     merge_ground_truth_gazebo_entity_params,
     merge_ground_truth_gazebo_models_params,
     primary_robot_name,
@@ -371,7 +373,18 @@ def launch_setup(context, *args, **kwargs):
     scen_gt_cfg = scenario_ground_truth_sim_config(user_config)
     if scen_gt_cfg.get('enabled'):
         gz_visual = ground_truth_gazebo_visual_enabled(scen_gt_cfg)
-        if gz_visual:
+        use_entity = ground_truth_use_gazebo_entity_node(scen_gt_cfg)
+        if gz_visual and not use_entity:
+            launch_items.append(
+                LogInfo(
+                    msg=(
+                        '[usv_sim_full] gazebo_visual=true 但 motion_mode 非 waypoint '
+                        '或 fixed_targets 为空：回退 scenario_ground_truth_node（CTRV），'
+                        '避免 entity 节点启动即退出'
+                    )
+                )
+            )
+        if use_entity:
             tt = str(scen_gt_cfg.get('tracks_topic') or 'sim/ground_truth').strip().lstrip('/')
             prefix = str(scen_gt_cfg.get('gazebo_model_prefix') or 'gt_ctrv_').strip() or 'gt_ctrv_'
             gz_spawn_delay = float(scen_gt_cfg.get('spawn_delay_sec', 10.0))
