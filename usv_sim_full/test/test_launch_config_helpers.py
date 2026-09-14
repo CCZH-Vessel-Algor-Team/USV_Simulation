@@ -44,6 +44,27 @@ def test_merge_entity_params_includes_mesh_profile():
     assert mesh_path.endswith("10m_mesh_profile.yaml")
 
 
+def test_merge_entity_params_resolves_package_mesh_profile():
+    params = merge_ground_truth_gazebo_entity_params(
+        "ccs_open_water_crop",
+        {
+            "gazebo_target_geometry": "mesh_profile",
+            "gazebo_mesh_profile": (
+                "package://usv_sim_full/description/models/target_ship/"
+                "10m_mesh_profile.yaml"
+            ),
+        },
+        "sim/ground_truth",
+        "gt_ctrv_",
+        10.0,
+        1.0,
+        "/tmp/ccs_config.yaml",
+    )
+    mesh_path = params["gazebo_mesh_profile"]
+    assert os.path.isfile(mesh_path)
+    assert mesh_path.endswith("10m_mesh_profile.yaml")
+
+
 def test_write_entity_params_yaml_includes_mesh_profile():
     full_config = os.path.abspath(
         os.path.join(
