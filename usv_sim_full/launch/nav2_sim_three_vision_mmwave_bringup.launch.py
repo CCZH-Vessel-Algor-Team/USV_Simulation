@@ -67,9 +67,9 @@ def _nav2_bringup_available() -> bool:
         return False
 
 
-def _colregs_bringup_available() -> bool:
+def _ts_manager_available() -> bool:
     try:
-        get_package_share_directory('nav2_colregs_bringup')
+        get_package_share_directory('nav2_colregs_ts_manager')
         return True
     except PackageNotFoundError:
         return False
@@ -363,11 +363,13 @@ def generate_launch_description():
         usv_sim_full_pkg, 'launch', 'nav2_thruster_bringup.launch.py'
     )
     ts_subsystem_launch_file = None
-    if _colregs_bringup_available():
+    if _ts_manager_available():
         ts_subsystem_launch_file = os.path.join(
-            get_package_share_directory('nav2_colregs_bringup'),
-            'launch', 'ts_subsystem_launch.py',
+            usv_sim_full_pkg, 'launch', 'ts_subsystem.launch.py',
         )
+    default_ts_params_file = os.path.join(
+        usv_sim_full_pkg, 'config', 'ts_subsystem.yaml'
+    )
 
     launch_dir = os.path.dirname(os.path.abspath(__file__))
     default_nav2_params_file = default_radar_nav2_param_yaml(launch_dir)
@@ -602,7 +604,8 @@ def generate_launch_description():
             ts_subsystem_launch = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(ts_subsystem_launch_file),
                 launch_arguments={
-                    'tracked_ship_topic': '/tracked_ship',
+                    'ts_params_file': LaunchConfiguration('ts_params_file').perform(context),
+                    'tracked_ship_topic': '/dynamic_ship/tracked_ships',
                     'robot_base_frame': f'{resolved_ns}/base_link',
                     'odom_topic': f'/{resolved_ns}/odom',
                     'use_sim_time': use_sim_time.perform(context),
@@ -852,6 +855,11 @@ def generate_launch_description():
             'params_file',
             default_value=default_nav2_params_file,
             description='Nav2 parameters file path',
+        ),
+        DeclareLaunchArgument(
+            'ts_params_file',
+            default_value=default_ts_params_file,
+            description='TS/AP/barrier 参数文件，独立于 Nav2 的 params_file',
         ),
         DeclareLaunchArgument(
             'control_params_file',

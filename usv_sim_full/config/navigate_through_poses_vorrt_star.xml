@@ -1,16 +1,18 @@
-
 <!--
-  This Behavior Tree replans the global path periodically at 1.0 Hz and it also has
-  recovery actions specific to planning / control as well as general system issues.
-  This will be continuous if a kinematically valid planner is selected.
+  CCS NavigateThroughPoses with the standard planner_server's VORRTStar plugin.
+  Preserve the CCS 0.333 Hz replanning rate and 8 m intermediate-goal radius.
+  Explicit frames avoid depending on the CCS base_link compatibility alias.
 -->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
     <RecoveryNode number_of_retries="6" name="NavigateRecovery">
       <PipelineSequence name="NavigateWithReplanning">
-        <RateController hz="1.0">
-          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
-            <ComputePathToPose goal="{goal}" path="{path}" planner_id="VORRTStar"/>
+        <RateController hz="0.333">
+          <RecoveryNode number_of_retries="1" name="ComputePathThroughPoses">
+            <ReactiveSequence>
+              <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="8.0" global_frame="map" robot_base_frame="usv_1/base_link"/>
+              <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="VORRTStar"/>
+            </ReactiveSequence>
             <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
           </RecoveryNode>
         </RateController>
