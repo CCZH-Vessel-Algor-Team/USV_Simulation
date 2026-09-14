@@ -23,7 +23,7 @@ global_costmap:
       resolution: 2.0
       # origin_x: -400.0
       # origin_y: -400.0
-      plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "inflation_layer"]
+      plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "perceived_obstacle_layer", "inflation_layer"]
       # plugins: ["static_layer","inflation_layer"]
       # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
       filters: ["keepout_filter"]
@@ -74,6 +74,13 @@ global_costmap:
         enabled: True
         track_timeout: 0.5
         tracked_ship_topic: "/tracked_ship"
+
+      perceived_obstacle_layer:
+        plugin: "nav2_colregs_costmap_layers::PerceivedObstacleLayer"
+        enabled: true
+        tracked_obstacle_topic: "/tracked_obstacles"
+        observation_timeout: 3.0
+        tracking_frame: "map"
 
       static_layer:
         # plugin: "nav2_costmap_2d::StaticLayer"
@@ -128,7 +135,7 @@ local_costmap:
       height: 50
       resolution: 0.2
       # plugins: ["static_layer", "inflation_layer"]
-      plugins: ["obstacle_layer", "ts_projection_layer", "inflation_layer"]
+      plugins: ["obstacle_layer", "ts_projection_layer", "perceived_obstacle_layer", "inflation_layer"]
       # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
       filters: ["keepout_filter"]
 
@@ -180,6 +187,13 @@ local_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         inflation_radius: 10.0    # 1.5
         cost_scaling_factor: 2.0
+
+      perceived_obstacle_layer:
+        plugin: "nav2_colregs_costmap_layers::PerceivedObstacleLayer"
+        enabled: true
+        tracked_obstacle_topic: "/tracked_obstacles"
+        observation_timeout: 3.0
+        tracking_frame: "map"
 
       keepout_filter:
         plugin: "nav2_costmap_2d::KeepoutFilter"
