@@ -88,13 +88,15 @@ def _target_spec(
     sequence_index: int = 0,
 ) -> Dict[str, Any]:
     typ, dangerous = enc
+    # 航路加长：原 max=50 / past≈50 / 交叉 lateral≈90 / 追越 track≈80，目标船很快到终点停住
     spec: Dict[str, Any] = {
         'id': ts_id,
         'type': typ,
         'is_dangerous': dangerous,
-        'target_tcpa_seconds': 10.0,
+        'target_tcpa_seconds': 30.0,
         'speed_knots': 14.0 if dangerous else 12.0,
-        'encounter_range_max_m': 50.0,
+        'encounter_range_max_m': 250.0,
+        'past_cpa_m': 200.0,
     }
     if dangerous:
         spec['target_dcpa_meters'] = 5.0 if typ == 'head_on' else 0.0
@@ -103,20 +105,23 @@ def _target_spec(
         spec['dcpa_safe_m'] = 55.0
     if typ in ('crossing_right', 'crossing_left'):
         spec['crossing_angle_deg'] = 90.0
-        spec['lateral_span_m'] = 90.0 if dangerous else 110.0
+        spec['lateral_span_m'] = 200.0 if dangerous else 220.0
     if typ == 'overtaking':
         spec['speed_knots'] = 8.0 if dangerous else 9.0
-        spec['encounter_range_m'] = 50.0
+        spec['encounter_range_m'] = 150.0
+        spec['track_length_m'] = 300.0
     if typ == 'overtaken':
         spec['speed_knots'] = 16.0 if dangerous else 14.0
-        spec['encounter_range_m'] = 50.0
+        spec['encounter_range_m'] = 150.0
+        spec['track_length_m'] = 350.0
     if role == 'decoy':
         spec['is_dangerous'] = False
         spec['target_dcpa_meters'] = 60.0
-        spec['encounter_range_m'] = 50.0
+        spec['encounter_range_m'] = 200.0
+        spec['past_cpa_m'] = 200.0
         spec['speed_knots'] = 10.0
         spec['type'] = 'head_on'
-        spec['target_tcpa_seconds'] = 10.0
+        spec['target_tcpa_seconds'] = 30.0
     if spawn_delay_sec > 0.0:
         spec['spawn_delay_sec'] = spawn_delay_sec
     if sequence_index > 0:
@@ -134,15 +139,22 @@ def build_c1(case_id: str, title: str, enc: Tuple[str, bool]) -> Dict[str, Any]:
 
 
 def build_c2(case_id: str, title: str, main_e: Tuple[str, bool], decoy_e: Tuple[str, bool]) -> Dict[str, Any]:
+    ts1 = _target_spec('TS1', main_e, role='primary')
+    ts2 = _target_spec('TS2', decoy_e, role='decoy')
+    # 左交叉主目标从左舷(+y)穿到右舷，与默认左舷干扰航路会近距离交叉；
+    # 将 TS2 锚到右舷并加大横向间距，避免两目标船相撞。
+    if main_e[0] == 'crossing_left':
+        # anchor 右舷偏移 + 横向 DCPA，使航迹约在 y=-80（对本船 DCPA≥80，且远离 TS1）
+        ts2['placement_lateral_m'] = -160.0
+        ts2['target_dcpa_meters'] = 80.0
+        ts2['dcpa_safe_m'] = 80.0
+        ts2['encounter_range_m'] = 200.0
     return {
         'scenario_id': case_id,
         'description': title,
         'own_ship': dict(DEFAULT_OWN),
         'timing': 'simultaneous',
-        'target_ships': [
-            _target_spec('TS1', main_e, role='primary'),
-            _target_spec('TS2', decoy_e, role='decoy'),
-        ],
+        'target_ships': [ts1, ts2],
     }
 
 

@@ -7,8 +7,9 @@ target_ships:
 - id: TS1
   type: head_on
   is_dangerous: false
-  target_tcpa_seconds: 10.0
+  target_tcpa_seconds: 30.0
   speed_knots: 12.0
-  encounter_range_max_m: 50.0
+  encounter_range_max_m: 250.0
+  past_cpa_m: 200.0
   target_dcpa_meters: 55.0
   dcpa_safe_m: 55.0
