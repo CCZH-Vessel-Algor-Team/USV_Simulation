@@ -55,7 +55,6 @@ def _dynamic_buoy_stack(context, *args, **kwargs):
                 'use_sim_time': use_sim_time,
                 'input_topics': [
                     '/dynamic_ship/tracked_ships/_internal',
-                    '/dynamic_buoy/tracked_ships',
                 ],
                 'output_topic': '/dynamic_ship/tracked_ships',
                 'frame_id': 'map',
