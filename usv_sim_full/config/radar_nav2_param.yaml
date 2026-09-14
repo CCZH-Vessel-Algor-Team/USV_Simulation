@@ -23,7 +23,8 @@ global_costmap:
       resolution: 2.0
       # origin_x: -400.0
       # origin_y: -400.0
-      plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "perceived_obstacle_layer", "inflation_layer"]
+      # plugins: ["static_layer","obstacle_layer", "ts_projection_layer", "perceived_obstacle_layer", "inflation_layer"]
+      plugins: ["static_layer", "ts_projection_layer", "perceived_obstacle_layer", "inflation_layer"]
       # plugins: ["static_layer","inflation_layer"]
       # 静态禁航区/矢量障碍：mask 由 vector_object_server 发布（默认空）
       filters: ["keepout_filter"]
