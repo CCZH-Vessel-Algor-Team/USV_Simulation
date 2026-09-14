@@ -42,6 +42,7 @@
   <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>nav2_colregs_msgs</exec_depend>
+  <exec_depend>nav2_colregs_ts_manager</exec_depend>
   <exec_depend>nav2_colregs_alos_controller</exec_depend>
   <exec_depend>nav2_colregs_costmap_layers</exec_depend>
   <!-- 海事态势评估：nav2_maritime_situation_monitor 源码位于 usv_ws/src/usv_nav/src -->
