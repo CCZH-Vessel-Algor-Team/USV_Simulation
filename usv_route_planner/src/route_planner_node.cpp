@@ -1,6 +1,8 @@
 #include <GeographicLib/LocalCartesian.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -19,6 +21,7 @@
 #include "nav2_msgs/action/navigate_through_poses.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -157,7 +160,11 @@ public:
     config.allow_diagonal = declare_parameter<bool>("allow_diagonal", true);
     config.prevent_corner_cutting = declare_parameter<bool>(
       "prevent_corner_cutting", true);
-    planner_ = std::make_unique<RoutePlanner>(config);
+    applyPlannerConfig(config);
+    param_callback_handle_ = add_on_set_parameters_callback(
+      std::bind(
+        &RoutePlannerNode::onPlannerParameterChanged, this,
+        std::placeholders::_1));
 
     const auto map_qos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();
     map_subscription_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
@@ -208,6 +215,129 @@ public:
   }
 
 private:
+  static bool isPlannerConfigParameter(const std::string & name)
+  {
+    static constexpr std::array<const char *, 12> kPlannerParameters = {
+      "collision_clearance_m",
+      "safety_hard_extra_clearance_m",
+      "safety_weight",
+      "safety_decay_distance_m",
+      "chart_risk_weight",
+      "max_start_goal_snap_distance_m",
+      "roi_margin_m",
+      "waypoint_spacing_m",
+      "max_waypoints",
+      "max_expansions",
+      "allow_diagonal",
+      "prevent_corner_cutting"};
+    return std::find(
+      kPlannerParameters.begin(), kPlannerParameters.end(),
+      name) != kPlannerParameters.end();
+  }
+
+  PlannerConfig readPlannerConfig(
+    const std::vector<rclcpp::Parameter> & overrides = {}) const
+  {
+    PlannerConfig config;
+    config.collision_clearance_m = get_parameter("collision_clearance_m").as_double();
+    config.safety_hard_extra_clearance_m =
+      get_parameter("safety_hard_extra_clearance_m").as_double();
+    config.safety_weight = get_parameter("safety_weight").as_double();
+    config.safety_decay_distance_m =
+      get_parameter("safety_decay_distance_m").as_double();
+    config.chart_risk_weight = get_parameter("chart_risk_weight").as_double();
+    config.max_start_goal_snap_distance_m =
+      get_parameter("max_start_goal_snap_distance_m").as_double();
+    config.roi_margin_m = get_parameter("roi_margin_m").as_double();
+    config.waypoint_spacing_m = get_parameter("waypoint_spacing_m").as_double();
+    config.max_waypoints = static_cast<std::size_t>(
+      get_parameter("max_waypoints").as_int());
+    config.max_expansions = static_cast<std::size_t>(
+      get_parameter("max_expansions").as_int());
+    config.allow_diagonal = get_parameter("allow_diagonal").as_bool();
+    config.prevent_corner_cutting =
+      get_parameter("prevent_corner_cutting").as_bool();
+
+    for (const auto & parameter : overrides) {
+      const std::string & name = parameter.get_name();
+      if (name == "collision_clearance_m") {
+        config.collision_clearance_m = parameter.as_double();
+      } else if (name == "safety_hard_extra_clearance_m") {
+        config.safety_hard_extra_clearance_m = parameter.as_double();
+      } else if (name == "safety_weight") {
+        config.safety_weight = parameter.as_double();
+      } else if (name == "safety_decay_distance_m") {
+        config.safety_decay_distance_m = parameter.as_double();
+      } else if (name == "chart_risk_weight") {
+        config.chart_risk_weight = parameter.as_double();
+      } else if (name == "max_start_goal_snap_distance_m") {
+        config.max_start_goal_snap_distance_m = parameter.as_double();
+      } else if (name == "roi_margin_m") {
+        config.roi_margin_m = parameter.as_double();
+      } else if (name == "waypoint_spacing_m") {
+        config.waypoint_spacing_m = parameter.as_double();
+      } else if (name == "max_waypoints") {
+        config.max_waypoints = static_cast<std::size_t>(parameter.as_int());
+      } else if (name == "max_expansions") {
+        config.max_expansions = static_cast<std::size_t>(parameter.as_int());
+      } else if (name == "allow_diagonal") {
+        config.allow_diagonal = parameter.as_bool();
+      } else if (name == "prevent_corner_cutting") {
+        config.prevent_corner_cutting = parameter.as_bool();
+      }
+    }
+    return config;
+  }
+
+  std::shared_ptr<RoutePlanner> planner()
+  {
+    std::lock_guard<std::mutex> lock(planner_mutex_);
+    return planner_;
+  }
+
+  void applyPlannerConfig(PlannerConfig config)
+  {
+    auto next = std::make_shared<RoutePlanner>(config);
+    {
+      std::lock_guard<std::mutex> lock(planner_mutex_);
+      planner_ = std::move(next);
+    }
+    RCLCPP_INFO(
+      get_logger(),
+      "Planner configuration applied: collision_clearance_m=%.3f "
+      "safety_hard_extra_clearance_m=%.3f safety_weight=%.3f "
+      "waypoint_spacing_m=%.3f",
+      config.collision_clearance_m, config.safety_hard_extra_clearance_m,
+      config.safety_weight, config.waypoint_spacing_m);
+  }
+
+  rcl_interfaces::msg::SetParametersResult onPlannerParameterChanged(
+    const std::vector<rclcpp::Parameter> & parameters)
+  {
+    bool reload = false;
+    for (const auto & parameter : parameters) {
+      if (isPlannerConfigParameter(parameter.get_name())) {
+        reload = true;
+        break;
+      }
+    }
+    if (reload) {
+      try {
+        applyPlannerConfig(readPlannerConfig(parameters));
+      } catch (const std::exception & error) {
+        RCLCPP_WARN(
+          get_logger(), "Rejected planner parameter change: %s", error.what());
+        auto rejected = rcl_interfaces::msg::SetParametersResult();
+        rejected.successful = false;
+        rejected.reason = error.what();
+        return rejected;
+      }
+    }
+    auto accepted = rcl_interfaces::msg::SetParametersResult();
+    accepted.successful = true;
+    return accepted;
+  }
+
   struct CachedPlan
   {
     std::string request_id;
@@ -484,7 +614,7 @@ private:
         start.x, start.y, goal.x, goal.y, map_message->info.width,
         map_message->info.height, map_message->info.resolution,
         map_message->info.origin.position.x, map_message->info.origin.position.y);
-      const PlanPair result = planner_->plan(map, start, goal);
+      const PlanPair result = planner()->plan(map, start, goal);
       const auto stamp = now();
       const std::string request_id = std::to_string(stamp.nanoseconds()) + "-" +
         std::to_string(++plan_sequence_);
@@ -573,7 +703,7 @@ private:
     std::string reason;
     try {
       const GridMap map(map_message, lethal_threshold_, unknown_is_obstacle_);
-      if (!planner_->validatePath(map, key_points, safest, reason)) {
+      if (!planner()->validatePath(map, key_points, safest, reason)) {
         publishStatus("Selection rejected by latest /map: " + reason);
         return;
       }
@@ -746,7 +876,8 @@ private:
   bool execute_with_nav2_;
   bool nav2_include_start_pose_;
 
-  std::unique_ptr<RoutePlanner> planner_;
+  std::shared_ptr<RoutePlanner> planner_;
+  std::mutex planner_mutex_;
   std::mutex map_mutex_;
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr latest_map_;
   std::mutex plan_mutex_;
@@ -773,6 +904,8 @@ private:
     plan_gps_waypoints_publisher_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr plan_gps_path_publisher_;
   rclcpp_action::Client<NavigateThroughPoses>::SharedPtr nav2_client_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr
+    param_callback_handle_;
 };
 
 }  // namespace usv_route_planner

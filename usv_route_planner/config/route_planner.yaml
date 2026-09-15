@@ -31,7 +31,7 @@ usv_route_planner:
     utm_reference_northing: 3846381.0
     lethal_threshold: 80
     unknown_is_obstacle: true
-    collision_clearance_m: 29.0
+    collision_clearance_m: 50.0
     safety_hard_extra_clearance_m: 30.0
     safety_weight: 5.0
     safety_decay_distance_m: 15.0

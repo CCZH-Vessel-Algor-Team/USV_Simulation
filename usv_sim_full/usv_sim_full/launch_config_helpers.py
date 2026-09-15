@@ -385,6 +385,16 @@ GROUND_TRUTH_SIM_META_KEYS = GROUND_TRUTH_SIM_NODE_EXCLUDE_KEYS
 
 def _resolve_gazebo_mesh_profile(v, full_config_path: str):
     vp = str(v).strip()
+    if vp.startswith('package://'):
+        package_path = vp[len('package://'):]
+        package_name, separator, relative_path = package_path.partition('/')
+        if package_name and separator and relative_path:
+            try:
+                return os.path.join(
+                    get_package_share_directory(package_name), relative_path
+                )
+            except Exception:
+                return v
     if vp and full_config_path and not os.path.isabs(vp):
         base = os.path.dirname(os.path.abspath(full_config_path))
         return os.path.normpath(os.path.join(base, vp))
