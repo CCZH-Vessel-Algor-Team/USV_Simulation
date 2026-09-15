@@ -110,6 +110,8 @@ def generate_launch_description():
     gz_headless = LaunchConfiguration('gz_headless')
     map_yaml = LaunchConfiguration('map_yaml')
     verbose_launch = LaunchConfiguration('verbose_launch')
+    control_backend = LaunchConfiguration('control_backend')
+    mavros_fcu_url = LaunchConfiguration('mavros_fcu_url')
 
     def disable_fastdds_shm_env(context, *args, **kwargs):
         """Gazebo + 多 ROS 节点时 Fast DDS 默认共享内存易抖动，可触发 lifecycle 服务响应超时。"""
@@ -250,6 +252,8 @@ def generate_launch_description():
                 'use_sim_time': use_sim_time.perform(context),
                 'verbose_launch': verbose_launch.perform(context),
                 'enable_tf_namespace_relay': 'false',
+                'control_backend': control_backend.perform(context),
+                'mavros_fcu_url': mavros_fcu_url.perform(context),
             }.items(),
         )
 
@@ -445,6 +449,19 @@ def generate_launch_description():
             'map_yaml',
             default_value=default_map_yaml,
             description='PGM map yaml file for nav2_map_server',
+        ),
+        DeclareLaunchArgument(
+            'control_backend',
+            default_value='thruster',
+            description=(
+                '透传 nav2_thruster_bringup：thruster|mavros；'
+                'Nav2 始终输出 /{ns}/cmd_vel，由后端互斥消费'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'mavros_fcu_url',
+            default_value='udp://:14540@127.0.0.1:14555',
+            description='透传 control_backend:=mavros 时的 MAVROS fcu_url',
         ),
         LogInfo(msg=['Starting simulation bringup from: ', config_path]),
         OpaqueFunction(function=disable_fastdds_shm_env),

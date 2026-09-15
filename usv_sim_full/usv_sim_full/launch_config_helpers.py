@@ -507,7 +507,8 @@ DEFAULT_GROUND_TRUTH_ENTITY_PARAMS = {
     'create_cli_timeout_sec': 20.0,
     'spawn_thread_pool_size': 4,
     'fixed_targets_json': '',
-    'motion_mode': 'waypoint',
+    # 与 full_config / reference 一致：默认 CTRV；waypoint 须显式配 fixed_targets
+    'motion_mode': 'ctrv',
     'waypoint_kinematics': 'arc',
     'waypoint_arrival_threshold_m': 0.5,
     'waypoint_omega_limit': 0.22,
@@ -606,6 +607,20 @@ def ground_truth_gazebo_visual_enabled(gt_cfg: dict) -> bool:
     if not isinstance(gt_cfg, dict):
         return False
     return _yaml_bool(gt_cfg.get('gazebo_visual'), False)
+
+
+def ground_truth_use_gazebo_entity_node(gt_cfg: dict) -> bool:
+    """entity 节点目前仅支持 waypoint + 非空 fixed_targets；否则回退 kinematic CTRV 节点。"""
+    if not ground_truth_gazebo_visual_enabled(gt_cfg):
+        return False
+    mode = str(gt_cfg.get('motion_mode') or 'ctrv').strip().lower() or 'ctrv'
+    if mode != 'waypoint':
+        return False
+    fixed = gt_cfg.get('fixed_targets')
+    if isinstance(fixed, list) and len(fixed) > 0:
+        return True
+    fj = str(gt_cfg.get('fixed_targets_json') or '').strip()
+    return bool(fj) and fj not in ('[]', 'null', 'None')
 
 
 def resolve_ground_truth_user_params_path(full_config_path: str, params_file) -> str:

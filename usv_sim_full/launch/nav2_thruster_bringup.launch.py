@@ -12,8 +12,9 @@ from launch.actions import (
     SetEnvironmentVariable,
 )
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import PushRosNamespace, Node
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import Node, PushRosNamespace
+from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 from usv_sim_full.launch_config_helpers import (
     default_radar_nav2_param_yaml,
@@ -62,6 +63,8 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     verbose_launch = LaunchConfiguration('verbose_launch')
     enable_tf_namespace_relay = LaunchConfiguration('enable_tf_namespace_relay')
+    control_backend = LaunchConfiguration('control_backend')
+    mavros_fcu_url = LaunchConfiguration('mavros_fcu_url')
 
     def launch_tf_relay_node(context, *args, **kwargs):
         if enable_tf_namespace_relay.perform(context).lower() != 'true':
@@ -200,6 +203,16 @@ def generate_launch_description():
         return [*prefix_logs, info, stack]
 
     def launch_thruster_bridge(context, *args, **kwargs):
+        backend = control_backend.perform(context).strip().lower()
+        if backend != 'thruster':
+            return [
+                LogInfo(
+                    msg=(
+                        f'control_backend:={backend}，跳过 cmd_vel_to_thruster '
+                        '（与 mavros 后端互斥）'
+                    )
+                )
+            ]
         ns = namespace.perform(context).strip().strip('/')
         v = verbose_launch.perform(context)
         out = 'screen' if launch_verbose_enabled(v) else 'log'
@@ -223,6 +236,47 @@ def generate_launch_description():
                 name='cmd_vel_to_thruster',
                 output=out,
             )
+        ]
+
+    def launch_mavros_backend(context, *args, **kwargs):
+        backend = control_backend.perform(context).strip().lower()
+        if backend != 'mavros':
+            return []
+        ns = namespace.perform(context).strip().strip('/') or 'usv_1'
+        fcu_url = mavros_fcu_url.perform(context).strip()
+        v = verbose_launch.perform(context)
+        out = 'screen' if launch_verbose_enabled(v) else 'log'
+        return [
+            LogInfo(
+                msg=(
+                    f'control_backend:=mavros：启动 MAVROS + usv_mav_bridge '
+                    f'(ns=/{ns}, fcu_url={fcu_url})；不启 cmd_vel_to_thruster'
+                )
+            ),
+            ExecuteProcess(
+                cmd=[
+                    'ros2', 'run', 'mavros', 'mavros_node',
+                    '--ros-args',
+                    '-r', f'__ns:=/{ns}/mavros',
+                    '-p', f'fcu_url:={fcu_url}',
+                ],
+                name='mavros_node',
+                output=out,
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    PathJoinSubstitution([
+                        FindPackageShare('usv_mav_bridge'),
+                        'launch',
+                        'usv_mavros_backend_launch.py',
+                    ])
+                ),
+                launch_arguments={
+                    'usv_ns': ns,
+                    'sim_mode': 'true',
+                    'cmd_vel_topic': f'/{ns}/cmd_vel',
+                }.items(),
+            ),
         ]
 
     return LaunchDescription([
@@ -262,9 +316,23 @@ def generate_launch_description():
             default_value=default_control_params_file,
             description='整船控制参数 YAML（ALOS + PID），合并到 Nav2 参数并传给 cmd_vel→推力桥',
         ),
+        DeclareLaunchArgument(
+            'control_backend',
+            default_value='thruster',
+            description=(
+                '控制后端互斥选择：thruster=cmd_vel_to_thruster；'
+                'mavros=usv_mav_bridge+MAVROS。Nav2 始终发布 /{ns}/cmd_vel，不改输出话题名。'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'mavros_fcu_url',
+            default_value='udp://:14540@127.0.0.1:14555',
+            description='MAVROS fcu_url（control_backend:=mavros 时生效；指向 PX4 SITL 或真机）',
+        ),
         OpaqueFunction(function=launch_tf_relay_node),
         LogInfo(msg=['Starting Nav2 navigation stack for ', namespace, '...']),
         OpaqueFunction(function=_launch_nav2_with_namespaced_map),
-        LogInfo(msg=['Starting cmd_vel to thruster bridge for ', namespace, '...']),
+        LogInfo(msg=['Starting control backend for ', namespace, '...']),
         OpaqueFunction(function=launch_thruster_bridge),
+        OpaqueFunction(function=launch_mavros_backend),
     ])

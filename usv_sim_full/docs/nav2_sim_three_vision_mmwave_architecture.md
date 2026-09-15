@@ -602,14 +602,15 @@ PX4_SYS_AUTOSTART=50000 PX4_SIM_MODEL=gz_rover_differential \
 
 ### 6.6 控制路径对比
 
-| 对比项 | 路径 A：cmd_vel_to_thruster | 路径 B/C：PX4 固件 |
+| 对比项 | 路径 A：cmd_vel_to_thruster | 路径 B/C：PX4 / MAVROS |
 |--------|----------------------------|-------------------|
 | 定位 | 默认联调路径，Launch 一键启动 | 飞控算法验证、硬件在环前仿真 |
-| 输入 | `/usv_1/cmd_vel` + `/usv_1/odom` | gz 传感器 + OFFBOARD 速度（路径 C） |
-| 控制律 | 本地双 PID（线速度 + 角速度） | PX4 EKF + Rover 差速混控 |
-| 最大推力 | 1000（可调） | ±2350（机架映射） |
+| 切换方式 | `control_backend:=thruster`（默认） | `control_backend:=mavros`；**不改** Nav2 输出话题名 |
+| 输入 | `/usv_1/cmd_vel` + `/usv_1/odom` | 同为 `/usv_1/cmd_vel`，经 `usv_mav_bridge`→MAVROS |
+| 控制律 | 本地双 PID（线速度 + 角速度） | PX4 EKF + Rover 差速混控（或 FCU mock 验证） |
+| 最大推力 | 1000（可调） | ±2350（机架映射；固件写死问题见 usv_mav_bridge README 待办） |
 | 状态估计 | 依赖 Gazebo odom / 可选 robot_localization | PX4 内置 EKF |
-| 与 Nav2 集成 | 开箱即用 | 路径 C 需 MAVROS + 话题重映射 |
+| 与 Nav2 集成 | 开箱即用 | 需 MAVROS + `usv_mav_bridge`；与路径 A 互斥 |
 
 ---
 
@@ -668,24 +669,35 @@ flowchart LR
 | 接口常量 | `usv_interfaces/topics.hpp` | `TOPIC_AUTOPILOT_STATE` 等统一命名 |
 | 认证场景通信 | `certi_senario.yaml` | 认证仿真本船 cmd_vel 链参数 |
 
-### 7.4 Nav2 → PX4 实验链路
+### 7.4 Nav2 → PX4 / MAVROS 链路
+
+Nav2 **固定**发布 `/{ns}/cmd_vel`。后端由 launch 参数 `control_backend` 互斥选择：
+
+- `thruster`：`cmd_vel_to_thruster` → Gazebo 推进器
+- `mavros`：`nav2_cmd_vel_bridge` → `usv_control_main` → MAVROS → PX4
+
+**禁止**再通过修改 Navigation2 / velocity_smoother 输出话题名（如改成 `px4_cmd_vel_smoothed`）来切换路径。
 
 ```mermaid
 sequenceDiagram
-    participant NAV as Nav2 velocity_smoother
-    participant MAV as MAVROS setpoint_velocity
-    participant PX4 as PX4 SITL OFFBOARD
-    participant GZ as Gazebo thrusters
+    participant NAV as Nav2 collision_monitor
+    participant BR as nav2_cmd_vel_bridge
+    participant CTRL as usv_control_main
+    participant MAV as MAVROS
+    participant PX4 as PX4 or FCU mock
 
-    NAV->>MAV: /usv_1/px4_cmd_vel_smoothed
+    NAV->>BR: /usv_1/cmd_vel Twist
+    BR->>CTRL: /usv_1/cc/command USVCommand
+    CTRL->>MAV: setpoint_raw + set_mode
     MAV->>PX4: MAVLink SET_POSITION_TARGET_LOCAL_NED
-    PX4->>PX4: Rover 差速混控
-    PX4->>GZ: gz_bridge 发布推力
 ```
 
 ```bash
-ros2 launch mavros px4.launch fcu_url:=udp://@127.0.0.1:14540
-ros2 service call /mavros/set_mode mavros_msgs/srv/SetMode "{custom_mode: 'OFFBOARD'}"
+# 默认 thruster
+ros2 launch usv_sim_full nav2_sim_full_bringup.launch.py
+
+# MAVROS 后端（需已启动 FCU mock 或 PX4，并配置 fcu_url）
+ros2 launch usv_sim_full nav2_sim_full_bringup.launch.py control_backend:=mavros
 ```
 
 ---

@@ -121,6 +121,7 @@ class GroundTruthGazeboEntityNode(Node):
         self.declare_parameter("spawn_thread_pool_size", 2)
         self.declare_parameter("fixed_targets_json", "")
         self.declare_parameter("fixed_targets", [])
+        self.declare_parameter("motion_mode", "waypoint")
         self.declare_parameter("waypoint_kinematics", "arc")
         self.declare_parameter("waypoint_arrival_threshold_m", 0.5)
         self.declare_parameter("waypoint_omega_limit", 0.22)
@@ -263,7 +264,9 @@ class GroundTruthGazeboEntityNode(Node):
         self._set_pose_svc = f"/world/{self._world}/set_pose"
         self._marker_cfg = MarkerPublishConfig(
             frame_id=self._frame_id,
-            motion_mode="waypoint",
+            motion_mode=(
+                str(self.get_parameter("motion_mode").value).strip().lower() or "waypoint"
+            ),
             waypoint_kinematics=str(self.get_parameter("waypoint_kinematics").value).strip().lower()
             or "arc",
             prediction_horizon=self._prediction_horizon,
@@ -273,6 +276,7 @@ class GroundTruthGazeboEntityNode(Node):
             waypoint_turn_radius_min=self._waypoint_turn_radius_min,
             waypoint_align_threshold_deg=self._waypoint_align_threshold_deg,
         )
+        self._motion_mode = self._marker_cfg.motion_mode
         self._fixed_targets_raw = self.get_parameter("fixed_targets").value
         self._fixed_targets_json = str(self.get_parameter("fixed_targets_json").value or "")
         self._rng = np.random.default_rng(0)
@@ -301,6 +305,13 @@ class GroundTruthGazeboEntityNode(Node):
             )
 
     def _init_targets(self) -> None:
+        if self._motion_mode != "waypoint":
+            self.get_logger().warn(
+                "ground_truth_gazebo_entity_node 仅支持 motion_mode=waypoint；"
+                "当前=%s，以空目标集启动（请改用 ground_truth_node 或补 fixed_targets）"
+                % self._motion_mode
+            )
+            return
         defaults = {
             "speed_min": 2.0,
             "size_width_min": 3.6,
@@ -308,12 +319,18 @@ class GroundTruthGazeboEntityNode(Node):
             "size_height_min": 2.0,
             "ais_match_probability": 0.4,
         }
-        targets = parse_fixed_targets(
-            self._fixed_targets_raw,
-            self._fixed_targets_json,
-            defaults,
-            self._rng,
-        )
+        try:
+            targets = parse_fixed_targets(
+                self._fixed_targets_raw,
+                self._fixed_targets_json,
+                defaults,
+                self._rng,
+            )
+        except ValueError as ex:
+            self.get_logger().error(
+                "waypoint fixed_targets 无效: %s；以空目标集启动以免拖垮仿真" % ex
+            )
+            return
         for t in targets:
             display = WaypointTargetState(
                 track_id=t.track_id,
