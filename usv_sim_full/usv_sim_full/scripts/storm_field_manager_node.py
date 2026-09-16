@@ -190,12 +190,8 @@ class StormFieldManager(Node):
                 Parameter('weather_validity_duration_s', value=weather_validity_duration_s),
                 Parameter('weather_grid_resolution_m', value=weather_grid_resolution_m),
             ])
-            for storm in self.storms.values():
-                storm.update_config(
-                    radius, drift_heading_deg, drift_speed,
-                    weather_validity_duration_s, weather_grid_resolution_m)
             response.success = True
-            response.message = 'storm config updated'
+            response.message = 'default config updated for future storms'
         except Exception as exc:
             response.success = False
             response.message = str(exc)
