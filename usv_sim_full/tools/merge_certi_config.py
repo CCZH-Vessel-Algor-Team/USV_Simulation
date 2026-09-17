@@ -27,7 +27,12 @@ DEFAULT_LATERAL_SPAN_M = 100.0
 DEFAULT_DCPA_SAFE_M = 50.0
 DCPA_TOLERANCE_M = 2.0
 
-MESH_PROFILE_REL = '../description/models/target_ship/10m_mesh_profile.yaml'
+# 相对 usv_sim_full 包根 / config 基底的候选路径（支持 certi_senario 与 ccs_config 等不同 base）
+MESH_PROFILE_CANDIDATES = (
+    '../description/models/target_ship/10m_mesh_profile.yaml',
+    '../../description/models/target_ship/10m_mesh_profile.yaml',
+    'description/models/target_ship/10m_mesh_profile.yaml',
+)
 
 CASE_SKIP_KEYS = frozenset({
     'meta', 'encounter', 'scenario_id', 'description', 'own_ship', 'target_ships',
@@ -36,9 +41,22 @@ CASE_SKIP_KEYS = frozenset({
 
 def resolve_mesh_profile_rel(base_path: str, out_path: str) -> str:
     base_dir = os.path.dirname(os.path.abspath(base_path))
-    mesh_abs = os.path.normpath(os.path.join(base_dir, MESH_PROFILE_REL))
-    if not os.path.isfile(mesh_abs):
-        raise FileNotFoundError(f'mesh_profile not found: {mesh_abs}')
+    pkg_root = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+    search_roots = (base_dir, pkg_root, os.path.join(pkg_root, 'config'))
+    mesh_abs = ''
+    for root in search_roots:
+        for rel_cand in MESH_PROFILE_CANDIDATES:
+            cand = os.path.normpath(os.path.join(root, rel_cand))
+            if os.path.isfile(cand):
+                mesh_abs = cand
+                break
+        if mesh_abs:
+            break
+    if not mesh_abs:
+        raise FileNotFoundError(
+            'mesh_profile not found; searched under '
+            f'{search_roots} with {MESH_PROFILE_CANDIDATES}'
+        )
     out_dir = os.path.dirname(os.path.abspath(out_path))
     rel = os.path.relpath(mesh_abs, out_dir)
     return rel.replace('\\', '/')
@@ -510,17 +528,23 @@ def apply_certificate_case(
     scenario = merged.setdefault('scenario', {})
     scenario['dynamic_obstacles'] = obstacles
     scenario['ground_truth_sim'] = {'enabled': False}
+    # 与面板 dynamic_ship_manager 话题隔离，供 CCS GT merger 的 _src/scenario 源使用
+    sm_cfg = scenario.setdefault('scenario_manager', {})
+    sm_cfg.setdefault('tracked_ships_topic', '/certificate_case/tracked_ships')
+    sm_cfg.setdefault('publish_tracked_ships', True)
 
     merged['certificate_runtime'] = {
         'case_id': parsed['case_id'],
         'description': parsed.get('description', ''),
         'target_validation': validations,
+        # 完整 CCS+Nav2 链路下由 Nav2 给定运行航速；初速仅供几何/可选恒速测试
         'own_ship_velocity': {
             'enabled': True,
             'namespace': ns,
             'speed_mps': speed_own,
             'course_deg': course_deg,
             'speed_knots': round(speed_own / KNOTS_TO_MPS, 3),
+            'nav2_owns_speed': True,
         },
     }
 

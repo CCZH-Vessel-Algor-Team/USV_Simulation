@@ -12,11 +12,10 @@ import uuid
 import rclpy
 from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import PointStamped, Pose
-from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from std_msgs.msg import String
-from usv_interfaces.msg import Buoy, BuoyArray
+from usv_interfaces.msg import Buoy, BuoyArray, TrackedObstacle, TrackedObstacleList
 from usv_interfaces.srv import (
     ClearDynamicBuoys,
     DeleteDynamicBuoy,
@@ -57,12 +56,13 @@ class DynamicBuoy:
         msg.color_sequence = self.buoy_type
         return msg
 
-    def tracked_ship(self):
-        ts = TrackedShip()
-        ts.target_id.uuid = list(bytes.fromhex(self.buoy_id.replace('-', '')))
-        ts.pose = self.pose()
-        ts.radius = self.radius_m
-        return ts
+    def tracked_obstacle(self):
+        obstacle = TrackedObstacle()
+        obstacle.type = TrackedObstacle.TYPE_BUOY
+        obstacle.target_id.uuid = list(bytes.fromhex(self.buoy_id.replace('-', '')))
+        obstacle.pose = self.pose()
+        obstacle.radius = self.radius_m
+        return obstacle
 
 
 class DynamicBuoyManager(Node):
@@ -92,7 +92,7 @@ class DynamicBuoyManager(Node):
 
         self.buoy_pub = self.create_publisher(BuoyArray, '/dynamic_buoy/buoys', 10)
         self.tracked_pub = self.create_publisher(
-            TrackedShipList, '/dynamic_buoy/tracked_ships', 10)
+            TrackedObstacleList, '/tracked_obstacles', 10)
         self.marker_pub = self.create_publisher(
             MarkerArray, '/dynamic_buoy/markers', 10)
         self.names_pub = self.create_publisher(String, '/dynamic_buoy/names', 10)
@@ -379,12 +379,12 @@ class DynamicBuoyManager(Node):
         buoy_msg.header.stamp = stamp
         buoy_msg.header.frame_id = self.frame_id
 
-        tracked_msg = TrackedShipList()
+        tracked_msg = TrackedObstacleList()
         tracked_msg.header = buoy_msg.header
 
         for buoy in sorted(self.buoys.values(), key=lambda b: b.model_name):
             buoy_msg.buoys.append(buoy.buoy_msg())
-            tracked_msg.ships.append(buoy.tracked_ship())
+            tracked_msg.obstacles.append(buoy.tracked_obstacle())
 
         self.buoy_pub.publish(buoy_msg)
         self.tracked_pub.publish(tracked_msg)

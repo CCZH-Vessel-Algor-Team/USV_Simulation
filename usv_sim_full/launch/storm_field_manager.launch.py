@@ -5,7 +5,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    tracked_ship_topic = LaunchConfiguration('tracked_ship_topic')
+    tracked_obstacle_topic = LaunchConfiguration('tracked_obstacle_topic')
     names_topic = LaunchConfiguration('names_topic')
     storm_field_topic = LaunchConfiguration('storm_field_topic')
     clicked_point_topic = LaunchConfiguration('clicked_point_topic')
@@ -14,9 +14,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            'tracked_ship_topic',
-            default_value='/tracked_ship',
-            description='TrackedShipList output topic for the storm hazard.'),
+            'tracked_obstacle_topic',
+            default_value='/tracked_obstacles',
+            description='TrackedObstacleList output topic for storm hazards.'),
         DeclareLaunchArgument(
             'names_topic',
             default_value='/storm_field/names',
@@ -32,7 +32,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'frame_id',
             default_value='map',
-            description='Frame ID used by published TrackedShipList messages.'),
+            description='Frame ID used by published TrackedObstacleList messages.'),
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='true',
@@ -44,7 +44,7 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'use_sim_time': use_sim_time,
-                'tracked_ship_topic': tracked_ship_topic,
+                'tracked_obstacle_topic': tracked_obstacle_topic,
                 'names_topic': names_topic,
                 'storm_field_topic': storm_field_topic,
                 'clicked_point_topic': clicked_point_topic,

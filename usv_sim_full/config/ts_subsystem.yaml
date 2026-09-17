@@ -1,0 +1,21 @@
+# CCS TS deployment parameters. Loaded through ts_params_file, independently
+# of the Nav2/route planner params_file launch argument.
+# Shared own-ship radius for the CCS test; frame/topic wiring is supplied by launch.
+ts_state_manager:
+  ros__parameters:
+    frequency: 10.0
+    ts_timeout: 1.0
+    tcpa_horizon: 40.0
+    safety_factor: 2.0
+    os_radius: 15.0
+    global_frame: map
+
+avoidance_point_node:
+  ros__parameters:
+    os_radius: 15.0
+    safety_factor: 2.0
+
+barrier_node:
+  ros__parameters:
+    ray_length: 999.0
+    os_radius: 15.0

@@ -484,7 +484,10 @@ def launch_setup(context, *args, **kwargs):
         executable="scenario_manager_node",
         name="scenario_manager_node",
         parameters=[{
-            "config_path": config_path
+            "config_path": config_path,
+            "use_sim_time": use_sim_time,
+            "sync_gazebo_pose": True,
+            "gazebo_pose_period_sec": 0.05,
         }],
         **quiet_ros_node_kwargs(verbose_s),
     )

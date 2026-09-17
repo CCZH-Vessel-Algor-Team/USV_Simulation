@@ -5,6 +5,7 @@ import math
 import os
 import subprocess
 import tempfile
+import threading
 import uuid
 import yaml
 
@@ -17,6 +18,7 @@ from usv_interfaces.srv import (
     SpawnDynamicShip, DeleteDynamicShip, ClearDynamicShips,
     SetDynamicShipConfig,
 )
+from usv_sim_full.pose_feedback import PoseTracker, fresh_sample, yaw_from_quaternion
 
 
 def _fmt_pose_xyzrpy(xyz, rpy):
@@ -45,6 +47,59 @@ def _resolve_profile_path(path_text, config_base_dir):
     return os.path.normpath(os.path.join(config_base_dir, p))
 
 
+class GazeboPoseCache:
+    """Gazebo 动态实体位姿缓存：/world/<world>/dynamic_pose/info。
+
+    回调运行在 gz-transport 线程，快照加锁读取。Python 绑定不可用时
+    缓存为空，调用方自动退回内部积分。
+    """
+
+    def __init__(self, world_name, logger=None):
+        self._lock = threading.Lock()
+        self._samples = {}
+        self._node = None
+        try:
+            import gz.transport13 as gz_transport
+            from gz.msgs10.pose_v_pb2 import Pose_V
+        except ImportError:
+            if logger is not None:
+                logger.warning(
+                    'gz.transport Python 绑定不可用，动态船真值退回开环积分')
+            return
+        self._node = gz_transport.Node()
+        topic = f'/world/{world_name}/dynamic_pose/info'
+        self._node.subscribe(Pose_V, topic, self._on_pose_v)
+        if logger is not None:
+            logger.info(f'GazeboPoseCache 订阅 {topic}')
+
+    def _on_pose_v(self, msg):
+        stamp_sec = float(msg.header.stamp.sec) + float(msg.header.stamp.nsec) * 1e-9
+        fresh = {}
+        for entry in msg.pose:
+            name = entry.name.split('::', 1)[0]
+            if not name or '/' in name:
+                continue
+            fresh[name] = (
+                float(entry.position.x),
+                float(entry.position.y),
+                yaw_from_quaternion(
+                    float(entry.orientation.x),
+                    float(entry.orientation.y),
+                    float(entry.orientation.z),
+                    float(entry.orientation.w),
+                ),
+                stamp_sec,
+            )
+        if not fresh:
+            return
+        with self._lock:
+            self._samples.update(fresh)
+
+    def snapshot(self):
+        with self._lock:
+            return dict(self._samples)
+
+
 class DynamicShip:
     def __init__(self, model_name, target_id, pose, half_distance, shape, speed, color,
                  mesh_profile, node, config_base_dir, world_name):
@@ -70,6 +125,10 @@ class DynamicShip:
 
         spawn_yaw = quat_to_yaw(pose.orientation)
         self.spawn_yaw = spawn_yaw
+        self.actual_yaw = spawn_yaw
+        self.pose_tracker = PoseTracker()
+        self.feedback_fresh = False
+        self.feedback_stamp_sec = None
 
         total_dist = 2.0 * half_distance
         self.waypoint_a = (x, y)
@@ -104,9 +163,23 @@ class DynamicShip:
             except Exception:
                 pass
 
+    def sync_from_feedback(self, sample, now_sec, timeout_sec):
+        """用 Gazebo 实测位姿覆盖内部积分状态，返回反馈是否有效。"""
+        sample = fresh_sample(sample, now_sec, timeout_sec)
+        if sample is None:
+            self.feedback_fresh = False
+            return False
+        self.current_x = sample[0]
+        self.current_y = sample[1]
+        self.actual_yaw = sample[2]
+        self.feedback_stamp_sec = sample[3]
+        self.pose_tracker.update(sample[0], sample[1], sample[3])
+        self.feedback_fresh = True
+        return True
+
     def world_twist_to_body(self, vx_world, vy_world, yaw=None):
         if yaw is None:
-            yaw = self.spawn_yaw
+            yaw = self.actual_yaw
         c = math.cos(yaw)
         s = math.sin(yaw)
         twist = Twist()
@@ -116,7 +189,7 @@ class DynamicShip:
         twist.angular.y = self.spawn_yaw
         return twist
 
-    def compute_cmd_vel(self, dt):
+    def compute_cmd_vel(self, dt, predict=True):
         if self._turning_remaining > 0.0:
             self._turning_remaining -= dt
             twist = Twist()
@@ -138,7 +211,7 @@ class DynamicShip:
             dist = math.hypot(dx, dy)
             if dist > 0.0:
                 new_heading = math.atan2(dy, dx)
-                heading_error = new_heading - self.spawn_yaw
+                heading_error = new_heading - self.actual_yaw
                 heading_error = math.atan2(math.sin(heading_error), math.cos(heading_error))
                 self.spawn_yaw = new_heading
                 turn_rate = 0.8
@@ -152,8 +225,9 @@ class DynamicShip:
             vx = 0.0
             vy = 0.0
 
-        self.current_x += vx * dt
-        self.current_y += vy * dt
+        if predict:
+            self.current_x += vx * dt
+            self.current_y += vy * dt
         return self.world_twist_to_body(vx, vy)
 
     def get_current_pose(self):
@@ -161,13 +235,20 @@ class DynamicShip:
         pose.position.x = self.current_x
         pose.position.y = self.current_y
         pose.position.z = 0.0
-        pose.orientation.w = math.cos(self.spawn_yaw / 2.0)
+        yaw = self.actual_yaw if self.feedback_fresh else self.spawn_yaw
+        pose.orientation.w = math.cos(yaw / 2.0)
         pose.orientation.x = 0.0
         pose.orientation.y = 0.0
-        pose.orientation.z = math.sin(self.spawn_yaw / 2.0)
+        pose.orientation.z = math.sin(yaw / 2.0)
         return pose
 
     def get_current_twist(self):
+        if self.feedback_fresh:
+            vx, vy = self.pose_tracker.velocity
+            twist = Twist()
+            twist.linear.x = vx
+            twist.linear.y = vy
+            return twist
         target = self.waypoint_b if self.direction > 0 else self.waypoint_a
         dx = target[0] - self.current_x
         dy = target[1] - self.current_y
@@ -202,6 +283,11 @@ class DynamicShipManager(Node):
         self.declare_parameter('speed', 3.0)
         self.declare_parameter('shape', 'mesh_profile')
         self.declare_parameter('half_distance', 50.0)
+        self.declare_parameter('pose_feedback_timeout', 1.0)
+
+        self.pose_feedback_timeout = (
+            self.get_parameter('pose_feedback_timeout').get_parameter_value().double_value)
+        self.gz_pose_cache = GazeboPoseCache(self.world_name, self.get_logger())
 
         self.ships = {}
         self.dt = 0.1
@@ -664,12 +750,22 @@ class DynamicShipManager(Node):
 
     def control_loop(self):
         msg = TrackedShipList()
-        msg.header.stamp = self.get_clock().now().to_msg()
+        now = self.get_clock().now()
+        now_sec = now.nanoseconds * 1e-9
+        msg.header.stamp = now.to_msg()
         msg.header.frame_id = 'map'
 
+        gz_samples = self.gz_pose_cache.snapshot()
+        stale_ships = []
         names = []
         for ship in self.ships.values():
-            twist = ship.compute_cmd_vel(self.dt)
+            sample = gz_samples.get(ship.model_name)
+            fresh = ship.sync_from_feedback(
+                sample, now_sec, self.pose_feedback_timeout)
+            if not fresh:
+                stale_ships.append(ship.model_name)
+
+            twist = ship.compute_cmd_vel(self.dt, predict=not fresh)
             ship.cmd_vel_pub.publish(twist)
 
             ts = TrackedShip()
@@ -679,6 +775,12 @@ class DynamicShipManager(Node):
             ts.radius = 5.0
             msg.ships.append(ts)
             names.append(ship.model_name)
+
+        if stale_ships:
+            self.get_logger().warn(
+                'dynamic ship Gazebo 位姿反馈超时，退回开环积分: %s'
+                % ', '.join(stale_ships),
+                throttle_duration_sec=5.0)
 
         self.tracked_pub.publish(msg)
         self.names_pub.publish(String(data=json.dumps(names)))

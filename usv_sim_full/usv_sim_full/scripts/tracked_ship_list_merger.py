@@ -17,7 +17,6 @@ class TrackedShipListMerger(Node):
 
         self.declare_parameter('input_topics', [
             '/dynamic_ship/tracked_ships/_internal',
-            '/dynamic_buoy/tracked_ships',
         ])
         self.declare_parameter('output_topic', '/dynamic_ship/tracked_ships')
         self.declare_parameter('frame_id', 'map')

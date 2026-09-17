@@ -1,6 +1,8 @@
 """
 认证会遇仿真入口：合并 certi 基底 + certificate_case → 启动 main + 本船 cmd_vel 链。
 本船运动链（cmd_vel_to_thruster + certi_own_ship_cmd_vel）在此 launch 内强制拉起，不依赖 Nav2 bringup。
+可选接入 dynamic_ship 发布链：scenario_manager → /dynamic_ship/tracked_ships
+  → dynamic_ship_to_ground_truth → /sim/ground_truth → perception_sim → fusion。
 """
 
 import os
@@ -87,6 +89,11 @@ def _merged_path_from_stdout(stdout: str) -> str:
     return ''
 
 
+def _default_sensor_params(share: str, src_root: str) -> str:
+    rel = os.path.join('three_vision_one_mmwave', 'ground_truth_sensor_sim_params.yaml')
+    return _config_path(share, src_root, rel)
+
+
 def launch_setup(context, *args, **kwargs):
     share, src_root = _resolve_pkg_paths()
 
@@ -96,6 +103,8 @@ def launch_setup(context, *args, **kwargs):
     verbose_s = LaunchConfiguration('verbose_launch').perform(context)
     robot_ns_arg = LaunchConfiguration('robot_namespace').perform(context).strip()
     thrust_delay_s = float(LaunchConfiguration('thrust_chain_delay').perform(context))
+    enable_fusion = LaunchConfiguration('enable_perception_fusion').perform(context)
+    sensor_params = LaunchConfiguration('sensor_params_file').perform(context).strip()
 
     if not os.path.isfile(base_config):
         base_config = _config_path(share, src_root, 'certi_senario.yaml')
@@ -149,7 +158,6 @@ def launch_setup(context, *args, **kwargs):
     speed_mps = float(own_vel.get('speed_mps', 4.0))
     course_deg = float(own_vel.get('course_deg', 0.0))
 
-    share_dir = share or src_root
     main_launch = os.path.join(
         get_package_share_directory('usv_sim_full') if share else src_root,
         'launch',
@@ -159,6 +167,11 @@ def launch_setup(context, *args, **kwargs):
         main_launch = os.path.join(src_root, 'launch', 'main.launch.py')
 
     out_mode = 'screen' if launch_verbose_enabled(verbose_s) else 'log'
+    use_sim_time = 'true'
+    fusion_on = enable_fusion.strip().lower() in ('true', '1', 'yes')
+
+    if not sensor_params or not os.path.isfile(sensor_params):
+        sensor_params = _default_sensor_params(share, src_root)
 
     actions = [
         LogInfo(msg=[f'[certifi_launch] merged config: {out_path}']),
@@ -170,6 +183,69 @@ def launch_setup(context, *args, **kwargs):
             }.items(),
         ),
     ]
+
+    if fusion_on:
+        bringup_share = get_package_share_directory('usv_bringup')
+        fusion_share = get_package_share_directory('usv_late_fusion')
+        converter_share = get_package_share_directory('convert_to_trackship')
+        actions.extend([
+            LogInfo(msg=[
+                '[certifi_launch] perception/fusion chain ON: '
+                'tracked_ships → /sim/ground_truth → sensor_sim → late_fusion'
+            ]),
+            # 不启 dynamic_ship_manager（会遇实体已由 scenario_manager 驱动），只复用其 GT 桥。
+            Node(
+                package='ground_truth_sensor_sim',
+                executable='dynamic_ship_to_ground_truth',
+                name='dynamic_ship_to_ground_truth',
+                output=out_mode,
+                parameters=[{
+                    'use_sim_time': True,
+                    'input_topic': '/dynamic_ship/tracked_ships',
+                    'output_topic': '/sim/ground_truth',
+                    'frame_id': 'map',
+                    'size_w': 3.6,
+                    'size_l': 10.0,
+                    'size_h': 2.0,
+                    'is_dark_target': True,
+                    'is_ais_matched': False,
+                    'matched_mmsi': 0,
+                    'source_model_name': 'certificate_dynamic_ship',
+                }],
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(bringup_share, 'launch', 'perception_sim.launch.py')
+                ),
+                launch_arguments={
+                    'params_file': sensor_params,
+                    'start_ais_node': 'false',
+                    'use_sim_time': use_sim_time,
+                }.items(),
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(bringup_share, 'launch', 'fusion.launch.py')
+                ),
+                launch_arguments={
+                    'fusion_io_params_file': os.path.join(
+                        fusion_share, 'config', 'event_fusion_three_sensor_io.yaml'
+                    ),
+                    'fusion_algorithm_params_file': os.path.join(
+                        fusion_share, 'config', 'event_fusion_algorithm.yaml'
+                    ),
+                    'fusion_params_file': '',
+                    'tracked_ship_params_file': os.path.join(
+                        converter_share, 'config', 'target_snapshot_to_tracked_ship.yaml'
+                    ),
+                    'use_sim_time': use_sim_time,
+                }.items(),
+            ),
+        ])
+    else:
+        actions.append(
+            LogInfo(msg='[certifi_launch] enable_perception_fusion:=false，跳过感知/融合链')
+        )
 
     thrust_chain = [
         ExecuteProcess(
@@ -219,6 +295,7 @@ def generate_launch_description():
     share, src_root = _resolve_pkg_paths()
     default_base = _config_path(share, src_root, 'certi_senario.yaml')
     default_case = _config_path(share, src_root, 'certificate_case/C1-001.yaml')
+    default_sensor = _default_sensor_params(share, src_root)
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -250,6 +327,19 @@ def generate_launch_description():
             'thrust_chain_delay',
             default_value='3.0',
             description='spawn 后延时启动 cmd_vel 链（秒）',
+        ),
+        DeclareLaunchArgument(
+            'enable_perception_fusion',
+            default_value='true',
+            description=(
+                'true：挂接 dynamic_ship_to_ground_truth + perception_sim + fusion '
+                '（复用 /dynamic_ship/tracked_ships 链；不启 dynamic_ship_manager）'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'sensor_params_file',
+            default_value=default_sensor,
+            description='ground_truth_sensor_sim 参数 YAML',
         ),
         OpaqueFunction(function=launch_setup),
     ])

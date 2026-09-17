@@ -7,10 +7,10 @@ import uuid
 import rclpy
 from builtin_interfaces.msg import Time
 from geometry_msgs.msg import Point, PointStamped, Pose, Twist
-from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from std_msgs.msg import String
+from usv_interfaces.msg import TrackedObstacle, TrackedObstacleList
 from usv_interfaces.srv import (
     ClearStormFields,
     DeleteStormField,
@@ -69,13 +69,14 @@ class StormField:
         twist.linear.y = self.drift_speed * math.sin(yaw)
         return twist
 
-    def tracked_ship(self):
-        ts = TrackedShip()
-        ts.target_id.uuid = list(bytes.fromhex(self.target_id.replace('-', '')))
-        ts.pose = self.pose()
-        ts.twist = self.twist()
-        ts.radius = self.radius
-        return ts
+    def tracked_obstacle(self):
+        obstacle = TrackedObstacle()
+        obstacle.type = TrackedObstacle.TYPE_STORM
+        obstacle.target_id.uuid = list(bytes.fromhex(self.target_id.replace('-', '')))
+        obstacle.pose = self.pose()
+        obstacle.twist = self.twist()
+        obstacle.radius = self.radius
+        return obstacle
 
     @staticmethod
     def _time_from_sec(sec):
@@ -114,7 +115,7 @@ class StormFieldManager(Node):
         super().__init__('storm_field_manager')
 
         self.declare_parameter('frame_id', 'map')
-        self.declare_parameter('tracked_ship_topic', '/tracked_ship')
+        self.declare_parameter('tracked_obstacle_topic', '/tracked_obstacles')
         self.declare_parameter('names_topic', '/storm_field/names')
         self.declare_parameter('marker_topic', '/storm_field/markers')
         self.declare_parameter('storm_field_topic', '/storm_field/storms')
@@ -128,7 +129,7 @@ class StormFieldManager(Node):
 
         self.frame_id = self.get_parameter('frame_id').value
         self.dt = float(self.get_parameter('dt').value)
-        tracked_ship_topic = self.get_parameter('tracked_ship_topic').value
+        tracked_obstacle_topic = self.get_parameter('tracked_obstacle_topic').value
         names_topic = self.get_parameter('names_topic').value
         marker_topic = self.get_parameter('marker_topic').value
         storm_field_topic = self.get_parameter('storm_field_topic').value
@@ -136,7 +137,8 @@ class StormFieldManager(Node):
 
         self.storms = {}
 
-        self.tracked_pub = self.create_publisher(TrackedShipList, tracked_ship_topic, 10)
+        self.tracked_pub = self.create_publisher(
+            TrackedObstacleList, tracked_obstacle_topic, 10)
         self.names_pub = self.create_publisher(String, names_topic, 10)
         self.marker_pub = self.create_publisher(MarkerArray, marker_topic, 10)
         self.storm_field_pub = self.create_publisher(StormFieldArray, storm_field_topic, 10)
@@ -154,7 +156,7 @@ class StormFieldManager(Node):
         self.timer = self.create_timer(self.dt, self.control_loop)
 
         self.get_logger().info(
-            f'StormFieldManager publishing TrackedShipList on {tracked_ship_topic}')
+            f'StormFieldManager publishing TrackedObstacleList on {tracked_obstacle_topic}')
 
     def _read_config(self):
         return (
@@ -188,12 +190,8 @@ class StormFieldManager(Node):
                 Parameter('weather_validity_duration_s', value=weather_validity_duration_s),
                 Parameter('weather_grid_resolution_m', value=weather_grid_resolution_m),
             ])
-            for storm in self.storms.values():
-                storm.update_config(
-                    radius, drift_heading_deg, drift_speed,
-                    weather_validity_duration_s, weather_grid_resolution_m)
             response.success = True
-            response.message = 'storm config updated'
+            response.message = 'default config updated for future storms'
         except Exception as exc:
             response.success = False
             response.message = str(exc)
@@ -298,7 +296,7 @@ class StormFieldManager(Node):
         return markers
 
     def control_loop(self):
-        msg = TrackedShipList()
+        msg = TrackedObstacleList()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = self.frame_id
         now_sec = self.get_clock().now().nanoseconds * 1e-9
@@ -310,7 +308,7 @@ class StormFieldManager(Node):
         names = []
         for storm in self.storms.values():
             storm.step(self.dt)
-            msg.ships.append(storm.tracked_ship())
+            msg.obstacles.append(storm.tracked_obstacle())
             storm_msg.storms.append(storm.storm_field_msg(now_sec))
             names.append(storm.name)
 
