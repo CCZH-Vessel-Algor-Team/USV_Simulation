@@ -167,6 +167,11 @@ def launch_setup(context, *args, **kwargs):
 
     world_name = user_config.get('environment', {}).get('world_name', 'sydney_regatta')
     launch_rviz = user_config.get('visualization', {}).get('launch_rviz', True)
+    rviz_override = LaunchConfiguration('use_rviz').perform(context).strip().lower()
+    if rviz_override != 'auto':
+        if rviz_override not in ('true', 'false'):
+            raise ValueError('use_rviz must be auto, true or false')
+        launch_rviz = rviz_override == 'true'
 
     radar_processing_enabled = False
     mmwave_enabled = False
@@ -250,6 +255,7 @@ def launch_setup(context, *args, **kwargs):
             'world_name': world_name,
             'verbose_launch': verbose_s,
             'gz_headless': gz_headless_s,
+            'real_time_factor': LaunchConfiguration('real_time_factor'),
         }.items()
     )
 
@@ -615,5 +621,11 @@ def generate_launch_description():
             default_value='false',
             description='true 时 Gazebo 以 server-only 运行，不启动 GUI 渲染窗口'
         ),
+        DeclareLaunchArgument(
+            'real_time_factor', default_value='0.3333333333333333',
+            description='Target Gazebo simulation/wall-clock ratio'),
+        DeclareLaunchArgument(
+            'use_rviz', default_value='auto',
+            description='auto uses visualization.launch_rviz from config; or true/false'),
         OpaqueFunction(function=launch_setup)
     ])

@@ -15,6 +15,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory, get_package_prefix
 from usv_sim_full.launch_config_helpers import quiet_ros_node_kwargs
+from usv_sim_full.world_config import world_with_real_time_factor
 import os
 import shlex
 import xml.etree.ElementTree as ET
@@ -44,6 +45,7 @@ def generate_launch_description():
     world_name = LaunchConfiguration('world_name')
     verbose_launch = LaunchConfiguration('verbose_launch')
     gz_headless = LaunchConfiguration('gz_headless')
+    real_time_factor = LaunchConfiguration('real_time_factor')
 
     # 设置GZ_SIM_RESOURCE_PATH环境变量，确保能找到模型文件
     usv_sim_path = get_package_share_directory('usv_sim_full')
@@ -174,7 +176,11 @@ def generate_launch_description():
                 f"World not found: {world_file}. Available world_name values: {available_worlds}"
             )
 
-        gz_args = ['-r', '-s', world_file] if headless else ['-r', world_file]
+        factor = float(real_time_factor.perform(context))
+        runtime_world = world_with_real_time_factor(world_file, factor)
+        print(f'[VRX physics] real_time_factor={factor:.6f}, original={world_file}, '
+              f'runtime_world={runtime_world} (max_step_size unchanged)')
+        gz_args = ['-r', '-s', runtime_world] if headless else ['-r', runtime_world]
         filtered_gz_command = (
             'ruby "$(which gz)" sim '
             f'{shlex.join(gz_args)} --force-version 8 '
@@ -259,6 +265,9 @@ def generate_launch_description():
         world_name_arg,
         verbose_launch_arg,
         gz_headless_arg,
+        DeclareLaunchArgument(
+            'real_time_factor', default_value='0.3333333333333333',
+            description='Target simulation/wall-clock ratio; does not change the physics step'),
         set_resource_path,
         set_model_path,  # 添加GAZEBO_MODEL_PATH设置
         set_plugin_path,  # 注册仿真插件路径（launch context）

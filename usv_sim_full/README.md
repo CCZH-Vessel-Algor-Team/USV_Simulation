@@ -17,6 +17,10 @@
 构建本包前请确保工作区已包含并可编译：`wamv_gazebo`、`wamv_description`（经 `wamv_gazebo` 等间接使用）、`ros_gz_sim`、`ros_gz_bridge`、`usv_interfaces`、`usv_mmwave_sim`（毫米波插件 + 点云增强节点）、`radar_gz_bridge`（海事雷达 spokes→ROS）、`robot_localization`（可选）。  
 **海事雷达建图**依赖 `gy_radar_driver`；**在已运行仿真中 spawn 毫米波探针**依赖 `usv_mmwave_sim`（直接 `ros2 launch usv_mmwave_sim spawn_ego_mmwave_validation.launch.py`，参数见该文件）。
 
+**动态目标船**使用Gazebo Harmonic原生Python绑定：`python3-gz-transport13`、
+`python3-gz-msgs10`，并需要PyYAML。动态船位来自Gazebo模型观测，速度按仿真时间差分计算；
+生成/删除服务与控制、状态发布分组执行，外部删除的模型通过Gazebo清单确认后注销。
+
 **Nav2 + COLREGs**（`nav2_sim_full_bringup` / `nav2_sim_three_vision_mmwave_bringup`）依赖工作区 `src/usv_nav/src` 下的包（`nav2_bringup`、`nav2_colregs_*` 等），**不要**使用 apt 的 `ros-*-navigation2`。推荐构建方式：
 
 ```bash
@@ -81,6 +85,19 @@ ros2 launch usv_sim_full sensor_tune.launch.py
 
 # 仿真 + 延时 Nav2（需完整依赖与雷达地图等话题就绪）
 ros2 launch usv_sim_full nav2_sim_full_bringup.launch.py
+```
+
+### COLREGS运行
+
+标准入口默认`real_time_factor:=0.3333333333333333`，保留原物理积分步长；`use_rviz:=auto`
+沿用可视化配置，也可指定`true`或`false`。Nav2及推力PID显式采用所选时钟。
+单目标BT重规划为0.3Hz墙钟，整体控制链并不是严格按实时因子等比缩放。
+
+```bash
+ros2 launch usv_sim_full nav2_sim_three_vision_mmwave_bringup.launch.py \
+  real_time_factor:=0.3333333333333333 use_rviz:=true
+
+# 使用当前配套Nav2的独立TS参数文件；也可通过ts_params_file指定自定义文件。
 ```
 
 ### 示例话题（船名为 `usv_1` 时）

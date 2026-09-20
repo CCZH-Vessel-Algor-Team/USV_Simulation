@@ -5,12 +5,19 @@ import math
 import os
 import subprocess
 import tempfile
+import threading
 import uuid
 import yaml
 
 import rclpy
-from geometry_msgs.msg import PointStamped, Pose, Twist
+from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Twist
 from rclpy.node import Node
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
+from gz.transport13 import Node as GzNode
+from gz.msgs10.empty_pb2 import Empty
+from gz.msgs10.pose_v_pb2 import Pose_V
+from gz.msgs10.scene_pb2 import Scene
 from std_msgs.msg import String
 from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
 from usv_interfaces.srv import (
@@ -82,6 +89,9 @@ class DynamicShip:
         self.current_y = y
         self.direction = 1
         self._turning_remaining = 0.0
+        self.observed_pose = None
+        self.observed_stamp = None
+        self.observed_twist = Twist()
 
         self.cmd_vel_pub = node.create_publisher(
             Twist, f'/model/{model_name}/cmd_vel', 10)
@@ -152,11 +162,38 @@ class DynamicShip:
             vx = 0.0
             vy = 0.0
 
-        self.current_x += vx * dt
-        self.current_y += vy * dt
         return self.world_twist_to_body(vx, vy)
 
+    def update_observation(self, observed, timestamp):
+        """Update state from Gazebo, never from commanded velocity integration.
+
+        :param observed: Gazebo model Pose message.
+        :param timestamp: Gazebo simulation timestamp in seconds.
+        """
+        if timestamp == self.observed_stamp:
+            return
+        pose = Pose()
+        pose.position.x = observed.position.x
+        pose.position.y = observed.position.y
+        pose.position.z = observed.position.z
+        pose.orientation.x = observed.orientation.x
+        pose.orientation.y = observed.orientation.y
+        pose.orientation.z = observed.orientation.z
+        pose.orientation.w = observed.orientation.w
+        if self.observed_stamp is not None and timestamp > self.observed_stamp:
+            dt = timestamp - self.observed_stamp
+            self.observed_twist.linear.x = (pose.position.x - self.observed_pose.position.x) / dt
+            self.observed_twist.linear.y = (pose.position.y - self.observed_pose.position.y) / dt
+        elif self.observed_stamp is not None and timestamp < self.observed_stamp:
+            self.observed_twist = Twist()
+        self.observed_pose = pose
+        self.observed_stamp = timestamp
+        self.current_x = pose.position.x
+        self.current_y = pose.position.y
+
     def get_current_pose(self):
+        if self.observed_pose is not None:
+            return self.observed_pose
         pose = Pose()
         pose.position.x = self.current_x
         pose.position.y = self.current_y
@@ -168,18 +205,7 @@ class DynamicShip:
         return pose
 
     def get_current_twist(self):
-        target = self.waypoint_b if self.direction > 0 else self.waypoint_a
-        dx = target[0] - self.current_x
-        dy = target[1] - self.current_y
-        dist = math.hypot(dx, dy)
-        if dist > 0:
-            vx = (dx / dist) * self.speed
-            vy = (dy / dist) * self.speed
-            twist = Twist()
-            twist.linear.x = vx
-            twist.linear.y = vy
-            return twist
-        return Twist()
+        return self.observed_twist
 
 
 class DynamicShipManager(Node):
@@ -198,13 +224,22 @@ class DynamicShipManager(Node):
         if not self.config_base_dir:
             self.config_base_dir = os.path.dirname(os.path.abspath(__file__))
 
+        self.declare_parameter('spawn_pose_topic', '/usv_1/initialpose')
         self.declare_parameter('heading_deg', 0.0)
         self.declare_parameter('speed', 3.0)
         self.declare_parameter('shape', 'mesh_profile')
         self.declare_parameter('half_distance', 50.0)
 
         self.ships = {}
+        self._ships_lock = threading.Lock()
         self.dt = 0.1
+        self._pose_lock = threading.Lock()
+        self._model_observations = {}
+        self._missing_model_counts = {}
+        self._gz_node = GzNode()
+        self._pose_topic = f'/world/{self.world_name}/pose/info'
+        if not self._gz_node.subscribe(Pose_V, self._pose_topic, self._on_gz_poses):
+            raise RuntimeError('Cannot subscribe to Gazebo model poses')
 
         self.spawn_srv = self.create_service(
             SpawnDynamicShip, '/dynamic_ship/spawn', self.on_spawn)
@@ -216,12 +251,26 @@ class DynamicShipManager(Node):
         self.tracked_pub = self.create_publisher(
             TrackedShipList, '/dynamic_ship/tracked_ships', 10)
 
-        self.timer = self.create_timer(self.dt, self.control_loop)
+        # Gazebo spawn/delete service calls may block for seconds. Keep the
+        # stamped tracking heartbeat and existing-ship control running meanwhile.
+        self.control_group = MutuallyExclusiveCallbackGroup()
+        self.timer = self.create_timer(self.dt, self.control_loop,
+                                       callback_group=self.control_group)
+        # Reconcile out-of-band / late-completing Gazebo deletions on the service
+        # callback group, so a slow inventory request cannot block tracking.
+        self.scene_timer = self.create_timer(1.0, self.reconcile_gazebo_models)
 
         self._ship_counter = 0
 
-        self.click_sub = self.create_subscription(
-            PointStamped, '/clicked_point', self.on_clicked_point, 10)
+        spawn_pose_topic = self.get_parameter(
+            'spawn_pose_topic').get_parameter_value().string_value
+        # RViz "2D Pose Estimate" interaction: click-drag provides both the
+        # spawn position and the initial heading (drag direction), replacing
+        # the former PublishPoint (/clicked_point) spawn which had no heading.
+        # PublishPoint is thereby released for general debugging.
+        self.spawn_pose_sub = self.create_subscription(
+            PoseWithCovarianceStamped, spawn_pose_topic,
+            self.on_spawn_pose, 10)
 
         self.config_srv = self.create_service(
             SetDynamicShipConfig, '/dynamic_ship/set_config',
@@ -257,14 +306,24 @@ class DynamicShipManager(Node):
             response.message = str(e)
         return response
 
-    def on_clicked_point(self, msg):
-        heading_deg, speed, shape, half_dist = self._read_config()
-        heading = math.pi / 2.0 - math.radians(heading_deg)
+    def on_spawn_pose(self, msg):
+        _, speed, shape, half_dist = self._read_config()
+
+        pose = msg.pose.pose
+        # Heading from the drag direction of the RViz pose tool (ENU yaw
+        # extracted from the quaternion). The heading_deg parameter remains
+        # available for service-driven configuration but is no longer used
+        # on the interactive spawn path.
+        heading = math.atan2(
+            2.0 * (pose.orientation.w * pose.orientation.z +
+                   pose.orientation.x * pose.orientation.y),
+            1.0 - 2.0 * (pose.orientation.y * pose.orientation.y +
+                         pose.orientation.z * pose.orientation.z))
 
         self._ship_counter += 1
         name = f'dyn_target_{self._ship_counter}'
 
-        self._spawn_ship_at(name, msg.point.x, msg.point.y, heading,
+        self._spawn_ship_at(name, pose.position.x, pose.position.y, heading,
                             half_dist, shape, speed)
 
     def _spawn_ship_at(self, name, x, y, yaw, half_dist, shape, speed):
@@ -294,12 +353,14 @@ class DynamicShipManager(Node):
         except Exception as e:
             ship.cleanup()
             self.get_logger().error(f'spawn failed: {e}')
-            return
+            return False
 
-        self.ships[name] = ship
+        with self._ships_lock:
+            self.ships[name] = ship
         self.get_logger().info(
-            f'clicked at ({x:.2f},{y:.2f}) heading={math.degrees(yaw):.0f}deg '
+            f'spawn pose ({x:.2f},{y:.2f}) heading={math.degrees(yaw):.0f}deg '
             f'-> spawned {name} speed={speed}m/s')
+        return True
 
     def on_spawn(self, request, response):
         try:
@@ -324,9 +385,10 @@ class DynamicShipManager(Node):
             speed = request.speed if request.speed > 0.0 else 3.0
             shape = request.shape.strip() or 'mesh_profile'
 
-            self._spawn_ship_at(name, request.pose.position.x,
-                               request.pose.position.y, yaw,
-                               half_dist, shape, speed)
+            if not self._spawn_ship_at(name, request.pose.position.x,
+                                       request.pose.position.y, yaw,
+                                       half_dist, shape, speed):
+                raise RuntimeError('Gazebo spawn failed; see dynamic_ship_manager log')
             response.success = True
             response.model_name = name
             response.message = f"Ship '{name}' spawned successfully"
@@ -344,8 +406,7 @@ class DynamicShipManager(Node):
             return response
         try:
             self._remove_gazebo(name)
-            self.ships[name].cleanup()
-            del self.ships[name]
+            self._forget_ship(name)
             response.success = True
             response.message = f"Ship '{name}' deleted"
             self.get_logger().info(f"Deleted dynamic ship '{name}'")
@@ -359,13 +420,13 @@ class DynamicShipManager(Node):
         for name in names:
             try:
                 self._remove_gazebo(name)
-                self.ships[name].cleanup()
-                del self.ships[name]
+                self._forget_ship(name)
             except Exception as e:
                 self.get_logger().warn(f"Failed to remove '{name}' during clear: {e}")
-        self.get_logger().info(f"Cleared all {len(names)} dynamic ships")
-        response.success = True
-        response.message = f"Cleared {len(names)} ships"
+        removed = len(names) - len(self.ships)
+        self.get_logger().info(f"Cleared {removed} of {len(names)} dynamic ships")
+        response.success = not self.ships
+        response.message = f"Cleared {removed} of {len(names)} ships"
         return response
 
     def _generate_sdf(self, ship):
@@ -647,20 +708,80 @@ class DynamicShipManager(Node):
             if tmp_sdf_path and os.path.exists(tmp_sdf_path):
                 self._retained_spawn_sdf_paths.append(tmp_sdf_path)
 
-    def _remove_gazebo(self, model_name):
+    def _gazebo_model_names(self):
+        """Read the authoritative model inventory from this Gazebo world.
+
+        :return: Set of model names, or None when the read did not succeed.
+        """
         try:
-            cmd = [
-                'gz', 'service', '-s', f'/world/{self.world_name}/remove',
-                '--reqtype', 'gz.msgs.Entity',
-                '--reptype', 'gz.msgs.Boolean',
-                '--timeout', '5000',
-                '--req', f'name: "{model_name}" type: MODEL'
-            ]
+            success, scene = self._gz_node.request(
+                f'/world/{self.world_name}/scene/info', Empty(), Empty, Scene, 1000)
+        except Exception as error:
+            self.get_logger().warn(f'Cannot read Gazebo model inventory: {error}',
+                                   throttle_duration_sec=5.0)
+            return None
+        return {model.name for model in scene.model} if success else None
+
+    def _forget_ship(self, name):
+        """Release a registration after the Gazebo model is confirmed removed.
+
+        :param name: Registered model name.
+        """
+        with self._ships_lock:
+            ship = self.ships.pop(name, None)
+        with self._pose_lock:
+            self._model_observations.pop(name, None)
+        self._missing_model_counts.pop(name, None)
+        if ship is not None:
+            ship.cleanup()
+
+    def reconcile_gazebo_models(self):
+        """Retire missing registrations after two successful inventory reads.
+
+        Missing pose messages alone never imply that an obstacle was deleted.
+        A second inventory read tolerates the asynchronous spawn acknowledgement.
+        """
+        with self._ships_lock:
+            names = list(self.ships)
+        if not names:
+            return
+        present = self._gazebo_model_names()
+        if present is None:
+            return
+        for name in names:
+            if name in present:
+                self._missing_model_counts.pop(name, None)
+                continue
+            missing = self._missing_model_counts.get(name, 0) + 1
+            self._missing_model_counts[name] = missing
+            if missing >= 2:
+                self._forget_ship(name)
+                self.get_logger().info(
+                    f"Removed stale registration for absent Gazebo model '{name}'")
+
+    def _remove_gazebo(self, model_name):
+        cmd = [
+            'gz', 'service', '-s', f'/world/{self.world_name}/remove',
+            '--reqtype', 'gz.msgs.Entity',
+            '--reptype', 'gz.msgs.Boolean',
+            '--timeout', '5000',
+            '--req', f'name: {json.dumps(model_name)} type: MODEL'
+        ]
+        try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            if result.returncode != 0:
-                self.get_logger().warn(f"Failed to remove Gazebo entity '{model_name}'")
-        except Exception as e:
-            self.get_logger().warn(f"Error removing '{model_name}': {e}")
+            if result.returncode == 0 and 'data:true' in ''.join(result.stdout.split()):
+                return
+            detail = f'{result.stdout} {result.stderr}'
+        except subprocess.TimeoutExpired as error:
+            detail = str(error)
+        # Transport timeout does not mean the server failed to execute removal.
+        # Confirm actual absence before deciding to retain a stale registration.
+        present = self._gazebo_model_names()
+        if present is not None and model_name not in present:
+            self.get_logger().info(
+                f"Gazebo inventory confirms '{model_name}' was removed despite missing reply")
+            return
+        raise RuntimeError(f"Gazebo did not confirm removal of '{model_name}': {detail}")
 
     def control_loop(self):
         msg = TrackedShipList()
@@ -668,7 +789,16 @@ class DynamicShipManager(Node):
         msg.header.frame_id = 'map'
 
         names = []
-        for ship in self.ships.values():
+        observation_stamps = []
+        with self._pose_lock:
+            observations = dict(self._model_observations)
+        with self._ships_lock:
+            ships = list(self.ships.values())
+        for ship in ships:
+            observation = observations.get(ship.model_name)
+            if observation is not None:
+                ship.update_observation(*observation)
+            observation_stamps.append(ship.observed_stamp if ship.observed_stamp is not None else 0.0)
             twist = ship.compute_cmd_vel(self.dt)
             ship.cmd_vel_pub.publish(twist)
 
@@ -680,18 +810,43 @@ class DynamicShipManager(Node):
             msg.ships.append(ts)
             names.append(ship.model_name)
 
-        self.tracked_pub.publish(msg)
         self.names_pub.publish(String(data=json.dumps(names)))
+        # A list has only one measurement stamp. Do not relabel newer poses with
+        # an older missing model's stamp, or publish an empty "no targets" list.
+        # Silence makes downstream freshness checks expire the previous snapshot.
+        if observation_stamps:
+            if 0.0 in observation_stamps or len(set(observation_stamps)) != 1:
+                return
+            timestamp = observation_stamps[0]
+            msg.header.stamp.sec = int(timestamp)
+            msg.header.stamp.nanosec = int((timestamp - int(timestamp)) * 1e9)
+        self.tracked_pub.publish(msg)
+
+    def _on_gz_poses(self, message):
+        """Cache model observations from the native Gazebo transport callback.
+
+        :param message: Pose_V carrying model poses and simulation time.
+        """
+        timestamp = message.header.stamp.sec + message.header.stamp.nsec * 1e-9
+        with self._ships_lock:
+            with self._pose_lock:
+                for pose in message.pose:
+                    if pose.name in self.ships:
+                        self._model_observations[pose.name] = (pose, timestamp)
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = DynamicShipManager()
+    executor = MultiThreadedExecutor(num_threads=2)
+    executor.add_node(node)
     try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
+        executor.spin()
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        executor.shutdown()
+        node._gz_node.unsubscribe(node._pose_topic)
         for ship in node.ships.values():
             ship.cleanup()
         for p in getattr(node, '_retained_spawn_sdf_paths', []):

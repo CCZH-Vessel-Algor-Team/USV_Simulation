@@ -1,16 +1,21 @@
-
 <!--
-  This Behavior Tree replans the global path periodically at 0.3 Hz and it also has
-  recovery actions specific to planning / control as well as general system issues.
-  This will be continuous if a kinematically valid planner is selected.
+  NavigateThroughPoses for the standard planner_server with VORRTStar.
+  Adapted from navigate_through_poses_colregs_local.xml: use the VORRTStar
+  plugin ID and standard global_costmap clearing services.
+  Keep the explicit map/usv_1/base_link frames for RemovePassedGoals; its
+  default base_link frame does not exist in this namespaced simulation.
+  Replan at 0.3 Hz and consider intermediate goals passed within 5 m.
 -->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
     <RecoveryNode number_of_retries="6" name="NavigateRecovery">
       <PipelineSequence name="NavigateWithReplanning">
         <RateController hz="0.3">
-          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
-            <ComputePathToPose goal="{goal}" path="{path}" planner_id="VORRTStar"/>
+          <RecoveryNode number_of_retries="1" name="ComputePathThroughPoses">
+            <ReactiveSequence name="ComputePathThroughPosesWithPruning">
+              <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="5.0" global_frame="map" robot_base_frame="usv_1/base_link"/>
+              <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="VORRTStar"/>
+            </ReactiveSequence>
             <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
           </RecoveryNode>
         </RateController>

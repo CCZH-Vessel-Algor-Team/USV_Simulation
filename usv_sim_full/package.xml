@@ -13,6 +13,7 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>rosgraph_msgs</depend>
+  <exec_depend>python3-yaml</exec_depend>
   <depend>tf2_ros</depend>
   <depend>xacro</depend>
   <depend>robot_state_publisher</depend>
@@ -34,6 +35,7 @@
   <exec_depend>convert_to_trackship</exec_depend>
   <!-- Nav2 + COLREGs：源码位于 usv_ws/src/usv_nav/src，勿依赖 apt navigation2 -->
   <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_colregs_bringup</exec_depend>
   <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>nav2_colregs_msgs</exec_depend>
