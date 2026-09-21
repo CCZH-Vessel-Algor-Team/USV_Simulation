@@ -35,6 +35,7 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch_ros.descriptions import ParameterFile
 from nav2_common.launch import RewrittenYaml
 from usv_sim_full.launch_config_helpers import launch_verbose_enabled, quiet_ros_node_kwargs
+from usv_sim_full.world_config import set_navigation_clock
 
 
 def _subst_robot_ns(obj, ns: str):
@@ -144,6 +145,7 @@ def generate_launch_description():
                 LogInfo(msg=f'已合并控制参数: {resolved_control_params_file}')
             )
 
+        set_navigation_clock(nav2_params, resolved_use_sim_time.lower() == 'true')
         gcp = nav2_params.get('colregs_costmap', {}).get(
             'colregs_costmap', {}).get('ros__parameters', {})
         robot_bf = str(gcp.get('robot_base_frame', '?'))
@@ -287,6 +289,7 @@ def generate_launch_description():
         resolved_control_params_file = control_params_file.perform(context).strip()
         if resolved_control_params_file and os.path.isfile(resolved_control_params_file):
             cmd += ['--params-file', resolved_control_params_file]
+        cmd += ['-p', f'use_sim_time:={use_sim_time.perform(context)}']
         return [
             ExecuteProcess(
                 cmd=cmd,

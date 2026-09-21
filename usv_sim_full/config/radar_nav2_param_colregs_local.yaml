@@ -8,16 +8,15 @@
 # 差异说明：
 #   - colregs_local_planner_server 内置 VO-RRT*（两段式避让规划），serve
 #     compute_path_to_pose action，BT 中 planner_id 须为 "RRTStar" 或留空
-#   - TS 决策参数（原 ts_state_manager/avoidance_point/barrier 三节点内联参数）收敛到
-#     colregs_ts_state 段：tcpa_horizon 20.0 / safety_factor 1.5 / os_radius 5.0
-#     （VRX 尺度，与原 ts_subsystem_launch 内联值一致）
+#   - TS 决策在 colregs_ts_state 内配置；物理半径、检测倍率、避让倍率、
+#     AP延伸量和barrier几何彼此独立。以下值为VRX尺度。
 #   - BT xml 换用 navigate_to_pose_colregs_local.xml（planner_id=RRTStar，
 #     清图服务名对齐 colregs_costmap）
 colregs_local_planner_server:
   ros__parameters:
     action_server_result_timeout: 10.0
     # colregs_costmap 更新频率 1.0 Hz，等待余量给足
-    costmap_update_timeout: 2.0
+    costmap_update_timeout: 6.0  # wall seconds; full static-map reset can exceed 2s
     # RRT* 截止时间：800x800 大图长航程规划实测需数秒（旧 VORRTStar 插件无时间
     # 限制，此处为安全上限；BT 以 0.3Hz 重规划）
     max_planning_time: 5.0
@@ -127,15 +126,21 @@ colregs_costmap:
       always_send_full_costmap: true
 
 # colregs_local_planner_server 内部 TS 状态子节点（节点路径 <ns>/colregs_ts_state）。
-# CPA 参数承接原 ts_subsystem_launch 内联值（VRX 尺度）。
+# configure前可设置；configure后只读，修改需cleanup/reconfigure或重启。
 colregs_ts_state:
   ros__parameters:
-    frequency: 10.0
-    ts_timeout: 3.0
-    tcpa_horizon: 20.0
-    safety_factor: 1.5
+    update_frequency: 10.0
+    track_list_timeout: 1.0
+    own_ship_state_timeout: 1.0
+    transform_timeout: 0.5       # wall seconds; wait for the exact measurement TF
+    threat_tcpa_horizon: 40.0
+    threat_radius_scale: 3.0
+    avoidance_radius_scale: 1.5
     os_radius: 5.0
-    barrier_ray_length: 999.0
+    point_extension_distance: 20.0
+    lateral_margin: 0.3
+    closing_segment_length: 999.0
+    max_request_position_delta: 3.0
     global_frame: "map"
     robot_base_frame: "__ROBOT_NS__/base_link"
     # 相对名 → <ns>/odom
@@ -258,12 +263,12 @@ controller_server:
 bt_navigator:
   ros__parameters:
     use_sim_time: True
+    default_server_timeout: 5000  # ms; allow full-map clear and action acknowledgements
     global_frame: map
     robot_base_frame: __ROBOT_NS__/base_link
     odom_topic: odom
     default_nav_to_pose_bt_xml: "$(find-pkg-share usv_sim_full)/config/navigate_to_pose_colregs_local.xml"
-    # colregs server 无 compute_path_through_poses action；占位 BT 防止
-    # on_configure 预加载默认 NTP BT 失败（NTP 目标将快速失败）
+    # Server支持ThroughPoses：仅首段实时COLREGS，后续段为普通规划preview。
     default_nav_through_poses_bt_xml: "$(find-pkg-share usv_sim_full)/config/navigate_through_poses_colregs_local.xml"
 
 behavior_server:

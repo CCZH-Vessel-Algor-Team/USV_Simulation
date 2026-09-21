@@ -100,6 +100,27 @@ ros2 launch usv_sim_full nav2_sim_three_vision_mmwave_bringup.launch.py \
 # 使用当前配套Nav2的独立TS参数文件；也可通过ts_params_file指定自定义文件。
 ```
 
+### COLREGS Server Humble入口
+
+配套Nav2分支`feat/rrt-star-local-planner-server-humble`使用进程内Server链路：
+
+```bash
+ros2 launch usv_sim_full nav2_sim_colregs_local_bringup.launch.py \
+  real_time_factor:=0.3333333333333333 use_rviz:=true
+```
+
+运行参数来自`config/radar_nav2_param_colregs_local.yaml`，通过`params_file`整体覆盖；
+Server子节点为`/usv_1/colregs_ts_state`，不使用旧三节点的`ts_params_file`。
+当前VRX配置为OS半径5m、检测倍率3、避让倍率1.5、TCPA资格窗40s、AP延伸20m、
+barrier margin0.3m与L3=999m。列表与OS状态超时1s，准确测量TF等待上限0.5s墙钟；
+约4800万格静态图清图后恢复可能超过2s，因此costmap更新等待6s、BT服务确认等待5000ms。
+
+TS及Server应用参数仅在UNCONFIGURED时可改，配置后需cleanup/reconfigure或重启。
+旧`frequency/ts_timeout/tcpa_horizon/safety_factor/barrier_ray_length`不再用于Server。
+`TrackedShipList`须为完整、有测量时间戳的列表；空表表示确认无目标，丢包/过期不会当成无目标。
+单目标和多途点导航均可用，多途点只在当前首段应用COLREGS，后续段是preview。
+Server当前已接入输入/决策合同与全目标VO，尚未接入速度采样、阻尼及物理半径fallback。
+
 ### 示例话题（船名为 `usv_1` 时）
 
 命名空间以配置中 `robot_N.name` 为准，常见形式：

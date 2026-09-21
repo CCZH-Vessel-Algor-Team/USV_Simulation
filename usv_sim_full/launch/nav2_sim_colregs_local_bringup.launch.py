@@ -450,6 +450,8 @@ def generate_launch_description():
             'gz_headless': gz_headless,
             'use_sim_time': use_sim_time,
             'rviz_config_path_override': rviz_config_path,
+            'use_rviz': LaunchConfiguration('use_rviz'),
+            'real_time_factor': LaunchConfiguration('real_time_factor'),
             'verbose_launch': verbose_launch,
             'nav2_namespace': nav2_namespace,
         }.items(),
@@ -785,6 +787,12 @@ def generate_launch_description():
             default_value=default_control_params_file,
             description='整船控制参数 YAML（ALOS + PID），合并到 Nav2 参数并传给 cmd_vel→推力桥',
         ),
+        DeclareLaunchArgument(
+            'real_time_factor', default_value='0.3333333333333333',
+            description='Target Gazebo simulation/wall-clock ratio'),
+        DeclareLaunchArgument(
+            'use_rviz', default_value='auto',
+            description='auto follows visualization config; or true/false'),
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='true',
