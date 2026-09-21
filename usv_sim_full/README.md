@@ -96,6 +96,8 @@ ros2 launch usv_sim_full nav2_sim_full_bringup.launch.py
 沿用可视化配置，也可指定`true`或`false`。Nav2及推力PID显式采用所选时钟。
 单目标BT重规划为0.3Hz墙钟，整体控制链并不是严格按实时因子等比缩放。
 
+Gazebo服务端与完整GUI分进程启动以避免启动握手阻塞，`gz_headless:=true`仅启动服务端；关闭GUI不代表清理完成，Docker实验仍须在每次运行前后重启容器。
+
 ```bash
 ros2 launch usv_sim_full nav2_sim_three_vision_mmwave_bringup.launch.py \
   real_time_factor:=0.3333333333333333 use_rviz:=true
