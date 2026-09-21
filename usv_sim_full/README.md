@@ -20,6 +20,9 @@
 **动态目标船**使用Gazebo Harmonic原生Python绑定：`python3-gz-transport13`、
 `python3-gz-msgs10`，并需要PyYAML。动态船位来自Gazebo模型观测，速度按仿真时间差分计算；
 生成/删除服务与控制、状态发布分组执行，外部删除的模型通过Gazebo清单确认后注销。
+目标船bridge直接启动实际`parameter_bridge`可执行文件，删除时有界停止并wait回收；
+发布器与控制循环同步退休，避免`ros2 run`包装器退出后留下孤儿bridge。
+清理失败的实例保留在退休资源集合中重试，不再发布控制，也不阻断其他实例的清理。
 
 **Nav2 + COLREGs**（`nav2_sim_full_bringup` / `nav2_sim_three_vision_mmwave_bringup`）依赖工作区 `src/usv_nav/src` 下的包（`nav2_bringup`、`nav2_colregs_*` 等），**不要**使用 apt 的 `ros-*-navigation2`。推荐构建方式：
 

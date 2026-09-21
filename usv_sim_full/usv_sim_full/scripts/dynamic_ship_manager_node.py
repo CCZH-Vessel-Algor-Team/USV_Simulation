@@ -3,6 +3,7 @@
 import json
 import math
 import os
+import signal
 import subprocess
 import tempfile
 import threading
@@ -10,6 +11,7 @@ import uuid
 import yaml
 
 import rclpy
+from ament_index_python.packages import get_package_prefix
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Twist
 from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
@@ -92,27 +94,67 @@ class DynamicShip:
         self.observed_pose = None
         self.observed_stamp = None
         self.observed_twist = Twist()
+        self.bridge_process = None
+        self._bridge_lock = threading.Lock()
+        self._publisher_lock = threading.Lock()
+        self._closed = False
 
         self.cmd_vel_pub = node.create_publisher(
             Twist, f'/model/{model_name}/cmd_vel', 10)
 
     def start_bridge(self):
-        cmd = [
-            'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
-            f'/model/{self.model_name}/cmd_vel'
-            f'@geometry_msgs/msg/Twist]gz.msgs.Twist',
-        ]
-        self.bridge_process = subprocess.Popen(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        """Start the bridge directly so its PID is owned and reaped here."""
+        with self._bridge_lock:
+            if self._closed or self.bridge_process is not None:
+                raise RuntimeError('Bridge already started or ship already cleaned up')
+            executable = os.path.join(
+                get_package_prefix('ros_gz_bridge'), 'lib', 'ros_gz_bridge',
+                'parameter_bridge')
+            cmd = [
+                executable,
+                f'/model/{self.model_name}/cmd_vel'
+                f'@geometry_msgs/msg/Twist]gz.msgs.Twist',
+            ]
+            self.bridge_process = subprocess.Popen(
+                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                start_new_session=True)
 
     def cleanup(self):
-        if hasattr(self, 'bridge_process') and self.bridge_process:
-            self.bridge_process.terminate()
-        if hasattr(self, 'bridge_process'):
+        """Retire the publisher and stop/reap only this instance's bridge."""
+        with self._bridge_lock:
             try:
-                self.bridge_process.wait(timeout=2)
-            except Exception:
-                pass
+                with self._publisher_lock:
+                    self._closed = True
+                    if self.cmd_vel_pub is not None:
+                        self.node.destroy_publisher(self.cmd_vel_pub)
+                        self.cmd_vel_pub = None
+            finally:
+                process = self.bridge_process
+                if process is not None:
+                    # Always attempt the owned child, even if publisher teardown
+                    # failed. Keep its handle until wait succeeds so a timeout
+                    # remains retryable. No publisher lock is held while waiting.
+                    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGKILL):
+                        process.send_signal(sig)
+                        try:
+                            process.wait(timeout=2)
+                            break
+                        except subprocess.TimeoutExpired:
+                            if sig == signal.SIGKILL:
+                                raise
+                    self.bridge_process = None
+
+    def publish_cmd_vel(self, twist):
+        """Publish unless cleanup has retired this ship.
+
+        :param twist: Body-frame command to publish.
+        :return: True when published, False when the ship has been retired.
+        """
+        with self._publisher_lock:
+            if self._closed:
+                return False
+            self.cmd_vel_pub.publish(twist)
+            return True
 
     def world_twist_to_body(self, vx_world, vy_world, yaw=None):
         if yaw is None:
@@ -231,6 +273,7 @@ class DynamicShipManager(Node):
         self.declare_parameter('half_distance', 50.0)
 
         self.ships = {}
+        self._retired_ships = set()
         self._ships_lock = threading.Lock()
         self.dt = 0.1
         self._pose_lock = threading.Lock()
@@ -346,12 +389,14 @@ class DynamicShipManager(Node):
             world_name=self.world_name,
         )
 
-        sdf_str = self._generate_sdf(ship)
         try:
-            self._spawn_gazebo(ship, sdf_str)
+            sdf_str = self._generate_sdf(ship)
+            # Resolve/start the bridge before creating an entity: a synchronous
+            # bridge failure must not leave an unregistered Gazebo model behind.
             ship.start_bridge()
+            self._spawn_gazebo(ship, sdf_str)
         except Exception as e:
-            ship.cleanup()
+            self._cleanup_ship(ship)
             self.get_logger().error(f'spawn failed: {e}')
             return False
 
@@ -722,6 +767,22 @@ class DynamicShipManager(Node):
             return None
         return {model.name for model in scene.model} if success else None
 
+    def _cleanup_ship(self, ship):
+        """Keep retired resources owned until cleanup succeeds.
+
+        :param ship: Retired or unregistered ship whose resources need releasing.
+        """
+        with self._ships_lock:
+            self._retired_ships.add(ship)
+        try:
+            ship.cleanup()
+        except Exception as error:
+            self.get_logger().warn(
+                f"Cleanup pending for '{ship.model_name}': {error}")
+        else:
+            with self._ships_lock:
+                self._retired_ships.discard(ship)
+
     def _forget_ship(self, name):
         """Release a registration after the Gazebo model is confirmed removed.
 
@@ -733,7 +794,7 @@ class DynamicShipManager(Node):
             self._model_observations.pop(name, None)
         self._missing_model_counts.pop(name, None)
         if ship is not None:
-            ship.cleanup()
+            self._cleanup_ship(ship)
 
     def reconcile_gazebo_models(self):
         """Retire missing registrations after two successful inventory reads.
@@ -741,6 +802,10 @@ class DynamicShipManager(Node):
         Missing pose messages alone never imply that an obstacle was deleted.
         A second inventory read tolerates the asynchronous spawn acknowledgement.
         """
+        with self._ships_lock:
+            retired = list(self._retired_ships)
+        for ship in retired:
+            self._cleanup_ship(ship)
         with self._ships_lock:
             names = list(self.ships)
         if not names:
@@ -798,9 +863,10 @@ class DynamicShipManager(Node):
             observation = observations.get(ship.model_name)
             if observation is not None:
                 ship.update_observation(*observation)
-            observation_stamps.append(ship.observed_stamp if ship.observed_stamp is not None else 0.0)
             twist = ship.compute_cmd_vel(self.dt)
-            ship.cmd_vel_pub.publish(twist)
+            if not ship.publish_cmd_vel(twist):
+                continue
+            observation_stamps.append(ship.observed_stamp if ship.observed_stamp is not None else 0.0)
 
             ts = TrackedShip()
             ts.target_id.uuid = list(bytes.fromhex(ship.target_id.replace('-', '')))
@@ -847,8 +913,13 @@ def main(args=None):
     finally:
         executor.shutdown()
         node._gz_node.unsubscribe(node._pose_topic)
-        for ship in node.ships.values():
-            ship.cleanup()
+        for name in list(node.ships):
+            node._forget_ship(name)
+        # Include earlier failures and retry failures from the first pass. Each
+        # attempt is bounded and isolated so all independently sessioned bridges
+        # get a cleanup attempt even when one child cannot yet be reaped.
+        for ship in list(node._retired_ships):
+            node._cleanup_ship(ship)
         for p in getattr(node, '_retained_spawn_sdf_paths', []):
             if p and os.path.isfile(p):
                 try:
