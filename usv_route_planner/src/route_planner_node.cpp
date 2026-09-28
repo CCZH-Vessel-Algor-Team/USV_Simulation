@@ -43,6 +43,7 @@ constexpr uint16_t ERROR_OK = 0;
 constexpr uint16_t ERROR_MAP_NOT_READY = 1;
 constexpr uint16_t ERROR_INVALID_GPS = 2;
 constexpr uint16_t ERROR_COORDINATE_TRANSFORM = 3;
+constexpr uint16_t ERROR_START_GOAL_NOT_NAVIGABLE = 4;
 constexpr uint16_t ERROR_NO_SHORTEST_ROUTE = 8;
 
 geometry_msgs::msg::Quaternion quaternionFromYaw(double yaw)
@@ -149,8 +150,6 @@ public:
     config.safety_decay_distance_m = declare_parameter<double>(
       "safety_decay_distance_m", 15.0);
     config.chart_risk_weight = declare_parameter<double>("chart_risk_weight", 1.0);
-    config.max_start_goal_snap_distance_m = declare_parameter<double>(
-      "max_start_goal_snap_distance_m", 10.0);
     config.roi_margin_m = declare_parameter<double>("roi_margin_m", 1000.0);
     config.waypoint_spacing_m = declare_parameter<double>("waypoint_spacing_m", 50.0);
     config.max_waypoints = static_cast<std::size_t>(
@@ -217,13 +216,12 @@ public:
 private:
   static bool isPlannerConfigParameter(const std::string & name)
   {
-    static constexpr std::array<const char *, 12> kPlannerParameters = {
+    static constexpr std::array<const char *, 11> kPlannerParameters = {
       "collision_clearance_m",
       "safety_hard_extra_clearance_m",
       "safety_weight",
       "safety_decay_distance_m",
       "chart_risk_weight",
-      "max_start_goal_snap_distance_m",
       "roi_margin_m",
       "waypoint_spacing_m",
       "max_waypoints",
@@ -246,8 +244,6 @@ private:
     config.safety_decay_distance_m =
       get_parameter("safety_decay_distance_m").as_double();
     config.chart_risk_weight = get_parameter("chart_risk_weight").as_double();
-    config.max_start_goal_snap_distance_m =
-      get_parameter("max_start_goal_snap_distance_m").as_double();
     config.roi_margin_m = get_parameter("roi_margin_m").as_double();
     config.waypoint_spacing_m = get_parameter("waypoint_spacing_m").as_double();
     config.max_waypoints = static_cast<std::size_t>(
@@ -270,8 +266,6 @@ private:
         config.safety_decay_distance_m = parameter.as_double();
       } else if (name == "chart_risk_weight") {
         config.chart_risk_weight = parameter.as_double();
-      } else if (name == "max_start_goal_snap_distance_m") {
-        config.max_start_goal_snap_distance_m = parameter.as_double();
       } else if (name == "roi_margin_m") {
         config.roi_margin_m = parameter.as_double();
       } else if (name == "waypoint_spacing_m") {
@@ -630,7 +624,16 @@ private:
       output.safest = makeCandidate(
         result.safest, usv_interfaces::msg::RouteCandidate::PLAN_SAFEST,
         request_id, stamp);
-      output.error_code = result.shortest.valid ? ERROR_OK : ERROR_NO_SHORTEST_ROUTE;
+      if (result.shortest.valid) {
+        output.error_code = ERROR_OK;
+      } else if (
+        result.failure == PlanFailure::kStartNotNavigable ||
+        result.failure == PlanFailure::kGoalNotNavigable)
+      {
+        output.error_code = ERROR_START_GOAL_NOT_NAVIGABLE;
+      } else {
+        output.error_code = ERROR_NO_SHORTEST_ROUTE;
+      }
       output.message = result.shortest.valid ? "OK" : result.shortest.message;
       candidates_publisher_->publish(output);
 

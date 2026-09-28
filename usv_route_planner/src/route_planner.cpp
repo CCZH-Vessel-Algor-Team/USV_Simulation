@@ -165,36 +165,6 @@ SearchGrid buildSearchGrid(
   return grid;
 }
 
-bool snapToCommonFree(
-  const SearchGrid & grid, const GridIndex & requested, double max_distance_m,
-  GridIndex & snapped)
-{
-  const GridIndex local = grid.local(requested);
-  if (!grid.blocked(local, false)) {
-    snapped = requested;
-    return true;
-  }
-
-  const int radius = static_cast<int>(std::ceil(max_distance_m / grid.resolution));
-  double best_squared = std::numeric_limits<double>::infinity();
-  bool found = false;
-  for (int dr = -radius; dr <= radius; ++dr) {
-    for (int dc = -radius; dc <= radius; ++dc) {
-      const double squared = static_cast<double>(dr * dr + dc * dc);
-      if (squared > static_cast<double>(radius * radius) || squared >= best_squared) {
-        continue;
-      }
-      const GridIndex candidate{local.row + dr, local.col + dc};
-      if (!grid.blocked(candidate, false)) {
-        best_squared = squared;
-        snapped = grid.global(candidate);
-        found = true;
-      }
-    }
-  }
-  return found && std::sqrt(best_squared) * grid.resolution <= max_distance_m;
-}
-
 bool lineIsFree(
   const SearchGrid & grid, GridIndex start, const GridIndex & goal,
   bool safest, bool prevent_corner_cutting)
@@ -564,30 +534,28 @@ PlanPair RoutePlanner::plan(
 
   const SearchGrid grid = buildSearchGrid(
     map, {start_index, goal_index}, config_, config_.roi_margin_m);
-  GridIndex snapped_start;
-  GridIndex snapped_goal;
-  if (!snapToCommonFree(
-      grid, start_index, config_.max_start_goal_snap_distance_m, snapped_start))
-  {
-    pair.shortest.message = "Start cannot be snapped to collision-free water";
+  if (grid.blocked(grid.local(start_index), false)) {
+    pair.shortest.message =
+      "Start is not in navigable water (obstacle or collision-clearance buffer)";
     pair.safest.message = pair.shortest.message;
+    pair.failure = PlanFailure::kStartNotNavigable;
     return pair;
   }
-  if (!snapToCommonFree(
-      grid, goal_index, config_.max_start_goal_snap_distance_m, snapped_goal))
-  {
-    pair.shortest.message = "Goal cannot be snapped to collision-free water";
+  if (grid.blocked(grid.local(goal_index), false)) {
+    pair.shortest.message =
+      "Goal is not in navigable water (obstacle or collision-clearance buffer)";
     pair.safest.message = pair.shortest.message;
+    pair.failure = PlanFailure::kGoalNotNavigable;
     return pair;
   }
 
-  pair.planned_start = map.gridToWorld(snapped_start);
-  pair.planned_goal = map.gridToWorld(snapped_goal);
+  pair.planned_start = map.gridToWorld(start_index);
+  pair.planned_goal = map.gridToWorld(goal_index);
   pair.shortest = finishRoute(
-    map, grid, runAStar(grid, snapped_start, snapped_goal, false, config_),
+    map, grid, runAStar(grid, start_index, goal_index, false, config_),
     false, config_);
   pair.safest = finishRoute(
-    map, grid, runAStar(grid, snapped_start, snapped_goal, true, config_),
+    map, grid, runAStar(grid, start_index, goal_index, true, config_),
     true, config_);
   return pair;
 }

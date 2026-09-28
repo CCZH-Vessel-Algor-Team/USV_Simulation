@@ -278,6 +278,28 @@ def generate_launch_description():
         'usv_map_rtsp_streamer.launch.py',
     )
 
+    usv_monitor_share = get_package_share_directory('usv_monitor')
+    usv_monitor_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(usv_monitor_share, 'launch', 'usv_monitor.launch.py')
+        ),
+    )
+    sensor_status_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(usv_monitor_share, 'launch', 'sensor_status.launch.py')
+        ),
+    )
+    # config_gateway.launch.py 也声明了 params_file；父链中的 params_file 已被 Nav2
+    # bringup 占用，必须显式传回 usv_monitor 自己的 gateway.yaml，否则会被覆盖。
+    config_gateway_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(usv_monitor_share, 'launch', 'config_gateway.launch.py')
+        ),
+        launch_arguments={
+            'params_file': os.path.join(usv_monitor_share, 'config', 'gateway.yaml'),
+        }.items(),
+    )
+
     config_path = LaunchConfiguration('config_path')
     use_sim_time = LaunchConfiguration('use_sim_time')
     enable_camera_rtsp = LaunchConfiguration('enable_camera_rtsp_streaming')
@@ -514,6 +536,9 @@ def generate_launch_description():
         LogInfo(msg=['Starting CCS certified simulation from: ', config_path]),
         base_bringup,
         route_planner_include,
+        usv_monitor_include,
+        sensor_status_include,
+        config_gateway_include,
         OpaqueFunction(function=_ccs_map_to_odom_tf),
         OpaqueFunction(function=_gazebo_camera_follow),
         OpaqueFunction(function=_dynamic_ship_ground_truth_bridge),
