@@ -105,20 +105,45 @@ class GazeboPoseCache:
             return dict(self._samples)
 
     def model_names(self, world_name, timeout_ms=1000):
-        """Read the scene using the existing transport node.
+        """Query scene inventory in a process isolated from the pose callback.
 
         :param world_name: Gazebo world whose model inventory is requested.
-        :param timeout_ms: Maximum transport request wait in milliseconds.
-        :return: Model names, or None when transport or the reply is unavailable.
+        :param timeout_ms: Total query budget, including process overhead, in milliseconds.
+        :return: Root model names, or None for unavailable, invalid or late replies.
         """
-        if self._node is None:
+        if self._node is None or timeout_ms <= 0:
             return None
-        from gz.msgs10.empty_pb2 import Empty
-        from gz.msgs10.scene_pb2 import Scene
+        timeout_sec = timeout_ms / 1000.0
+        deadline = time.monotonic() + timeout_sec
+        try:
+            from google.protobuf import text_format
+            from gz.msgs10.scene_pb2 import Scene
+        except ImportError:
+            return None
+        if time.monotonic() >= deadline:
+            return None
 
-        success, scene = self._node.request(
-            f'/world/{world_name}/scene/info', Empty(), Empty, Scene, timeout_ms)
-        return {model.name for model in scene.model} if success else None
+        cmd = [
+            'gz', 'service', '-s', f'/world/{world_name}/scene/info',
+            '--reqtype', 'gz.msgs.Empty', '--reptype', 'gz.msgs.Scene',
+            '--timeout', str(timeout_ms), '--req', '',
+        ]
+        try:
+            # Isolate the synchronous transport wait from high-rate pose callback
+            # processing; the CLI owns its separate request connection.
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=timeout_sec)
+            if (time.monotonic() > deadline or result.returncode != 0
+                    or not result.stdout.strip()):
+                return None
+            scene = text_format.Parse(result.stdout, Scene())
+        except (OSError, subprocess.TimeoutExpired, text_format.ParseError):
+            return None
+        if not scene.ListFields():
+            return None
+        names = {model.name for model in scene.model}
+        # Popen startup and protobuf parsing are not covered by run's wait timeout.
+        return names if time.monotonic() <= deadline else None
 
     def forget(self, name):
         """Discard feedback belonging to a removed registration.
@@ -863,7 +888,7 @@ class DynamicShipManager(Node):
     def _gazebo_model_names(self, timeout_ms=1000):
         """Read authoritative inventory without adding a pose pipeline.
 
-        :param timeout_ms: Maximum transport request wait in milliseconds.
+        :param timeout_ms: Total scene query budget in milliseconds.
         :return: Model names, or None when inventory cannot be read.
         """
         try:
