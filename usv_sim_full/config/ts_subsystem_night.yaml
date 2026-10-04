@@ -1,6 +1,6 @@
-# CCS geometry migration for standalone Nav2 night e58faf30.
-# Pass through ts_params_file; launch supplies simulation clock and input/TF wiring.
-# Parameter/geometry compatibility does not imply legacy trajectory equivalence.
+# Explicit CCS night/D profile for standalone Nav2 e58faf30.
+# Physical radii, both inflation scales, threat horizon and AP extension stay CCS-sized.
+# Heading gains apply per avoidance request, not per second.
 ts_state_manager:
   ros__parameters:
     update_frequency: 10.0
@@ -16,12 +16,12 @@ avoidance_point_node:
     snapshot_timeout: 1.0
     max_request_position_delta: 3.0
     avoidance_radius_scale: 2.0
-    point_extension_distance: 40.0  # Legacy (15m OS + 5m TS) * 2.
-    heading_smoothing_alpha: 1.0
+    point_extension_distance: 40.0
+    heading_smoothing_alpha: 0.5    # Symmetric-mode gain; D uses the two gains below.
     smooth_initial_heading: false
-    speed_tolerance: 0.0
+    speed_tolerance: 0.3
     speed_sample_count: 5
-    asymmetric_heading_smoothing: false
+    asymmetric_heading_smoothing: true
     heading_alpha_increase: 1.0
     heading_alpha_decrease: 0.15
 
@@ -29,5 +29,5 @@ barrier_node:
   ros__parameters:
     snapshot_timeout: 1.0
     max_request_position_delta: 3.0
-    closing_segment_length: 999.0
-    lateral_margin: 15.0           # Legacy first segment: TS radius + 15m.
+    closing_segment_length: 8.0
+    lateral_margin: 0.3

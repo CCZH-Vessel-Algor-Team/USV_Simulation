@@ -16,6 +16,8 @@ from ament_index_python.packages import get_package_prefix
 from geometry_msgs.msg import PointStamped, Pose, Twist
 from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.clock import JumpThreshold
+from rclpy.duration import Duration
 from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -23,7 +25,9 @@ from usv_interfaces.srv import (
     SpawnDynamicShip, DeleteDynamicShip, ClearDynamicShips,
     SetDynamicShipConfig,
 )
-from usv_sim_full.pose_feedback import PoseTracker, fresh_sample, yaw_from_quaternion
+from usv_sim_full.pose_feedback import (
+    PoseTracker, fresh_sample, is_feedback_fresh_ns, yaw_from_quaternion,
+)
 
 
 def _fmt_pose_xyzrpy(xyz, rpy):
@@ -55,13 +59,21 @@ def _resolve_profile_path(path_text, config_base_dir):
 class GazeboPoseCache:
     """Gazebo 动态实体位姿缓存：/world/<world>/dynamic_pose/info。
 
-    回调运行在 gz-transport 线程，快照加锁读取。Python 绑定不可用时
-    缓存为空，调用方自动退回内部积分。
+    One subscription supplies both accumulated control feedback and complete
+    observation frames. Missing bindings leave tracked publication unavailable.
     """
 
-    def __init__(self, world_name, logger=None):
+    def __init__(self, world_name, logger=None, now_ns=None, pose_feedback_timeout=1.0):
         self._lock = threading.Lock()
         self._samples = {}
+        self._frame = None
+        self._pending_frame = None
+        self._watermark_ns = None
+        self._max_observed_ns = None
+        self._not_before_ns = 0
+        self._awaiting_absence = set()
+        self._now_ns = now_ns
+        self._future_window_ns = int(pose_feedback_timeout * 1e9)
         self._node = None
         self._topic = f'/world/{world_name}/dynamic_pose/info'
         try:
@@ -70,7 +82,7 @@ class GazeboPoseCache:
         except ImportError:
             if logger is not None:
                 logger.warning(
-                    'gz.transport Python 绑定不可用，动态船真值退回开环积分')
+                    'gz.transport Python 绑定不可用，停止发布动态船跟踪快照')
             return
         self._node = gz_transport.Node()
         self._node.subscribe(Pose_V, self._topic, self._on_pose_v)
@@ -78,31 +90,105 @@ class GazeboPoseCache:
             logger.info(f'GazeboPoseCache 订阅 {self._topic}')
 
     def _on_pose_v(self, msg):
-        stamp_sec = float(msg.header.stamp.sec) + float(msg.header.stamp.nsec) * 1e-9
-        fresh = {}
-        for entry in msg.pose:
-            name = entry.name.split('::', 1)[0]
-            if not name or '/' in name:
-                continue
-            fresh[name] = (
-                float(entry.position.x),
-                float(entry.position.y),
-                yaw_from_quaternion(
-                    float(entry.orientation.x),
-                    float(entry.orientation.y),
-                    float(entry.orientation.z),
-                    float(entry.orientation.w),
-                ),
-                stamp_sec,
-            )
-        if not fresh:
+        if self._now_ns is None:
             return
         with self._lock:
-            self._samples.update(fresh)
+            now_ns = self._now_ns()
+            # Promote BEFORE considering a newer future frame. Retain the earliest
+            # pending frame so a slower /clock cannot starve this subscription.
+            self._promote_pending(now_ns)
+            sec, nsec = msg.header.stamp.sec, msg.header.stamp.nsec
+            if sec < 0 or not 0 <= nsec < 1_000_000_000:
+                return
+            stamp_ns = sec * 1_000_000_000 + nsec
+            # A delayed old-epoch packet must not poison the next membership
+            # fence. Only bounded clock/pose skew can enter pending/observed state.
+            if stamp_ns - now_ns > self._future_window_ns:
+                return
+            # Separate from the accepted watermark: even a future frame not kept
+            # in the single pending slot must fence a later membership change.
+            self._max_observed_ns = max(
+                stamp_ns, self._max_observed_ns if self._max_observed_ns is not None else stamp_ns)
+            roots = {}
+            for entry in msg.pose:
+                name = entry.name
+                if not name or '::' in name or '/' in name:
+                    continue
+                q = entry.orientation
+                values = (entry.position.x, entry.position.y, entry.position.z,
+                          q.x, q.y, q.z, q.w)
+                if (name in roots or not all(map(math.isfinite, values))
+                        or not any((q.x, q.y, q.z, q.w))):
+                    roots[name] = None  # Ambiguous/malformed roots cannot disappear silently.
+                    continue
+                roots[name] = (float(entry.position.x), float(entry.position.y),
+                               yaw_from_quaternion(q.x, q.y, q.z, q.w), stamp_ns)
+            frame = (stamp_ns, roots)
+            if stamp_ns <= now_ns:
+                self._accept(frame)
+            elif self._pending_frame is None or stamp_ns < self._pending_frame[0]:
+                self._pending_frame = frame
+
+    def _accept(self, frame):
+        """Accept an advancing frame under the cache lock.
+
+        :param frame: Exact timestamp and root-pose mapping.
+        """
+        stamp_ns, roots = frame
+        if (stamp_ns < self._not_before_ns or
+                (self._watermark_ns is not None and stamp_ns <= self._watermark_ns)):
+            return
+        self._watermark_ns = stamp_ns
+        self._frame = frame
+        self._samples.update(roots)
+        if self._awaiting_absence.isdisjoint(roots):
+            self._awaiting_absence.clear()
+
+    def _promote_pending(self, now_ns):
+        """Promote a waiting observation under the cache lock.
+
+        :param now_ns: Current simulation time in nanoseconds.
+        """
+        if self._pending_frame is not None and self._pending_frame[0] <= now_ns:
+            frame, self._pending_frame = self._pending_frame, None
+            self._accept(frame)
 
     def snapshot(self):
+        """Return accumulated control samples and the latest whole frame.
+
+        :return: A control-sample copy and an immutable-by-convention frame tuple.
+        """
         with self._lock:
-            return dict(self._samples)
+            if self._now_ns is not None:
+                self._promote_pending(self._now_ns())
+            return dict(self._samples), self._frame
+
+    def invalidate_frame(self, removed_name=None):
+        """Fence membership and any deletion witness atomically under the cache lock.
+
+        :param removed_name: Confirmed removed root requiring a subsequent absence witness.
+        """
+        with self._lock:
+            if removed_name is not None:
+                self._samples.pop(removed_name, None)
+                self._awaiting_absence.add(removed_name)
+            self._not_before_ns = max(
+                self._not_before_ns,
+                self._now_ns() if self._now_ns is not None else 0,
+                self._max_observed_ns + 1 if self._max_observed_ns is not None else 0)
+            self._frame = None
+            self._pending_frame = None
+
+    def reset(self):
+        """Clear both cache views and ordering state after a ROS clock rewind."""
+        with self._lock:
+            self._samples.clear()
+            self._frame = None
+            self._pending_frame = None
+            self._watermark_ns = None
+            self._max_observed_ns = None
+            self._not_before_ns = 0
+            # A clock rewind does not discharge a physical deletion witness.
 
     def model_names(self, world_name, timeout_ms=1000):
         """Query scene inventory in a process isolated from the pose callback.
@@ -146,12 +232,15 @@ class GazeboPoseCache:
         return names if time.monotonic() <= deadline else None
 
     def forget(self, name):
-        """Discard feedback belonging to a removed registration.
+        """Discard previous feedback before reserving an absent model name.
 
-        :param name: Removed model name.
+        :param name: Model name whose absence was confirmed by the spawn preflight.
         """
         with self._lock:
             self._samples.pop(name, None)
+            # The existing authoritative scene absence preflight allows the new
+            # incarnation to appear even if no intervening pose frame was read.
+            self._awaiting_absence.discard(name)
 
     def close(self):
         """Stop the existing pose subscription at shutdown."""
@@ -285,6 +374,33 @@ class DynamicShip:
         self.feedback_fresh = True
         return True
 
+    def reset_feedback(self):
+        """Reset observation history while preserving physical motion and ownership."""
+        self.pose_tracker.reset()
+        self.feedback_fresh = False
+        self.feedback_stamp_sec = None
+
+    def sync_from_feedback_ns(self, sample, now_ns, timeout_sec):
+        """Use exact-time measured feedback for control and tracked publication.
+
+        :param sample: World X/Y/yaw and integer observation nanoseconds, or None.
+        :param now_ns: Current simulation time in nanoseconds.
+        :param timeout_sec: Maximum age and velocity-history gap in seconds.
+        :return: Whether measured pose feedback is usable (velocity may be bootstrapping).
+        """
+        if (sample is None or not all(map(math.isfinite, sample[:3])) or
+                not is_feedback_fresh_ns(sample[3], now_ns, timeout_sec)):
+            self.reset_feedback()
+            return False
+        previous = self.pose_tracker.stamp_ns
+        if previous is not None and sample[3] <= previous:
+            return self.feedback_fresh
+        self.pose_tracker.update_ns(sample[0], sample[1], sample[3], timeout_sec)
+        self.current_x, self.current_y, self.actual_yaw = sample[:3]
+        self.feedback_stamp_sec = sample[3] * 1e-9
+        self.feedback_fresh = True
+        return True
+
     def world_twist_to_body(self, vx_world, vy_world, yaw=None):
         if yaw is None:
             yaw = self.actual_yaw
@@ -395,7 +511,15 @@ class DynamicShipManager(Node):
 
         self.pose_feedback_timeout = (
             self.get_parameter('pose_feedback_timeout').get_parameter_value().double_value)
-        self.gz_pose_cache = GazeboPoseCache(self.world_name, self.get_logger())
+        if not math.isfinite(self.pose_feedback_timeout) or self.pose_feedback_timeout <= 0:
+            raise ValueError('pose_feedback_timeout must be finite and positive')
+        self._clock_reset = threading.Event()
+        self._clock_jump_handle = self.get_clock().create_jump_callback(
+            JumpThreshold(min_backward=Duration(nanoseconds=-1), on_clock_change=True),
+            post_callback=lambda jump: self._clock_reset.set())
+        self.gz_pose_cache = GazeboPoseCache(
+            self.world_name, self.get_logger(), lambda: self.get_clock().now().nanoseconds,
+            pose_feedback_timeout=self.pose_feedback_timeout)
 
         self.ships = {}
         self._ships_lock = threading.Lock()
@@ -403,33 +527,43 @@ class DynamicShipManager(Node):
         # Failed/dispatched creates: name -> whether creation was ever observed.
         self._pending_spawns = {}
         self._missing_model_counts = {}
+        self._registry_revision = 0
+        self._last_published_stamp_ns = None
         self.dt = 0.1
 
+        # TimeSource places /clock in the default group. Keep blocking lifecycle
+        # work serialized elsewhere so it cannot freeze this node's ROS clock.
+        self.lifecycle_group = MutuallyExclusiveCallbackGroup()
         self.spawn_srv = self.create_service(
-            SpawnDynamicShip, '/dynamic_ship/spawn', self.on_spawn)
+            SpawnDynamicShip, '/dynamic_ship/spawn', self.on_spawn,
+            callback_group=self.lifecycle_group)
         self.delete_srv = self.create_service(
-            DeleteDynamicShip, '/dynamic_ship/delete', self.on_delete)
+            DeleteDynamicShip, '/dynamic_ship/delete', self.on_delete,
+            callback_group=self.lifecycle_group)
         self.clear_srv = self.create_service(
-            ClearDynamicShips, '/dynamic_ship/clear', self.on_clear)
+            ClearDynamicShips, '/dynamic_ship/clear', self.on_clear,
+            callback_group=self.lifecycle_group)
 
         self.tracked_pub = self.create_publisher(
             TrackedShipList, '/dynamic_ship/tracked_ships', 10)
 
-        # Services, clicks and reconciliation share the default mutually exclusive
-        # group. Only control runs concurrently; no blocking work holds its locks.
+        # With two executor threads, control and /clock can share the available
+        # worker while the other waits in the lifecycle group.
         self.control_group = MutuallyExclusiveCallbackGroup()
         self.timer = self.create_timer(
             self.dt, self.control_loop, callback_group=self.control_group)
-        self.scene_timer = self.create_timer(1.0, self.reconcile_gazebo_models)
+        self.scene_timer = self.create_timer(
+            1.0, self.reconcile_gazebo_models, callback_group=self.lifecycle_group)
 
         self._ship_counter = 0
 
         self.click_sub = self.create_subscription(
-            PointStamped, '/clicked_point', self.on_clicked_point, 10)
+            PointStamped, '/clicked_point', self.on_clicked_point, 10,
+            callback_group=self.lifecycle_group)
 
         self.config_srv = self.create_service(
             SetDynamicShipConfig, '/dynamic_ship/set_config',
-            self.on_set_config)
+            self.on_set_config, callback_group=self.lifecycle_group)
 
         self.names_pub = self.create_publisher(
             String, '/dynamic_ship/names', 10)
@@ -508,6 +642,7 @@ class DynamicShipManager(Node):
 
         with self._ships_lock:
             self._pending_spawns.pop(name, None)
+            self._membership_changed()
         self.get_logger().info(
             f'clicked at ({x:.2f},{y:.2f}) heading={math.degrees(yaw):.0f}deg '
             f'-> spawned {name} speed={speed}m/s')
@@ -858,6 +993,8 @@ class DynamicShipManager(Node):
             with self._ships_lock:
                 self.ships[ship.model_name] = ship
                 self._pending_spawns[ship.model_name] = False
+                self.gz_pose_cache.forget(ship.model_name)
+                self._membership_changed()
             try:
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
                 command_ok = result.returncode == 0
@@ -949,8 +1086,16 @@ class DynamicShipManager(Node):
             self._retired_ships.add(ship)
             self._pending_spawns.pop(name, None)
             self._missing_model_counts.pop(name, None)
-        self.gz_pose_cache.forget(name)
+            self._membership_changed(removed_name=name)
         self._cleanup_ship(ship)
+
+    def _membership_changed(self, removed_name=None):
+        """Invalidate publication after a change; caller holds the registry lock.
+
+        :param removed_name: Confirmed deletion requiring a root-absence witness.
+        """
+        self._registry_revision += 1
+        self.gz_pose_cache.invalidate_frame(removed_name=removed_name)
 
     def reconcile_gazebo_models(self):
         """Retry cleanup even with zero active ships and reconcile scene deletions.
@@ -1040,27 +1185,44 @@ class DynamicShipManager(Node):
         raise RuntimeError(f"Gazebo did not confirm removal of '{model_name}': {detail}")
 
     def control_loop(self):
-        msg = TrackedShipList()
-        now = self.get_clock().now()
-        now_sec = now.nanoseconds * 1e-9
-        msg.header.stamp = now.to_msg()
-        msg.header.frame_id = 'map'
-
-        gz_samples = self.gz_pose_cache.snapshot()
+        if self._clock_reset.is_set():
+            # The clock callback only sets an Event: no cache/registry locks in
+            # that callback, and only this control thread mutates tracker history.
+            self._clock_reset.clear()
+            with self._ships_lock:
+                self.gz_pose_cache.reset()
+                for ship in self.ships.values():
+                    ship.reset_feedback()
+                self._last_published_stamp_ns = None
         stale_ships = []
         names = []
         with self._ships_lock:
+            revision = self._registry_revision
+            pending = bool(self._pending_spawns)
             ships = [ship for name, ship in self.ships.items()
                      if name not in self._pending_spawns]
+            gz_samples, frame = self.gz_pose_cache.snapshot()
+        now = self.get_clock().now()
+        complete = (not pending and frame is not None and
+                    is_feedback_fresh_ns(frame[0], now.nanoseconds, self.pose_feedback_timeout))
+        msg = TrackedShipList()
+        msg.header.frame_id = 'map'
         for ship in ships:
             sample = gz_samples.get(ship.model_name)
-            fresh = ship.sync_from_feedback(
-                sample, now_sec, self.pose_feedback_timeout)
+            fresh = ship.sync_from_feedback_ns(
+                sample, now.nanoseconds, self.pose_feedback_timeout)
             if not fresh:
                 stale_ships.append(ship.model_name)
 
             twist = ship.compute_cmd_vel(self.dt, predict=not fresh)
-            if not ship.publish_cmd_vel(twist):
+            if ship.publish_cmd_vel(twist):
+                names.append(ship.model_name)
+
+            if (not complete or not fresh or not ship.pose_tracker.ready or
+                    frame[1].get(ship.model_name) is None or
+                    ship.pose_tracker.stamp_ns != frame[0] or
+                    not all(map(math.isfinite, ship.pose_tracker.velocity))):
+                complete = False
                 continue
 
             ts = TrackedShip()
@@ -1069,15 +1231,34 @@ class DynamicShipManager(Node):
             ts.twist = ship.get_current_twist()
             ts.radius = 5.0
             msg.ships.append(ts)
-            names.append(ship.model_name)
 
         if stale_ships:
             self.get_logger().warn(
-                'dynamic ship Gazebo 位姿反馈超时，退回开环积分: %s'
+                'dynamic ship feedback unavailable; tracked snapshot withheld: %s'
                 % ', '.join(stale_ships),
                 throttle_duration_sec=5.0)
 
-        self.tracked_pub.publish(msg)
+        if complete:
+            msg.header.stamp.sec, msg.header.stamp.nanosec = divmod(frame[0], 1_000_000_000)
+            cache = self.gz_pose_cache
+            # Lock order is registry -> cache. Only the final validation/publish
+            # runs here, never scene queries or process waits. Frame identity is
+            # its generation token: accepted/replaced/reset frames cannot pass as
+            # the candidate selected earlier, even with an identical timestamp.
+            with self._ships_lock, cache._lock:
+                final_now_ns = self.get_clock().now().nanoseconds
+                cache._promote_pending(final_now_ns)
+                if (revision == self._registry_revision and not self._pending_spawns and
+                        cache._frame is frame and not cache._awaiting_absence and
+                        is_feedback_fresh_ns(frame[0], final_now_ns, self.pose_feedback_timeout) and
+                        (self._last_published_stamp_ns is None or
+                         frame[0] > self._last_published_stamp_ns) and
+                        not self._clock_reset.is_set()):
+                    # This post-clock-read Event check is the commit point. The
+                    # ROS jump callback only sets the Event, never takes either
+                    # lock (Clock.now may hold the ROS clock mutex during it).
+                    self.tracked_pub.publish(msg)
+                    self._last_published_stamp_ns = frame[0]
         self.names_pub.publish(String(data=json.dumps(names)))
 
 
