@@ -76,24 +76,26 @@ spawn/delete/clear/config 服务、点击订阅和场景查询定时器共用独
 Barrier 使用 avoidance 返回的同一 snapshot UUID 和 header；这是 standalone 接口，不是 Server 接口，
 也不包含归档 P 实验的 prediction 字段。
 
-默认 `config/ts_subsystem.yaml` 是 **CCS 参数与几何迁移，不保证旧版轨迹等价**。
+CCS/三视觉毫米波导航入口及独立 `ts_subsystem.launch.py` 默认加载
+`config/ts_subsystem_asymmetric.yaml`，无需额外指定 `ts_params_file`；该参数仍可显式覆盖配置。
+
+可选的对称配置 `config/ts_subsystem.yaml` 是 **CCS 参数与几何迁移，不保证旧版轨迹等价**。
 保持配置 OS 半径 15m、TS 半径 5m、威胁 TCPA horizon 40s；威胁判定倍率为2，避让倍率为1.5。
 按当前半径和20m，判定区间为40m、避让计算半径为30m，使避让域小于判定域，降低刚避让就离开判定域的情况。
 AP 扩展距离为 40m，即原 `(15+5)*2`；第一段 barrier 为 `5+15=20m`，第三段为 999m。
 新扩展距离是独立参数，仅对当前 5m TS 重现旧公式；40s horizon 是威胁筛选窗口。
 
-显式选择非对称航向平滑（D）profile：
+使用默认非对称航向平滑（D）profile：
 
 ```bash
 ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py \
-  auto_cleanup:=false cleanup_fastdds_shm:=false \
-  ts_params_file:="$(ros2 pkg prefix --share usv_sim_full)/config/ts_subsystem_asymmetric.yaml"
+  auto_cleanup:=false cleanup_fastdds_shm:=false
 ```
 
 `ts_params_file` 独立于 Nav2 的 `params_file`。非对称 profile 同样保持 OS 15m、判定/避让倍率2/1.5、horizon 40s、
 AP 扩展 40m；启用不对称增益 1.0/0.15、速度容差 ±0.3m/s、5 个区间样本（另检查不在网格上的实测速度），
 barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smoothing_alpha=0.5` 是对称模式
-备用增益，不与 D 增益串联。默认 profile 为 alpha 1、速度容差 0、不启用 D。
+备用增益，不与 D 增益串联。可选对称 profile 为 alpha 1、速度容差 0、不启用 D。
 两份配置的输入/OS/processed 超时均为 1s，请求位置容差为 3m。
 
 参数迁移：manager 的 `frequency/ts_timeout/tcpa_horizon/safety_factor` 分别变为

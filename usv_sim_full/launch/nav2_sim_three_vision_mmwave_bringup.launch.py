@@ -368,7 +368,7 @@ def generate_launch_description():
             usv_sim_full_pkg, 'launch', 'ts_subsystem.launch.py',
         )
     default_ts_params_file = os.path.join(
-        usv_sim_full_pkg, 'config', 'ts_subsystem.yaml'
+        usv_sim_full_pkg, 'config', 'ts_subsystem_asymmetric.yaml'
     )
 
     launch_dir = os.path.dirname(os.path.abspath(__file__))
