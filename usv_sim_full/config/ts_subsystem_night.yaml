@@ -1,5 +1,5 @@
 # Explicit CCS night/D profile for standalone Nav2 e58faf30.
-# Physical radii, both inflation scales, threat horizon and AP extension stay CCS-sized.
+# CCS radii, threat scale/horizon and AP extension; avoidance scale stays below detection.
 # Heading gains apply per avoidance request, not per second.
 ts_state_manager:
   ros__parameters:
@@ -15,7 +15,7 @@ avoidance_point_node:
   ros__parameters:
     snapshot_timeout: 1.0
     max_request_position_delta: 3.0
-    avoidance_radius_scale: 2.0
+    avoidance_radius_scale: 1.5
     point_extension_distance: 40.0
     heading_smoothing_alpha: 0.5    # Symmetric-mode gain; D uses the two gains below.
     smooth_initial_heading: false

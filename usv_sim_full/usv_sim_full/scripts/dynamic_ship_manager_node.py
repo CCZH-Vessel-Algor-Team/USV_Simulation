@@ -13,8 +13,9 @@ import yaml
 
 import rclpy
 from ament_index_python.packages import get_package_prefix
-from geometry_msgs.msg import PointStamped, Pose, Twist
+from geometry_msgs.msg import PointStamped, Pose, PoseWithCovarianceStamped, Twist
 from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
+from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.clock import JumpThreshold
 from rclpy.duration import Duration
@@ -508,6 +509,14 @@ class DynamicShipManager(Node):
         self.declare_parameter('shape', 'mesh_profile')
         self.declare_parameter('half_distance', 50.0)
         self.declare_parameter('pose_feedback_timeout', 1.0)
+        self.declare_parameter(
+            'spawn_pose_topic', '/dynamic_ship/spawn_pose',
+            ParameterDescriptor(
+                read_only=True,
+                description='RViz Pose Estimate input; map XY and drag yaw select TS placement'))
+        spawn_pose_topic = self.get_parameter('spawn_pose_topic').get_parameter_value().string_value
+        if not spawn_pose_topic.strip():
+            raise ValueError('spawn_pose_topic must be nonempty')
 
         self.pose_feedback_timeout = (
             self.get_parameter('pose_feedback_timeout').get_parameter_value().double_value)
@@ -560,6 +569,10 @@ class DynamicShipManager(Node):
         self.click_sub = self.create_subscription(
             PointStamped, '/clicked_point', self.on_clicked_point, 10,
             callback_group=self.lifecycle_group)
+        self.spawn_pose_sub = self.create_subscription(
+            PoseWithCovarianceStamped, spawn_pose_topic, self.on_spawn_pose, 10,
+            callback_group=self.lifecycle_group)
+        self.get_logger().info(f'RViz TS pose input: {spawn_pose_topic} (map XY and drag heading)')
 
         self.config_srv = self.create_service(
             SetDynamicShipConfig, '/dynamic_ship/set_config',
@@ -603,6 +616,29 @@ class DynamicShipManager(Node):
         name = f'dyn_target_{self._ship_counter}'
 
         self._spawn_ship_at(name, msg.point.x, msg.point.y, heading,
+                            half_dist, shape, speed)
+
+    def on_spawn_pose(self, msg):
+        """Create a target at the RViz drag pose through the existing lifecycle.
+
+        :param msg: PoseWithCovarianceStamped in map. XY and quaternion yaw are
+            used; covariance, Z and request time do not become target measurements.
+        """
+        pose = msg.pose.pose
+        q = pose.orientation
+        values = (pose.position.x, pose.position.y, pose.position.z, q.x, q.y, q.z, q.w)
+        if msg.header.frame_id != 'map' or not all(map(math.isfinite, values)):
+            self.get_logger().warn('Rejected TS pose: require finite coordinates in map')
+            return
+        norm = math.hypot(q.x, q.y, q.z, q.w)
+        if not math.isfinite(norm) or norm < 1e-12:
+            self.get_logger().warn('Rejected TS pose: quaternion must be finite and nonzero')
+            return
+        heading = yaw_from_quaternion(q.x / norm, q.y / norm, q.z / norm, q.w / norm)
+        _, speed, shape, half_dist = self._read_config()
+        self._ship_counter += 1
+        name = f'dyn_target_{self._ship_counter}'
+        self._spawn_ship_at(name, pose.position.x, pose.position.y, heading,
                             half_dist, shape, speed)
 
     def _spawn_ship_at(self, name, x, y, yaw, half_dist, shape, speed):

@@ -1,4 +1,4 @@
-# CCS geometry migration for standalone Nav2 night e58faf30.
+# CCS defaults for standalone Nav2 night e58faf30.
 # Pass through ts_params_file; launch supplies simulation clock and input/TF wiring.
 # Parameter/geometry compatibility does not imply legacy trajectory equivalence.
 ts_state_manager:
@@ -15,7 +15,7 @@ avoidance_point_node:
   ros__parameters:
     snapshot_timeout: 1.0
     max_request_position_delta: 3.0
-    avoidance_radius_scale: 2.0
+    avoidance_radius_scale: 1.5 # Keep avoidance inside the larger threat-detection domain.
     point_extension_distance: 40.0  # Legacy (15m OS + 5m TS) * 2.
     heading_smoothing_alpha: 1.0
     smooth_initial_heading: false
