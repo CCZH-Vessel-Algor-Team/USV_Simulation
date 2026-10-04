@@ -3,15 +3,20 @@
 import json
 import math
 import os
+import signal
 import subprocess
 import tempfile
 import threading
+import time
 import uuid
 import yaml
 
 import rclpy
+from ament_index_python.packages import get_package_prefix
 from geometry_msgs.msg import PointStamped, Pose, Twist
 from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
 from std_msgs.msg import String
 from usv_interfaces.srv import (
@@ -58,6 +63,7 @@ class GazeboPoseCache:
         self._lock = threading.Lock()
         self._samples = {}
         self._node = None
+        self._topic = f'/world/{world_name}/dynamic_pose/info'
         try:
             import gz.transport13 as gz_transport
             from gz.msgs10.pose_v_pb2 import Pose_V
@@ -67,10 +73,9 @@ class GazeboPoseCache:
                     'gz.transport Python 绑定不可用，动态船真值退回开环积分')
             return
         self._node = gz_transport.Node()
-        topic = f'/world/{world_name}/dynamic_pose/info'
-        self._node.subscribe(Pose_V, topic, self._on_pose_v)
+        self._node.subscribe(Pose_V, self._topic, self._on_pose_v)
         if logger is not None:
-            logger.info(f'GazeboPoseCache 订阅 {topic}')
+            logger.info(f'GazeboPoseCache 订阅 {self._topic}')
 
     def _on_pose_v(self, msg):
         stamp_sec = float(msg.header.stamp.sec) + float(msg.header.stamp.nsec) * 1e-9
@@ -98,6 +103,35 @@ class GazeboPoseCache:
     def snapshot(self):
         with self._lock:
             return dict(self._samples)
+
+    def model_names(self, world_name, timeout_ms=1000):
+        """Read the scene using the existing transport node.
+
+        :param world_name: Gazebo world whose model inventory is requested.
+        :param timeout_ms: Maximum transport request wait in milliseconds.
+        :return: Model names, or None when transport or the reply is unavailable.
+        """
+        if self._node is None:
+            return None
+        from gz.msgs10.empty_pb2 import Empty
+        from gz.msgs10.scene_pb2 import Scene
+
+        success, scene = self._node.request(
+            f'/world/{world_name}/scene/info', Empty(), Empty, Scene, timeout_ms)
+        return {model.name for model in scene.model} if success else None
+
+    def forget(self, name):
+        """Discard feedback belonging to a removed registration.
+
+        :param name: Removed model name.
+        """
+        with self._lock:
+            self._samples.pop(name, None)
+
+    def close(self):
+        """Stop the existing pose subscription at shutdown."""
+        if self._node is not None:
+            self._node.unsubscribe(self._topic)
 
 
 class DynamicShip:
@@ -141,27 +175,76 @@ class DynamicShip:
         self.current_y = y
         self.direction = 1
         self._turning_remaining = 0.0
+        self.bridge_process = None
+        self._bridge_lock = threading.Lock()
+        self._publisher_lock = threading.Lock()
+        self._closed = False
 
         self.cmd_vel_pub = node.create_publisher(
             Twist, f'/model/{model_name}/cmd_vel', 10)
 
     def start_bridge(self):
-        cmd = [
-            'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
-            f'/model/{self.model_name}/cmd_vel'
-            f'@geometry_msgs/msg/Twist]gz.msgs.Twist',
-        ]
-        self.bridge_process = subprocess.Popen(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        """Start the actual bridge executable and own its child PID."""
+        with self._bridge_lock, self._publisher_lock:
+            if self._closed or self.bridge_process is not None:
+                raise RuntimeError('Bridge already started or ship already retired')
+            executable = os.path.join(
+                get_package_prefix('ros_gz_bridge'), 'lib', 'ros_gz_bridge',
+                'parameter_bridge')
+            cmd = [
+                executable,
+                f'/model/{self.model_name}/cmd_vel'
+                f'@geometry_msgs/msg/Twist]gz.msgs.Twist',
+            ]
+            self.bridge_process = subprocess.Popen(
+                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                start_new_session=True)
+
+    def retire(self):
+        """Reject future commands, synchronized with any in-flight publication."""
+        with self._publisher_lock:
+            self._closed = True
 
     def cleanup(self):
-        if hasattr(self, 'bridge_process') and self.bridge_process:
-            self.bridge_process.terminate()
-        if hasattr(self, 'bridge_process'):
+        """Retire resources, retaining failed handles for a later bounded retry."""
+        with self._bridge_lock:
             try:
-                self.bridge_process.wait(timeout=2)
-            except Exception:
-                pass
+                with self._publisher_lock:
+                    self._closed = True
+                    if self.cmd_vel_pub is not None:
+                        if not self.node.destroy_publisher(self.cmd_vel_pub):
+                            raise RuntimeError('Publisher destruction was not confirmed')
+                        self.cmd_vel_pub = None
+            finally:
+                process = self.bridge_process
+                if process is not None:
+                    # Reap even if a signal failed (including exit-before-signal).
+                    # Never hold the publisher/registry locks during child waits.
+                    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGKILL):
+                        try:
+                            process.send_signal(sig)
+                        except OSError:
+                            pass
+                        try:
+                            process.wait(timeout=2)
+                        except (subprocess.TimeoutExpired, OSError):
+                            if sig == signal.SIGKILL:
+                                raise
+                        else:
+                            self.bridge_process = None
+                            break
+
+    def publish_cmd_vel(self, twist):
+        """Publish only while the ship owns a live publisher.
+
+        :param twist: Body-frame command to publish.
+        :return: True if published, False if the ship has retired.
+        """
+        with self._publisher_lock:
+            if self._closed:
+                return False
+            self.cmd_vel_pub.publish(twist)
+            return True
 
     def sync_from_feedback(self, sample, now_sec, timeout_sec):
         """用 Gazebo 实测位姿覆盖内部积分状态，返回反馈是否有效。"""
@@ -290,6 +373,11 @@ class DynamicShipManager(Node):
         self.gz_pose_cache = GazeboPoseCache(self.world_name, self.get_logger())
 
         self.ships = {}
+        self._ships_lock = threading.Lock()
+        self._retired_ships = set()
+        # Failed/dispatched creates: name -> whether creation was ever observed.
+        self._pending_spawns = {}
+        self._missing_model_counts = {}
         self.dt = 0.1
 
         self.spawn_srv = self.create_service(
@@ -302,7 +390,12 @@ class DynamicShipManager(Node):
         self.tracked_pub = self.create_publisher(
             TrackedShipList, '/dynamic_ship/tracked_ships', 10)
 
-        self.timer = self.create_timer(self.dt, self.control_loop)
+        # Services, clicks and reconciliation share the default mutually exclusive
+        # group. Only control runs concurrently; no blocking work holds its locks.
+        self.control_group = MutuallyExclusiveCallbackGroup()
+        self.timer = self.create_timer(
+            self.dt, self.control_loop, callback_group=self.control_group)
+        self.scene_timer = self.create_timer(1.0, self.reconcile_gazebo_models)
 
         self._ship_counter = 0
 
@@ -354,6 +447,11 @@ class DynamicShipManager(Node):
                             half_dist, shape, speed)
 
     def _spawn_ship_at(self, name, x, y, yaw, half_dist, shape, speed):
+        with self._ships_lock:
+            if name in self.ships or any(
+                    ship.model_name == name for ship in self._retired_ships):
+                self.get_logger().error(f"Ship '{name}' already exists or has cleanup pending")
+                return False
         target_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, name))
         pose = Pose()
         pose.position.x = x
@@ -373,19 +471,22 @@ class DynamicShipManager(Node):
             world_name=self.world_name,
         )
 
-        sdf_str = self._generate_sdf(ship)
         try:
-            self._spawn_gazebo(ship, sdf_str)
+            sdf_str = self._generate_sdf(ship)
+            # A synchronous bridge failure must not create a Gazebo entity.
             ship.start_bridge()
+            self._spawn_gazebo(ship, sdf_str)
         except Exception as e:
-            ship.cleanup()
+            self._cleanup_ship(ship)
             self.get_logger().error(f'spawn failed: {e}')
-            return
+            return False
 
-        self.ships[name] = ship
+        with self._ships_lock:
+            self._pending_spawns.pop(name, None)
         self.get_logger().info(
             f'clicked at ({x:.2f},{y:.2f}) heading={math.degrees(yaw):.0f}deg '
             f'-> spawned {name} speed={speed}m/s')
+        return True
 
     def on_spawn(self, request, response):
         try:
@@ -394,11 +495,6 @@ class DynamicShipManager(Node):
                 name = f'dyn_target_{self._ship_counter}'
             else:
                 name = request.name.strip()
-
-            if name in self.ships:
-                response.success = False
-                response.message = f"Ship '{name}' already exists"
-                return response
 
             yaw = math.atan2(
                 2.0 * (request.pose.orientation.w * request.pose.orientation.z
@@ -410,9 +506,10 @@ class DynamicShipManager(Node):
             speed = request.speed if request.speed > 0.0 else 3.0
             shape = request.shape.strip() or 'mesh_profile'
 
-            self._spawn_ship_at(name, request.pose.position.x,
-                               request.pose.position.y, yaw,
-                               half_dist, shape, speed)
+            if not self._spawn_ship_at(name, request.pose.position.x,
+                                       request.pose.position.y, yaw,
+                                       half_dist, shape, speed):
+                raise RuntimeError('Spawn failed or name still owned; see manager log')
             response.success = True
             response.model_name = name
             response.message = f"Ship '{name}' spawned successfully"
@@ -424,14 +521,15 @@ class DynamicShipManager(Node):
 
     def on_delete(self, request, response):
         name = request.model_name.strip()
-        if name not in self.ships:
+        with self._ships_lock:
+            registered = name in self.ships
+        if not registered:
             response.success = False
             response.message = f"Ship '{name}' not found"
             return response
         try:
             self._remove_gazebo(name)
-            self.ships[name].cleanup()
-            del self.ships[name]
+            self._forget_ship(name)
             response.success = True
             response.message = f"Ship '{name}' deleted"
             self.get_logger().info(f"Deleted dynamic ship '{name}'")
@@ -441,17 +539,19 @@ class DynamicShipManager(Node):
         return response
 
     def on_clear(self, request, response):
-        names = list(self.ships.keys())
+        with self._ships_lock:
+            names = list(self.ships)
+        removed = 0
         for name in names:
             try:
                 self._remove_gazebo(name)
-                self.ships[name].cleanup()
-                del self.ships[name]
+                self._forget_ship(name)
+                removed += 1
             except Exception as e:
                 self.get_logger().warn(f"Failed to remove '{name}' during clear: {e}")
-        self.get_logger().info(f"Cleared all {len(names)} dynamic ships")
-        response.success = True
-        response.message = f"Cleared {len(names)} ships"
+        self.get_logger().info(f"Cleared {removed} of {len(names)} dynamic ships")
+        response.success = removed == len(names)
+        response.message = f"Cleared {removed} of {len(names)} ships"
         return response
 
     def _generate_sdf(self, ship):
@@ -692,6 +792,12 @@ class DynamicShipManager(Node):
         return sdf
 
     def _spawn_gazebo(self, ship, sdf_str):
+        """Dispatch only for an absent name and verify creation in the scene.
+
+        :param ship: Ship whose exact model name must be created.
+        :param sdf_str: Prepared model SDF.
+        :raises RuntimeError: Preflight or creation cannot be confirmed.
+        """
         z = 0.5
         if ship.shape == 'mesh_profile':
             profile_path = _resolve_profile_path(ship.mesh_profile, self.config_base_dir)
@@ -718,35 +824,195 @@ class DynamicShipManager(Node):
                 '-z', str(z),
                 '-Y', str(ship.spawn_yaw),
             ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            if result.returncode == 0:
+            present = self._gazebo_model_names()
+            if present is None or ship.model_name in present:
+                raise RuntimeError(
+                    f"Cannot confirm '{ship.model_name}' is absent; create not dispatched")
+            # Only dispatched attempts acquire an entity reservation. A late
+            # create can outlive its CLI, so absence alone cannot release it.
+            with self._ships_lock:
+                self.ships[ship.model_name] = ship
+                self._pending_spawns[ship.model_name] = False
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+                command_ok = result.returncode == 0
+                detail = f"code={result.returncode}: {(result.stderr or result.stdout or '').strip()}"
+            except (subprocess.TimeoutExpired, OSError) as error:
+                command_ok = False
+                detail = str(error)
+            created = self._wait_for_gazebo_model(ship.model_name, True)
+            if created:
+                with self._ships_lock:
+                    self._pending_spawns[ship.model_name] = True
+            # ros_gz_sim create can exit zero on timeout/rejection. Its exit
+            # status or output alone is never proof that the model exists.
+            if command_ok and created:
                 self.get_logger().info(
-                    f"Gazebo entity '{ship.model_name}' spawned via ros_gz_sim create")
+                    f"Gazebo scene confirms creation of '{ship.model_name}'")
             else:
-                detail = (result.stderr or result.stdout or '').strip()
                 self.get_logger().error(
-                    f"Gazebo spawn failed for '{ship.model_name}' (code={result.returncode}): {detail}")
-                raise RuntimeError(f"Gazebo spawn failed: {detail}")
+                    f"Gazebo spawn failed for '{ship.model_name}': {detail}")
+                raise RuntimeError(
+                    f"Gazebo creation unconfirmed or command failed; name quarantined: {detail}")
         except Exception:
             raise
         finally:
             if tmp_sdf_path and os.path.exists(tmp_sdf_path):
                 self._retained_spawn_sdf_paths.append(tmp_sdf_path)
 
-    def _remove_gazebo(self, model_name):
+    def _gazebo_model_names(self, timeout_ms=1000):
+        """Read authoritative inventory without adding a pose pipeline.
+
+        :param timeout_ms: Maximum transport request wait in milliseconds.
+        :return: Model names, or None when inventory cannot be read.
+        """
         try:
-            cmd = [
-                'gz', 'service', '-s', f'/world/{self.world_name}/remove',
-                '--reqtype', 'gz.msgs.Entity',
-                '--reptype', 'gz.msgs.Boolean',
-                '--timeout', '5000',
-                '--req', f'name: "{model_name}" type: MODEL'
-            ]
+            return self.gz_pose_cache.model_names(self.world_name, timeout_ms=timeout_ms)
+        except Exception as error:
+            self.get_logger().warn(
+                f'Cannot read Gazebo model inventory: {error}',
+                throttle_duration_sec=5.0)
+            return None
+
+    def _wait_for_gazebo_model(self, model_name, expected_present):
+        """Poll scene state for up to two wall-clock seconds without holding locks.
+
+        :param model_name: Exact model name whose state must be confirmed.
+        :param expected_present: True for creation, False for removal.
+        :return: True only if a successful inventory confirms the requested state.
+        """
+        deadline = time.monotonic() + 2.0
+        while True:
+            timeout_ms = min(1000, int((deadline - time.monotonic()) * 1000))
+            if timeout_ms <= 0:
+                return False
+            names = self._gazebo_model_names(timeout_ms=timeout_ms)
+            remaining = deadline - time.monotonic()
+            if remaining < 0.0:
+                return False
+            if names is not None and (model_name in names) == expected_present:
+                return True
+            if remaining > 0.0:
+                time.sleep(min(0.05, remaining))
+
+    def _cleanup_ship(self, ship):
+        """Keep failed resource cleanup owned and isolate failures per ship.
+
+        :param ship: Ship whose publisher and child must be released.
+        """
+        with self._ships_lock:
+            self._retired_ships.add(ship)
+        try:
+            ship.cleanup()
+        except Exception as error:
+            self.get_logger().warn(f"Cleanup pending for '{ship.model_name}': {error}")
+        else:
+            with self._ships_lock:
+                self._retired_ships.discard(ship)
+
+    def _forget_ship(self, name):
+        """Retire a registration only after Gazebo removal is confirmed.
+
+        :param name: Removed model name.
+        """
+        with self._ships_lock:
+            ship = self.ships.get(name)
+            if ship is None:
+                return
+            ship.retire()
+            del self.ships[name]
+            self._retired_ships.add(ship)
+            self._pending_spawns.pop(name, None)
+            self._missing_model_counts.pop(name, None)
+        self.gz_pose_cache.forget(name)
+        self._cleanup_ship(ship)
+
+    def reconcile_gazebo_models(self):
+        """Retry cleanup even with zero active ships and reconcile scene deletions.
+
+        Two successful missing inventory reads confirm deletion only after a
+        model was observed. Unresolved creates remain quarantined despite absence.
+        Missing pose samples or failed inventory reads never imply removal.
+        """
+        with self._ships_lock:
+            retired = list(self._retired_ships)
+        for ship in retired:
+            self._cleanup_ship(ship)
+        with self._ships_lock:
+            names = list(self.ships)
+            pending = dict(self._pending_spawns)
+        if not names:
+            return
+        present = self._gazebo_model_names()
+        for name in names:
+            if name in pending:
+                if present is not None and name in present:
+                    with self._ships_lock:
+                        self._pending_spawns[name] = True
+                    self._missing_model_counts.pop(name, None)
+                    try:
+                        self._remove_gazebo(name)
+                    except Exception as error:
+                        self.get_logger().warn(f"Spawn rollback pending for '{name}': {error}")
+                    else:
+                        self._forget_ship(name)
+                    continue
+                if not pending[name]:
+                    # Repeated absence cannot exclude a still-queued create.
+                    continue
+            if present is None:
+                continue
+            if name in present:
+                self._missing_model_counts.pop(name, None)
+                continue
+            missing = self._missing_model_counts.get(name, 0) + 1
+            self._missing_model_counts[name] = missing
+            if missing >= 2:
+                self._forget_ship(name)
+                self.get_logger().info(f"Removed absent Gazebo model registration '{name}'")
+
+    def cleanup_ships(self):
+        """After executor shutdown, clean all resources and retry failed handles.
+
+        Entity registrations remain owned because shutdown does not remove models.
+        Each child gets bounded attempts even when another child's cleanup fails.
+        """
+        with self._ships_lock:
+            ships = set(self.ships.values()) | self._retired_ships
+        for ship in ships:
+            self._cleanup_ship(ship)
+        with self._ships_lock:
+            retired = list(self._retired_ships)
+        for ship in retired:
+            self._cleanup_ship(ship)
+
+    def _remove_gazebo(self, model_name):
+        with self._ships_lock:
+            unresolved_create = self._pending_spawns.get(model_name) is False
+        if unresolved_create:
+            present = self._gazebo_model_names()
+            if present is None or model_name not in present:
+                raise RuntimeError(
+                    f"Create for '{model_name}' is unresolved; name remains quarantined")
+            with self._ships_lock:
+                self._pending_spawns[model_name] = True
+        cmd = [
+            'gz', 'service', '-s', f'/world/{self.world_name}/remove',
+            '--reqtype', 'gz.msgs.Entity',
+            '--reptype', 'gz.msgs.Boolean',
+            '--timeout', '5000',
+            '--req', f'name: {json.dumps(model_name)} type: MODEL'
+        ]
+        try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            if result.returncode != 0:
-                self.get_logger().warn(f"Failed to remove Gazebo entity '{model_name}'")
-        except Exception as e:
-            self.get_logger().warn(f"Error removing '{model_name}': {e}")
+            detail = f'{result.stdout} {result.stderr}'
+        except (subprocess.TimeoutExpired, OSError) as error:
+            detail = str(error)
+        # Boolean true only acknowledges a queued remove. A timeout can also
+        # follow actual removal; only a successful scene read proves absence.
+        if self._wait_for_gazebo_model(model_name, False):
+            return
+        raise RuntimeError(f"Gazebo did not confirm removal of '{model_name}': {detail}")
 
     def control_loop(self):
         msg = TrackedShipList()
@@ -758,7 +1024,10 @@ class DynamicShipManager(Node):
         gz_samples = self.gz_pose_cache.snapshot()
         stale_ships = []
         names = []
-        for ship in self.ships.values():
+        with self._ships_lock:
+            ships = [ship for name, ship in self.ships.items()
+                     if name not in self._pending_spawns]
+        for ship in ships:
             sample = gz_samples.get(ship.model_name)
             fresh = ship.sync_from_feedback(
                 sample, now_sec, self.pose_feedback_timeout)
@@ -766,7 +1035,8 @@ class DynamicShipManager(Node):
                 stale_ships.append(ship.model_name)
 
             twist = ship.compute_cmd_vel(self.dt, predict=not fresh)
-            ship.cmd_vel_pub.publish(twist)
+            if not ship.publish_cmd_vel(twist):
+                continue
 
             ts = TrackedShip()
             ts.target_id.uuid = list(bytes.fromhex(ship.target_id.replace('-', '')))
@@ -789,13 +1059,19 @@ class DynamicShipManager(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = DynamicShipManager()
+    executor = MultiThreadedExecutor(num_threads=2)
+    executor.add_node(node)
     try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
+        executor.spin()
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
-        for ship in node.ships.values():
-            ship.cleanup()
+        executor.shutdown()
+        node.cleanup_ships()
+        try:
+            node.gz_pose_cache.close()
+        except Exception as error:
+            node.get_logger().warn(f'Cannot close Gazebo pose subscription: {error}')
         for p in getattr(node, '_retained_spawn_sdf_paths', []):
             if p and os.path.isfile(p):
                 try:
