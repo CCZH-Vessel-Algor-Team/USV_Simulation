@@ -515,7 +515,7 @@ class DynamicShipManager(Node):
             raise ValueError('pose_feedback_timeout must be finite and positive')
         self._clock_reset = threading.Event()
         self._clock_jump_handle = self.get_clock().create_jump_callback(
-            JumpThreshold(min_backward=Duration(nanoseconds=-1), on_clock_change=True),
+            JumpThreshold(min_forward=None, min_backward=Duration(nanoseconds=-1), on_clock_change=True),
             post_callback=lambda jump: self._clock_reset.set())
         self.gz_pose_cache = GazeboPoseCache(
             self.world_name, self.get_logger(), lambda: self.get_clock().now().nanoseconds,
