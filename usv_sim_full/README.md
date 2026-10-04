@@ -29,6 +29,8 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 
 主配置文件为 `config/full_config.yaml`。
 
+`/storm_field/set_config` 更新后续新建storm的默认配置；已经生成的storm保留各自的半径、漂移和有效期。
+
 `use_sim_time` 在合并参数后显式应用到各Nav2节点和costmap，并传给 `cmd_vel_to_thruster`。
 仿真默认使用 `/clock`；需要系统时间时可传 `use_sim_time:=false`，不改变世界的实时倍率。
 
