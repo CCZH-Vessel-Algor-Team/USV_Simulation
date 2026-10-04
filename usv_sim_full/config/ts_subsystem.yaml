@@ -1,4 +1,4 @@
-# CCS defaults for standalone Nav2 night e58faf30.
+# CCS defaults for standalone COLREGS navigation.
 # Pass through ts_params_file; launch supplies simulation clock and input/TF wiring.
 # Parameter/geometry compatibility does not imply legacy trajectory equivalence.
 ts_state_manager:

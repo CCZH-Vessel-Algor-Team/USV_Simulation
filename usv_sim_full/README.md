@@ -66,10 +66,11 @@ spawn/delete/clear/config 服务、点击订阅和场景查询定时器共用独
 保留操作串行性。默认组留给 TimeSource 的 `/clock` 等节点回调，控制仍使用 `control_group`；
 两个 executor 线程使生命周期等待期间的时钟更新与控制/跟踪发布能够继续执行。
 
-## CCS standalone night
+## CCS standalone COLREGS
 
-此接线针对 Nav2 `feat/colregs-humble-night`，固定版本
-`e58faf3012cbbecb7f0e23252de92daf6899f1d8`。运行时须使用该版本一致的消息、服务和二进制 overlay。
+此接线要求 Nav2 提供下述独立 TS 快照、避让点和 barrier 服务及参数，运行时须使用接口一致的
+消息、服务和二进制 overlay。当前接口验证基线为 Nav2
+`e58faf3012cbbecb7f0e23252de92daf6899f1d8`；后续包含相同接口和参数能力的分支可沿用此入口与配置。
 复用现有 `ts_subsystem.launch.py` 启动独立的 TS manager、avoidance point 和 barrier 节点，
 经 `/processed_ts_list`、`/get_avoidance_point`、`/get_barrier_lines` 接入 VO-RRT*。
 Barrier 使用 avoidance 返回的同一 snapshot UUID 和 header；这是 standalone 接口，不是 Server 接口，
@@ -81,15 +82,15 @@ Barrier 使用 avoidance 返回的同一 snapshot UUID 和 header；这是 stand
 AP 扩展距离为 40m，即原 `(15+5)*2`；第一段 barrier 为 `5+15=20m`，第三段为 999m。
 新扩展距离是独立参数，仅对当前 5m TS 重现旧公式；40s horizon 是威胁筛选窗口。
 
-显式选择夜间 D profile：
+显式选择非对称航向平滑（D）profile：
 
 ```bash
 ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py \
   auto_cleanup:=false cleanup_fastdds_shm:=false \
-  ts_params_file:="$(ros2 pkg prefix --share usv_sim_full)/config/ts_subsystem_night.yaml"
+  ts_params_file:="$(ros2 pkg prefix --share usv_sim_full)/config/ts_subsystem_asymmetric.yaml"
 ```
 
-`ts_params_file` 独立于 Nav2 的 `params_file`。夜间 profile 同样保持 OS 15m、判定/避让倍率2/1.5、horizon 40s、
+`ts_params_file` 独立于 Nav2 的 `params_file`。非对称 profile 同样保持 OS 15m、判定/避让倍率2/1.5、horizon 40s、
 AP 扩展 40m；启用不对称增益 1.0/0.15、速度容差 ±0.3m/s、5 个区间样本（另检查不在网格上的实测速度），
 barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smoothing_alpha=0.5` 是对称模式
 备用增益，不与 D 增益串联。默认 profile 为 alpha 1、速度容差 0、不启用 D。
@@ -125,7 +126,7 @@ barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smooth
   直到时钟追上且收到符合时间窗口的新帧。
 - ROS 时钟回退回调只发出重置信号；控制线程清空位姿缓存/水位并重置速度历史，保留实体与
   隔离注册。merger 同样清空跨时钟时期的缓存。暂停沿用仿真时间语义，不增加墙钟超时。
-- 停止发布依赖 night 现有 1s 输入契约使旧快照失效；没有新增立即失效的 wire 消息。
+- 停止发布依赖 TS 子系统现有 1s 输入契约使旧快照失效；没有新增立即失效的 wire 消息。
   消费端应区分 `ProcessedTSList.valid=false` 与合法空场景的 `NO_THREAT`。
 - **要求完整新 launch 会话。** 注册表仅在内存中；只重启 manager 不能恢复仍存活模型的所有权，
   不可用这种方式判定空场景或恢复会话。

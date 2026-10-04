@@ -1,4 +1,4 @@
-# Explicit CCS night/D profile for standalone Nav2 e58faf30.
+# Explicit CCS asymmetric-heading profile for standalone COLREGS navigation.
 # CCS radii, threat scale/horizon and AP extension; avoidance scale stays below detection.
 # Heading gains apply per avoidance request, not per second.
 ts_state_manager:
