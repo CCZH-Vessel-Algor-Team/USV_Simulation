@@ -29,6 +29,20 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 
 主配置文件为 `config/full_config.yaml`。
 
+### RViz导航目标
+
+CCS使用 **Nav2 Goal** 工具（快捷键 `g`）向唯一的 **Navigation 2** 面板输入本船导航目标。
+固定坐标系使用 `map`，等待面板显示Navigation active后操作：
+
+- 单点导航：在普通模式下选择Nav2 Goal，按住左键拖拽位置和艏向，释放后发送NavigateToPose。
+- 多点导航：先点击 **Waypoint / Nav Through Poses Mode**，再用Nav2 Goal依次拖拽各目标；
+  累积过程中不发送导航任务，`Nav2 Waypoints`显示所选航点。点击 **Start Nav Through Poses**
+  发送NavigateThroughPoses；**Start Waypoint Following**对应逐点到达的FollowWaypoints。
+- 导航中点击 **Cancel** 取消当前任务；**Cancel Accumulation**退出选点模式。
+
+目标通过面板的Nav2 Action客户端发送，使用RViz所在的 `usv_1` 命名空间。
+**2D Pose Estimate**和**Publish Point**用于下述目标船生成，不用于设置本船导航目标。
+
 ### RViz生成动态目标船
 
 CCS的 **2D Pose Estimate** 工具发送到专用 `/dynamic_ship/spawn_pose`：点击选择位置，拖拽箭头选择
