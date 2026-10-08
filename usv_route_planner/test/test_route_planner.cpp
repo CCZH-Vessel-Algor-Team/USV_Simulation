@@ -128,3 +128,59 @@ TEST(RoutePlanner, ResamplingPreservesCollisionFreeTurns)
     << reason;
   EXPECT_GT(result.shortest.length_m, 43.0);
 }
+
+TEST(RoutePlanner, RejectsStartInsideClearanceBuffer)
+{
+  auto message = makeMap(30, 30);
+  setObstacle(*message, 15, 15);
+  usv_route_planner::GridMap map(message, 80, true);
+  usv_route_planner::PlannerConfig config;
+  config.collision_clearance_m = 4.0;
+  config.safety_hard_extra_clearance_m = 0.0;
+  usv_route_planner::RoutePlanner planner(config);
+
+  const auto result = planner.plan(map, {13.5, 15.5}, {25.5, 25.5});
+  EXPECT_FALSE(result.shortest.valid);
+  EXPECT_FALSE(result.safest.valid);
+  EXPECT_EQ(result.failure, usv_route_planner::PlanFailure::kStartNotNavigable);
+  EXPECT_TRUE(result.shortest.map_key_points.empty());
+}
+
+TEST(RoutePlanner, RejectsGoalInsideClearanceBuffer)
+{
+  auto message = makeMap(30, 30);
+  setObstacle(*message, 15, 15);
+  usv_route_planner::GridMap map(message, 80, true);
+  usv_route_planner::PlannerConfig config;
+  config.collision_clearance_m = 4.0;
+  config.safety_hard_extra_clearance_m = 0.0;
+  usv_route_planner::RoutePlanner planner(config);
+
+  const auto result = planner.plan(map, {5.5, 5.5}, {17.5, 15.5});
+  EXPECT_FALSE(result.shortest.valid);
+  EXPECT_FALSE(result.safest.valid);
+  EXPECT_EQ(result.failure, usv_route_planner::PlanFailure::kGoalNotNavigable);
+  EXPECT_TRUE(result.safest.map_key_points.empty());
+}
+
+TEST(RoutePlanner, KeepsRequestedStartWhenNavigable)
+{
+  auto message = makeMap(30, 30);
+  setObstacle(*message, 15, 15);
+  usv_route_planner::GridMap map(message, 80, true);
+  usv_route_planner::PlannerConfig config;
+  config.collision_clearance_m = 2.0;
+  config.safety_hard_extra_clearance_m = 0.0;
+  config.roi_margin_m = 20.0;
+  config.waypoint_spacing_m = 1.0;
+  config.max_waypoints = 500;
+  usv_route_planner::RoutePlanner planner(config);
+
+  const auto result = planner.plan(map, {5.5, 5.5}, {25.5, 25.5});
+  ASSERT_TRUE(result.shortest.valid) << result.shortest.message;
+  EXPECT_NEAR(result.planned_start.x, 5.5, 1e-9);
+  EXPECT_NEAR(result.planned_start.y, 5.5, 1e-9);
+  ASSERT_FALSE(result.shortest.map_key_points.empty());
+  EXPECT_NEAR(result.shortest.map_key_points.front().x, 5.5, 1e-9);
+  EXPECT_NEAR(result.shortest.map_key_points.front().y, 5.5, 1e-9);
+}

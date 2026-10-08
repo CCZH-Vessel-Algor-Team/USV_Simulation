@@ -21,7 +21,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'ts_params_file',
             default_value=os.path.join(
-                get_package_share_directory('usv_sim_full'), 'config', 'ts_subsystem.yaml'),
+                get_package_share_directory('usv_sim_full'), 'config', 'ts_subsystem_asymmetric.yaml'),
             description='TS service parameters; independent of the Nav2 params_file'),
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         DeclareLaunchArgument(
