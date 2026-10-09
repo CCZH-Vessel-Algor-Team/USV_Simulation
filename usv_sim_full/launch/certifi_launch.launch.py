@@ -1,8 +1,8 @@
 """
 认证会遇仿真入口：合并 certi 基底 + certificate_case → 启动 main + 本船 cmd_vel 链。
 本船运动链（cmd_vel_to_thruster + certi_own_ship_cmd_vel）在此 launch 内强制拉起，不依赖 Nav2 bringup。
-可选接入 dynamic_ship 发布链：scenario_manager → /dynamic_ship/tracked_ships
-  → dynamic_ship_to_ground_truth → /sim/ground_truth → perception_sim → fusion。
+可选接入认证目标链：scenario_manager → 配置中的 tracked_ships_topic
+  → dynamic_ship_to_ground_truth → GT 合并链 → perception_sim → fusion。
 """
 
 import os
@@ -105,6 +105,8 @@ def launch_setup(context, *args, **kwargs):
     thrust_delay_s = float(LaunchConfiguration('thrust_chain_delay').perform(context))
     enable_fusion = LaunchConfiguration('enable_perception_fusion').perform(context)
     sensor_params = LaunchConfiguration('sensor_params_file').perform(context).strip()
+    enable_buoy = LaunchConfiguration('enable_dynamic_buoy_manager').perform(context).strip().lower()
+    buoy_enabled = enable_buoy in ('true', '1', 'yes')
 
     if not os.path.isfile(base_config):
         base_config = _config_path(share, src_root, 'certi_senario.yaml')
@@ -147,6 +149,10 @@ def launch_setup(context, *args, **kwargs):
     with open(out_path, 'r', encoding='utf-8') as f:
         merged = yaml.safe_load(f) or {}
 
+    sm_cfg = ((merged.get('scenario') or {}).get('scenario_manager') or {})
+    tracked_topic = str(sm_cfg.get('tracked_ships_topic') or '/certificate_case/tracked_ships').strip()
+    gt_topic = '/sim/ground_truth/_src/scenario' if buoy_enabled else '/sim/ground_truth'
+
     runtime = merged.get('certificate_runtime', {})
     own_vel = runtime.get('own_ship_velocity', {})
     if not own_vel.get('enabled', False):
@@ -180,6 +186,7 @@ def launch_setup(context, *args, **kwargs):
             launch_arguments={
                 'config_path': out_path,
                 'verbose_launch': verbose_s,
+                'enable_dynamic_buoy_manager': 'true' if buoy_enabled else 'false',
             }.items(),
         ),
     ]
@@ -191,7 +198,7 @@ def launch_setup(context, *args, **kwargs):
         actions.extend([
             LogInfo(msg=[
                 '[certifi_launch] perception/fusion chain ON: '
-                'tracked_ships → /sim/ground_truth → sensor_sim → late_fusion'
+                f'{tracked_topic} → {gt_topic} → sensor_sim → late_fusion'
             ]),
             # 不启 dynamic_ship_manager（会遇实体已由 scenario_manager 驱动），只复用其 GT 桥。
             Node(
@@ -201,8 +208,8 @@ def launch_setup(context, *args, **kwargs):
                 output=out_mode,
                 parameters=[{
                     'use_sim_time': True,
-                    'input_topic': '/dynamic_ship/tracked_ships',
-                    'output_topic': '/sim/ground_truth',
+                    'input_topic': tracked_topic,
+                    'output_topic': gt_topic,
                     'frame_id': 'map',
                     'size_w': 3.6,
                     'size_l': 10.0,
@@ -329,11 +336,16 @@ def generate_launch_description():
             description='spawn 后延时启动 cmd_vel 链（秒）',
         ),
         DeclareLaunchArgument(
+            'enable_dynamic_buoy_manager',
+            default_value='true',
+            description='true：由浮标栈合并场景 GT；false：认证桥直接发布最终 GT',
+        ),
+        DeclareLaunchArgument(
             'enable_perception_fusion',
             default_value='true',
             description=(
                 'true：挂接 dynamic_ship_to_ground_truth + perception_sim + fusion '
-                '（复用 /dynamic_ship/tracked_ships 链；不启 dynamic_ship_manager）'
+                '（读取认证配置中的 tracked_ships_topic；不启 dynamic_ship_manager）'
             ),
         ),
         DeclareLaunchArgument(

@@ -120,6 +120,22 @@ barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smooth
 
 ### 动态目标快照契约
 
+#### 普通场景与认证场景的发布归属
+
+- `scenario_manager_node` 默认不发布跟踪列表；认证配置由 `merge_certi_config.py` 显式启用，
+  默认发布到 `/certificate_case/tracked_ships`。普通 CCS 的 `/dynamic_ship/tracked_ships`
+  由动态船管理器／tracked merger 提供完整场景，不能另接一个只包含认证目标的完整列表发布者。
+- CCS 浮标栈开启时，动态船 GT 桥读取 `/_internal`，最终 `/sim/ground_truth` 由浮标栈的
+  `ground_truth_track_merger` 发布；浮标关闭时，桥读取 `/dynamic_ship/tracked_ships`，
+  由 `ccs_ground_truth_track_merger` 汇总各个 `_src` 输入。关闭动态船 GT 桥不关闭该备用 merger，
+  认证 GT 仍可使用它。
+- `ccs_certificate_encounter.launch.py` 沿用认证专用话题到 `_src/scenario` 的桥接。
+  旧 `certifi_launch.launch.py` 同样读取生成配置中的 `tracked_ships_topic`：浮标开启时输出到
+  `_src/scenario`，浮标关闭时直接输出最终 GT，避免和已有 merger 同时发布。
+- 这项接线隔离不将两种目标列表直接混入导航输入，也不改变认证场景已有的导航数据源选择。
+
+#### 实测快照与失效处理
+
 - 唯一 Gazebo 位姿订阅读取 `/world/<world>/dynamic_pose/info`。只接受精确根模型名，
   `model::link` 不会覆盖根位姿。累积反馈供原控制使用，最新完整 FRAME 单独用于发布完整性判断。
 - `/dynamic_ship/tracked_ships` 默认只包含本 manager 注册的动态船。Pose 使用实测 XY/艏向，

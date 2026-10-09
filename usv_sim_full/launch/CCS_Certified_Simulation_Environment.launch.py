@@ -39,27 +39,30 @@ def _resolve_robot_namespace(config_path: str) -> str:
 
 
 def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
-    """可选启动 dynamic_ship/tracked_ships → /sim/ground_truth 转换节点。"""
-    enable = LaunchConfiguration('enable_dynamic_ship_gt_bridge').perform(context).strip().lower()
-    if enable not in ('true', '1', 'yes'):
-        return [
-            LogInfo(msg='enable_dynamic_ship_gt_bridge:=false，跳过动态船真值转换节点。'),
-        ]
+    """Select the dynamic-ship GT input and supply a merger only without the buoy stack.
 
+    :param context: Launch context containing the shared buoy and ship-bridge switches.
+    :return: Optional ship bridge and, when needed, the single fallback GT merger.
+    """
+    enable = LaunchConfiguration('enable_dynamic_ship_gt_bridge').perform(context).strip().lower()
+    enable_buoy = LaunchConfiguration('enable_dynamic_buoy_manager').perform(context).strip().lower()
+    buoy_enabled = enable_buoy in ('true', '1', 'yes')
+    tracked_topic = ('/dynamic_ship/tracked_ships/_internal' if buoy_enabled
+                     else '/dynamic_ship/tracked_ships')
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
-    return [
-        LogInfo(
-            msg='启动 dynamic_ship_to_ground_truth（/_internal -> /sim/ground_truth/_src/dynamic_ships）；'
-                '合并与 markers 由 ground_truth_track_merger 负责。'
-        ),
-        Node(
+    actions = []
+    if enable in ('true', '1', 'yes'):
+        actions.append(LogInfo(
+            msg=f'启动 dynamic_ship_to_ground_truth（{tracked_topic} -> '
+                '/sim/ground_truth/_src/dynamic_ships）。'))
+        actions.append(Node(
             package='ground_truth_sensor_sim',
             executable='dynamic_ship_to_ground_truth',
             name='dynamic_ship_to_ground_truth',
             output='log',
             parameters=[{
                 'use_sim_time': use_sim_time,
-                'input_topic': '/dynamic_ship/tracked_ships/_internal',
+                'input_topic': tracked_topic,
                 'output_topic': '/sim/ground_truth/_src/dynamic_ships',
                 'frame_id': 'map',
                 'size_w': 3.6,
@@ -70,9 +73,14 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
                 'matched_mmsi': 0,
                 'source_model_name': 'dynamic_ship',
             }],
-        ),
-        # 浮标栈未启时仍需 merger，把 _src/dynamic_ships 汇到 /sim/ground_truth 并发 markers。
-        Node(
+        ))
+    else:
+        actions.append(LogInfo(msg='enable_dynamic_ship_gt_bridge:=false，跳过动态船真值转换节点。'))
+
+    # main.launch owns the merger when the buoy stack is enabled. The fallback
+    # also serves certificate GT when its dynamic-ship bridge is disabled.
+    if not buoy_enabled:
+        actions.append(Node(
             package='ground_truth_sensor_sim',
             executable='ground_truth_track_merger',
             name='ccs_ground_truth_track_merger',
@@ -89,8 +97,8 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
                 'publish_markers': True,
                 'frame_id': 'map',
             }],
-        ),
-    ]
+        ))
+    return actions
 
 
 def _sim_ais_node(context, *args, **kwargs):

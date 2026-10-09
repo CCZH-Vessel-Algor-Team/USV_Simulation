@@ -174,7 +174,9 @@ class ScenarioManager(Node):
         self._retained_spawn_sdf_paths: list[str] = []
 
         self.declare_parameter('config_path', '')
-        self.declare_parameter('publish_tracked_ships', True)
+        # Ordinary CCS owns its tracked list through dynamic_ship_manager/merger.
+        # Certificate configs explicitly enable their separate tracked source.
+        self.declare_parameter('publish_tracked_ships', False)
         self.declare_parameter('tracked_ships_topic', '/dynamic_ship/tracked_ships')
         self.declare_parameter('tracked_ship_radius', 5.0)
         # use_sim_time 由 launch --params 注入时会自动声明，勿重复 declare
