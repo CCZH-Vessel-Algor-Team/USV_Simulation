@@ -174,14 +174,10 @@ def generate_launch_description():
                 f"World not found: {world_file}. Available world_name values: {available_worlds}"
             )
 
-        gz_args = ['-r', '-s', world_file] if headless else ['-r', world_file]
-        filtered_gz_command = (
-            'ruby "$(which gz)" sim '
-            f'{shlex.join(gz_args)} --force-version 8 '
-            '2>&1 | grep --line-buffered -vE -- '
-            '"SceneManager\\.cc:615|Could not find visual for entity: 0"; '
-            'gz_status=${PIPESTATUS[0]}; exit "$gz_status"'
-        )
+        # Separate processes avoid the combined startup's /gazebo/starting_world handshake.
+        gz_commands = [['-r', '-s', world_file]]
+        if not headless:
+            gz_commands.append(['-g'])
         gz_environment = {
             'GZ_SIM_SYSTEM_PLUGIN_PATH': ':'.join([
                 os.environ.get('GZ_SIM_SYSTEM_PLUGIN_PATH', ''),
@@ -192,13 +188,21 @@ def generate_launch_description():
                 os.environ.get('LD_LIBRARY_PATH', ''),
             ]),
         }
-        return [
-            ExecuteProcess(
+        processes = []
+        for gz_args in gz_commands:
+            filtered_gz_command = (
+                'ruby "$(which gz)" sim '
+                f'{shlex.join(gz_args)} --force-version 8 '
+                '2>&1 | grep --line-buffered -vE -- '
+                '"SceneManager\\.cc:615|Could not find visual for entity: 0"; '
+                'gz_status=${PIPESTATUS[0]}; exit "$gz_status"'
+            )
+            processes.append(ExecuteProcess(
                 cmd=['bash', '-lc', filtered_gz_command],
                 output='screen',
                 additional_env=gz_environment,
-            )
-        ]
+            ))
+        return processes
     
     def launch_global_bridge(context, *args, **kwargs):
         v = verbose_launch.perform(context)

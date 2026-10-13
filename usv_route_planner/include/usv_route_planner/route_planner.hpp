@@ -18,7 +18,6 @@ struct PlannerConfig
   double safety_weight{5.0};
   double safety_decay_distance_m{15.0};
   double chart_risk_weight{1.0};
-  double max_start_goal_snap_distance_m{10.0};
   double roi_margin_m{1000.0};
   double waypoint_spacing_m{10.0};
   std::size_t max_waypoints{200};
@@ -38,12 +37,20 @@ struct PlannedRoute
   double min_clearance_m{0.0};
 };
 
+enum class PlanFailure : uint16_t
+{
+  kNone = 0,
+  kStartNotNavigable,
+  kGoalNotNavigable,
+};
+
 struct PlanPair
 {
   PlannedRoute shortest;
   PlannedRoute safest;
   MapPoint planned_start;
   MapPoint planned_goal;
+  PlanFailure failure{PlanFailure::kNone};
 };
 
 class RoutePlanner

@@ -368,7 +368,7 @@ def generate_launch_description():
             usv_sim_full_pkg, 'launch', 'ts_subsystem.launch.py',
         )
     default_ts_params_file = os.path.join(
-        usv_sim_full_pkg, 'config', 'ts_subsystem.yaml'
+        usv_sim_full_pkg, 'config', 'ts_subsystem_asymmetric.yaml'
     )
 
     launch_dir = os.path.dirname(os.path.abspath(__file__))
@@ -482,7 +482,9 @@ def generate_launch_description():
             'vector_object_server|keepout_costmap_filter_info_server|lifecycle_manager_keepout_zone|'
             'scenario_ground_truth_node|ground_truth_gazebo_entity|ground_truth_gazebo_models|'
             'maritime_situation_monitor|ais_aggregator_node|sim_ais_node|'
-            'depth_provider_node|grounding_warning_node|route_planner_node'
+            'depth_provider_node|grounding_warning_node|route_planner_node|'
+            'system_status_node|heartbeat_node|autopilot_control_service_node|'
+            'alarm_watchdog_node|sensor_status_node|config_gateway'
         )
         subprocess.run(
             ['bash', '-lc', f'pkill -9 -f "{kill_pattern}" || true; sleep 1'],

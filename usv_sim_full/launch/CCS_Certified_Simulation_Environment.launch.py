@@ -39,27 +39,30 @@ def _resolve_robot_namespace(config_path: str) -> str:
 
 
 def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
-    """可选启动 dynamic_ship/tracked_ships → /sim/ground_truth 转换节点。"""
-    enable = LaunchConfiguration('enable_dynamic_ship_gt_bridge').perform(context).strip().lower()
-    if enable not in ('true', '1', 'yes'):
-        return [
-            LogInfo(msg='enable_dynamic_ship_gt_bridge:=false，跳过动态船真值转换节点。'),
-        ]
+    """Select the dynamic-ship GT input and supply a merger only without the buoy stack.
 
+    :param context: Launch context containing the shared buoy and ship-bridge switches.
+    :return: Optional ship bridge and, when needed, the single fallback GT merger.
+    """
+    enable = LaunchConfiguration('enable_dynamic_ship_gt_bridge').perform(context).strip().lower()
+    enable_buoy = LaunchConfiguration('enable_dynamic_buoy_manager').perform(context).strip().lower()
+    buoy_enabled = enable_buoy in ('true', '1', 'yes')
+    tracked_topic = ('/dynamic_ship/tracked_ships/_internal' if buoy_enabled
+                     else '/dynamic_ship/tracked_ships')
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
-    return [
-        LogInfo(
-            msg='启动 dynamic_ship_to_ground_truth（/_internal -> /sim/ground_truth/_src/dynamic_ships）；'
-                '合并与 markers 由 ground_truth_track_merger 负责。'
-        ),
-        Node(
+    actions = []
+    if enable in ('true', '1', 'yes'):
+        actions.append(LogInfo(
+            msg=f'启动 dynamic_ship_to_ground_truth（{tracked_topic} -> '
+                '/sim/ground_truth/_src/dynamic_ships）。'))
+        actions.append(Node(
             package='ground_truth_sensor_sim',
             executable='dynamic_ship_to_ground_truth',
             name='dynamic_ship_to_ground_truth',
             output='log',
             parameters=[{
                 'use_sim_time': use_sim_time,
-                'input_topic': '/dynamic_ship/tracked_ships/_internal',
+                'input_topic': tracked_topic,
                 'output_topic': '/sim/ground_truth/_src/dynamic_ships',
                 'frame_id': 'map',
                 'size_w': 3.6,
@@ -70,9 +73,14 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
                 'matched_mmsi': 0,
                 'source_model_name': 'dynamic_ship',
             }],
-        ),
-        # 浮标栈未启时仍需 merger，把 _src/dynamic_ships 汇到 /sim/ground_truth 并发 markers。
-        Node(
+        ))
+    else:
+        actions.append(LogInfo(msg='enable_dynamic_ship_gt_bridge:=false，跳过动态船真值转换节点。'))
+
+    # main.launch owns the merger when the buoy stack is enabled. The fallback
+    # also serves certificate GT when its dynamic-ship bridge is disabled.
+    if not buoy_enabled:
+        actions.append(Node(
             package='ground_truth_sensor_sim',
             executable='ground_truth_track_merger',
             name='ccs_ground_truth_track_merger',
@@ -89,8 +97,8 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
                 'publish_markers': True,
                 'frame_id': 'map',
             }],
-        ),
-    ]
+        ))
+    return actions
 
 
 def _sim_ais_node(context, *args, **kwargs):
@@ -296,6 +304,28 @@ def generate_launch_description():
         map_streamer_share,
         'launch',
         'usv_map_rtsp_streamer.launch.py',
+    )
+
+    usv_monitor_share = get_package_share_directory('usv_monitor')
+    usv_monitor_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(usv_monitor_share, 'launch', 'usv_monitor.launch.py')
+        ),
+    )
+    sensor_status_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(usv_monitor_share, 'launch', 'sensor_status.launch.py')
+        ),
+    )
+    # config_gateway.launch.py 也声明了 params_file；父链中的 params_file 已被 Nav2
+    # bringup 占用，必须显式传回 usv_monitor 自己的 gateway.yaml，否则会被覆盖。
+    config_gateway_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(usv_monitor_share, 'launch', 'config_gateway.launch.py')
+        ),
+        launch_arguments={
+            'params_file': os.path.join(usv_monitor_share, 'config', 'gateway.yaml'),
+        }.items(),
     )
 
     config_path = LaunchConfiguration('config_path')
@@ -552,6 +582,9 @@ def generate_launch_description():
         LogInfo(msg=['Starting CCS certified simulation from: ', config_path]),
         base_bringup,
         route_planner_include,
+        usv_monitor_include,
+        sensor_status_include,
+        config_gateway_include,
         OpaqueFunction(function=_ccs_map_to_odom_tf),
         OpaqueFunction(function=_gazebo_camera_follow),
         OpaqueFunction(function=_dynamic_ship_ground_truth_bridge),

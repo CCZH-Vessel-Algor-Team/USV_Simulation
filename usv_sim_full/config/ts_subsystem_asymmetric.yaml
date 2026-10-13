@@ -1,0 +1,33 @@
+# Default CCS asymmetric-heading profile for standalone COLREGS navigation.
+# CCS radii, threat scale/horizon and AP extension; avoidance scale stays below detection.
+# Heading gains apply per avoidance request, not per second.
+ts_state_manager:
+  ros__parameters:
+    update_frequency: 10.0
+    track_list_timeout: 1.0
+    own_ship_state_timeout: 1.0
+    threat_tcpa_horizon: 40.0
+    threat_radius_scale: 2.0
+    os_radius: 15.0
+    global_frame: map
+
+avoidance_point_node:
+  ros__parameters:
+    snapshot_timeout: 1.0
+    max_request_position_delta: 3.0
+    avoidance_radius_scale: 1.5
+    point_extension_distance: 40.0
+    heading_smoothing_alpha: 0.5    # Symmetric-mode gain; D uses the two gains below.
+    smooth_initial_heading: false
+    speed_tolerance: 0.3
+    speed_sample_count: 5
+    asymmetric_heading_smoothing: true
+    heading_alpha_increase: 1.0
+    heading_alpha_decrease: 0.15
+
+barrier_node:
+  ros__parameters:
+    snapshot_timeout: 1.0
+    max_request_position_delta: 3.0
+    closing_segment_length: 8.0
+    lateral_margin: 0.3

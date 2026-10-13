@@ -38,7 +38,18 @@ def is_feedback_fresh(
     """
     if feedback_stamp_sec is None:
         return False
-    return (now_sec - feedback_stamp_sec) <= timeout_sec
+    return 0.0 <= (now_sec - feedback_stamp_sec) <= timeout_sec
+
+
+def is_feedback_fresh_ns(stamp_ns: Optional[int], now_ns: int, timeout_sec: float) -> bool:
+    """Check observation age without rounding an absolute timestamp to float.
+
+    :param stamp_ns: Observation time in nanoseconds, or None.
+    :param now_ns: Current simulation time in nanoseconds.
+    :param timeout_sec: Maximum observation age in seconds.
+    :return: Whether the observation is neither future-dated nor expired.
+    """
+    return stamp_ns is not None and 0 <= now_ns - stamp_ns <= int(timeout_sec * 1e9)
 
 
 def fresh_sample(
@@ -65,18 +76,30 @@ class PoseTracker:
 
     def __init__(self, tau_sec: float = 0.3) -> None:
         self._tau_sec = max(0.0, float(tau_sec))
-        self._prev: Optional[Tuple[float, float, float]] = None
+        self._prev: Optional[Tuple[float, float, int]] = None
         self._velocity: Tuple[float, float] = (0.0, 0.0)
+        self._ready = False
 
     @property
     def velocity(self) -> Tuple[float, float]:
         """当前滤波后的平面速度 (vx, vy)，单位 m/s。"""
         return self._velocity
 
+    @property
+    def ready(self) -> bool:
+        """Whether two advancing observations have established a velocity."""
+        return self._ready
+
+    @property
+    def stamp_ns(self) -> Optional[int]:
+        """Timestamp of the last accepted observation, in nanoseconds."""
+        return None if self._prev is None else self._prev[2]
+
     def reset(self) -> None:
         """清空历史样本与速度。"""
         self._prev = None
         self._velocity = (0.0, 0.0)
+        self._ready = False
 
     def update(self, x: float, y: float, stamp_sec: float) -> Tuple[float, float]:
         """输入新位姿样本，返回滤波后的平面速度。
@@ -86,18 +109,40 @@ class PoseTracker:
         :param stamp_sec: 样本时间戳（秒）
         :return: 滤波后的速度 (vx, vy)，单位 m/s
         """
+        if not math.isfinite(stamp_sec):
+            return self._velocity
+        return self.update_ns(x, y, round(stamp_sec * 1e9))
+
+    def update_ns(self, x: float, y: float, stamp_ns: int,
+                  timeout_sec: Optional[float] = None) -> Tuple[float, float]:
+        """Update from exact observation time; ignore duplicates and reordering.
+
+        :param x: World-frame X position in metres.
+        :param y: World-frame Y position in metres.
+        :param stamp_ns: Integer observation timestamp in nanoseconds.
+        :param timeout_sec: Reset history across a longer gap, if supplied.
+        :return: Filtered world-frame velocity in metres per second.
+        """
+        if not isinstance(stamp_ns, int) or not all(map(math.isfinite, (x, y))):
+            return self._velocity
         if self._prev is not None:
-            dt = stamp_sec - self._prev[2]
-            if dt > 1e-6:
-                raw_vx = (x - self._prev[0]) / dt
-                raw_vy = (y - self._prev[1]) / dt
-                if self._tau_sec <= 0.0:
-                    self._velocity = (raw_vx, raw_vy)
-                else:
-                    alpha = dt / (self._tau_sec + dt)
-                    self._velocity = (
-                        self._velocity[0] + alpha * (raw_vx - self._velocity[0]),
-                        self._velocity[1] + alpha * (raw_vy - self._velocity[1]),
-                    )
-        self._prev = (x, y, stamp_sec)
+            dt_ns = stamp_ns - self._prev[2]
+            if dt_ns <= 0:
+                return self._velocity
+            if timeout_sec is not None and dt_ns > int(timeout_sec * 1e9):
+                self.reset()
+        if self._prev is not None:
+            dt = (stamp_ns - self._prev[2]) * 1e-9
+            raw_vx = (x - self._prev[0]) / dt
+            raw_vy = (y - self._prev[1]) / dt
+            if not all(map(math.isfinite, (raw_vx, raw_vy))):
+                self.reset()
+            else:
+                alpha = dt / (self._tau_sec + dt)
+                self._velocity = (
+                    (1.0 - alpha) * self._velocity[0] + alpha * raw_vx,
+                    (1.0 - alpha) * self._velocity[1] + alpha * raw_vy,
+                )
+                self._ready = True
+        self._prev = (x, y, stamp_ns)
         return self._velocity

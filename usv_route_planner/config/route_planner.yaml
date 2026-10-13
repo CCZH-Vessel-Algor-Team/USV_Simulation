@@ -31,14 +31,13 @@ usv_route_planner:
     utm_reference_northing: 3846381.0
     lethal_threshold: 80
     unknown_is_obstacle: true
-    collision_clearance_m: 50.0
+    collision_clearance_m: 30.0
     safety_hard_extra_clearance_m: 30.0
     safety_weight: 5.0
     safety_decay_distance_m: 15.0
     chart_risk_weight: 1.0
     allow_diagonal: true
     prevent_corner_cutting: true
-    max_start_goal_snap_distance_m: 10.0
     roi_margin_m: 1000.0
     max_expansions: 10000000
     waypoint_spacing_m: 50.0
