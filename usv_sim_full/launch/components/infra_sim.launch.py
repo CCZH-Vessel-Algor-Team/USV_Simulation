@@ -37,7 +37,7 @@ def generate_launch_description():
     gz_headless_arg = DeclareLaunchArgument(
         'gz_headless',
         default_value='false',
-        description='true 时以 server-only 方式启动 Gazebo（不启动 GUI 渲染窗口）'
+        description='true: Gazebo server-only with EGL offscreen rendering; no GUI'
     )
     
     # 获取launch配置
@@ -176,7 +176,9 @@ def generate_launch_description():
 
         # Separate processes avoid the combined startup's /gazebo/starting_world handshake.
         gz_commands = [['-r', '-s', world_file]]
-        if not headless:
+        if headless:
+            gz_commands[0].append('--headless-rendering')
+        else:
             gz_commands.append(['-g'])
         gz_environment = {
             'GZ_SIM_SYSTEM_PLUGIN_PATH': ':'.join([

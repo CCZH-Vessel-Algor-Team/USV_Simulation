@@ -1,8 +1,10 @@
 // 将 gpu_ray + ros_gz_bridge 的 PointCloud2 增强为 x,y,z,doppler_velocity,rcs
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <memory>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -35,6 +37,24 @@ public:
     output_topic_ = declare_parameter<std::string>("output_topic", "");
     odom_topic_ = declare_parameter<std::string>("odom_topic", "");
     world_frame_ = declare_parameter<std::string>("world_frame", "map");
+    use_truth_pose_ = declare_parameter<bool>("use_truth_pose", false);
+    truth_odom_max_dt_ = declare_parameter<double>("truth_odom_max_dt", 0.25);
+    if (!std::isfinite(truth_odom_max_dt_) || truth_odom_max_dt_ <= 0.0) {
+      throw std::invalid_argument("truth_odom_max_dt must be finite and positive (seconds)");
+    }
+    if (use_truth_pose_) {
+      const auto xyz = declare_parameter<std::vector<double>>("sensor_xyz", {0.0, 0.0, 0.0});
+      const auto rpy = declare_parameter<std::vector<double>>("sensor_rpy", {0.0, 0.0, 0.0});
+      const auto finite = [](double v) {return std::isfinite(v);};
+      if (odom_topic_.empty() || xyz.size() != 3 || rpy.size() != 3 ||
+        !std::all_of(xyz.begin(), xyz.end(), finite) ||
+        !std::all_of(rpy.begin(), rpy.end(), finite))
+      {
+        throw std::invalid_argument("truth pose requires odom_topic and finite sensor_xyz/rpy[3]");
+      }
+      sensor_xyz_.setValue(xyz[0], xyz[1], xyz[2]);
+      sensor_rotation_.setRPY(rpy[0], rpy[1], rpy[2]);
+    }
     // Reliable 与 RViz/部分工具默认订阅 QoS 兼容；Best effort 订阅方仍可接收 Reliable 发布
     output_use_reliable_qos_ = declare_parameter<bool>("output_use_reliable_qos", true);
 
@@ -90,61 +110,102 @@ private:
   void onCloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
   {
     const std::string sensor_frame = msg->header.frame_id;
-    geometry_msgs::msg::TransformStamped world_T_sensor;
-    geometry_msgs::msg::TransformStamped world_T_base;
-    bool have_tf = true;
-    // 使用 TimePointZero 取「最新可用」TF，避免点云 header 时间略超前于 TF 树时的
-    // “extrapolation into the future”（仿真步进与桥接延迟常见）。
-    try {
-      world_T_sensor = tf_buffer_.lookupTransform(
-        world_frame_, sensor_frame, tf2::TimePointZero, tf2::durationFromSec(0.1));
-    } catch (const tf2::TransformException &e) {
-      RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), 5000,
-        "TF %s->%s: %s", world_frame_.c_str(), sensor_frame.c_str(), e.what());
-      have_tf = false;
-    }
-
     tf2::Quaternion q_ws(0, 0, 0, 1);
     tf2::Vector3 p_ws(0, 0, 0);
-    if (have_tf) {
-      tf2::fromMsg(world_T_sensor.transform.rotation, q_ws);
-      p_ws = tf2::Vector3(
-        world_T_sensor.transform.translation.x,
-        world_T_sensor.transform.translation.y,
-        world_T_sensor.transform.translation.z);
-    }
-
     tf2::Vector3 v_sensor_world(0, 0, 0);
-    if (last_odom_ && have_tf) {
-      std::string bf = last_odom_->child_frame_id;
-      bool have_base = false;
-      if (!bf.empty()) {
-        try {
-          world_T_base = tf_buffer_.lookupTransform(
-            world_frame_, bf, tf2::TimePointZero, tf2::durationFromSec(0.1));
-          have_base = true;
-        } catch (const tf2::TransformException &e) {
-          RCLCPP_WARN_THROTTLE(
-            get_logger(), *get_clock(), 5000,
-            "TF base %s: %s", bf.c_str(), e.what());
-        }
+    bool have_tf = true;
+    if (use_truth_pose_) {
+      if (!last_odom_) {
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 5000, "Waiting for Gazebo truth odometry");
+        return;
       }
-      if (have_base) {
-        tf2::Quaternion q_wb;
-        tf2::fromMsg(world_T_base.transform.rotation, q_wb);
-        const tf2::Vector3 p_wb(
-          world_T_base.transform.translation.x,
-          world_T_base.transform.translation.y,
-          world_T_base.transform.translation.z);
+      const auto &odom_stamp = last_odom_->header.stamp;
+      const auto &cloud_stamp = msg->header.stamp;
+      // Reject unset or malformed stamps before computing an integer nanosecond difference.
+      const auto valid_stamp = [](const auto &stamp) {
+          return stamp.sec >= 0 && stamp.nanosec < 1000000000u &&
+                 (stamp.sec != 0 || stamp.nanosec != 0);
+        };
+      if (!valid_stamp(odom_stamp) || !valid_stamp(cloud_stamp)) {
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 5000,
+          "Invalid Gazebo truth odometry/cloud timestamp; dropping cloud");
+        return;
+      }
+      const std::int64_t dt_ns =
+        (static_cast<std::int64_t>(cloud_stamp.sec) - odom_stamp.sec) * 1000000000LL +
+        static_cast<std::int64_t>(cloud_stamp.nanosec) - odom_stamp.nanosec;
+      const double truth_dt = static_cast<double>(dt_ns) * 1e-9;
+      if (!std::isfinite(truth_dt) || std::abs(truth_dt) > truth_odom_max_dt_) {
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 5000,
+          "Gazebo truth odometry/cloud time mismatch (dt=%.6f s, max=%.6f s); dropping cloud",
+          truth_dt, truth_odom_max_dt_);
+        return;
+      }
+      // Compose truth base pose with the fixed mount, never the public localization TF.
+      const auto &pose = last_odom_->pose.pose;
+      tf2::Quaternion q_wb;
+      tf2::fromMsg(pose.orientation, q_wb);
+      q_ws = q_wb * sensor_rotation_;
+      p_ws = tf2::Vector3(pose.position.x, pose.position.y, pose.position.z) +
+        tf2::quatRotate(q_wb, sensor_xyz_);
+      const auto &tw = last_odom_->twist.twist;
+      const tf2::Vector3 v_b(tw.linear.x, tw.linear.y, tw.linear.z);
+      const tf2::Vector3 w_b(tw.angular.x, tw.angular.y, tw.angular.z);
+      v_sensor_world = tf2::quatRotate(q_wb, v_b + w_b.cross(sensor_xyz_));
+    } else {
+      geometry_msgs::msg::TransformStamped world_T_sensor;
+      geometry_msgs::msg::TransformStamped world_T_base;
+      // 使用 TimePointZero 取「最新可用」TF，避免点云 header 时间略超前于 TF 树时的
+      // “extrapolation into the future”（仿真步进与桥接延迟常见）。
+      try {
+        world_T_sensor = tf_buffer_.lookupTransform(
+          world_frame_, sensor_frame, tf2::TimePointZero, tf2::durationFromSec(0.1));
+      } catch (const tf2::TransformException &e) {
+        RCLCPP_WARN_THROTTLE(
+          get_logger(), *get_clock(), 5000,
+          "TF %s->%s: %s", world_frame_.c_str(), sensor_frame.c_str(), e.what());
+        have_tf = false;
+      }
+      if (have_tf) {
+        tf2::fromMsg(world_T_sensor.transform.rotation, q_ws);
+        p_ws = tf2::Vector3(
+          world_T_sensor.transform.translation.x,
+          world_T_sensor.transform.translation.y,
+          world_T_sensor.transform.translation.z);
+      }
+      if (last_odom_ && have_tf) {
+        std::string bf = last_odom_->child_frame_id;
+        bool have_base = false;
+        if (!bf.empty()) {
+          try {
+            world_T_base = tf_buffer_.lookupTransform(
+              world_frame_, bf, tf2::TimePointZero, tf2::durationFromSec(0.1));
+            have_base = true;
+          } catch (const tf2::TransformException &e) {
+            RCLCPP_WARN_THROTTLE(
+              get_logger(), *get_clock(), 5000,
+              "TF base %s: %s", bf.c_str(), e.what());
+          }
+        }
+        if (have_base) {
+          tf2::Quaternion q_wb;
+          tf2::fromMsg(world_T_base.transform.rotation, q_wb);
+          const tf2::Vector3 p_wb(
+            world_T_base.transform.translation.x,
+            world_T_base.transform.translation.y,
+            world_T_base.transform.translation.z);
 
-        const auto &tw = last_odom_->twist.twist;
-        tf2::Vector3 v_b(tw.linear.x, tw.linear.y, tw.linear.z);
-        tf2::Vector3 w_b(tw.angular.x, tw.angular.y, tw.angular.z);
-        tf2::Vector3 v_base_world = tf2::quatRotate(q_wb, v_b);
-        tf2::Vector3 w_world = tf2::quatRotate(q_wb, w_b);
-        tf2::Vector3 r_world = p_ws - p_wb;
-        v_sensor_world = v_base_world + w_world.cross(r_world);
+          const auto &tw = last_odom_->twist.twist;
+          tf2::Vector3 v_b(tw.linear.x, tw.linear.y, tw.linear.z);
+          tf2::Vector3 w_b(tw.angular.x, tw.angular.y, tw.angular.z);
+          tf2::Vector3 v_base_world = tf2::quatRotate(q_wb, v_b);
+          tf2::Vector3 w_world = tf2::quatRotate(q_wb, w_b);
+          tf2::Vector3 r_world = p_ws - p_wb;
+          v_sensor_world = v_base_world + w_world.cross(r_world);
+        }
       }
     }
 
@@ -271,6 +332,10 @@ private:
   std::string output_topic_;
   std::string odom_topic_;
   std::string world_frame_;
+  bool use_truth_pose_{false};
+  double truth_odom_max_dt_{0.25};
+  tf2::Vector3 sensor_xyz_{0, 0, 0};
+  tf2::Quaternion sensor_rotation_{0, 0, 0, 1};
   bool output_use_reliable_qos_{true};
   double base_rcs_{12.0};
   double rcs_distance_decay_{0.01};
