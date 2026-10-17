@@ -29,9 +29,15 @@ ros2 launch usv_sim_full nav2_sim_full_bringup.launch.py
 # CCS 认证仿真
 ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py
 
+# Fossen模型2小艇（Sydney，直接牛顿推力，PID + ALOS）
+ros2 launch usv_sim_full fossen_model2.launch.py
+
 # 使用指定配置
 ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 ```
+
+小艇模型的动力学、输入范围及适用边界见
+[Fossen模型2说明](usv_sim_full/description/models/fossen_model2/README.md)。
 
 ## 功能包
 

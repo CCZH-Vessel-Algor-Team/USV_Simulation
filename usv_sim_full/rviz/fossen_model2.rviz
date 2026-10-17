@@ -1,0 +1,92 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: nav2_rviz_plugins/Navigation 2
+    Name: Navigation 2
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Fixed Frame: map
+    Background Color: 48; 48; 48
+    Frame Rate: 30
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 100
+    - Class: rviz_default_plugins/Map
+      Name: Sydney Map
+      Enabled: true
+      Topic:
+        Value: /map
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+        Depth: 1
+      Alpha: 0.6
+    - Class: rviz_default_plugins/Odometry
+      Name: Own Ship (position and heading)
+      Enabled: true
+      Value: true
+      Keep: 1
+      Position Tolerance: 0
+      Angle Tolerance: 0
+      Covariance:
+        Value: false
+      Shape:
+        Value: Arrow
+        Alpha: 1
+        Color: 255; 85; 0
+        Shaft Length: 0.35
+        Shaft Radius: 0.08
+        Head Length: 1.15
+        Head Radius: 0.45
+      Topic:
+        Value: /usv_1/odom
+        Depth: 5
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+    - Class: rviz_default_plugins/LaserScan
+      Name: Lidar
+      Enabled: true
+      Topic:
+        Value: /usv_1/sensors/lidar/front_lidar/scan
+        Reliability Policy: Best Effort
+        Depth: 5
+      Size (m): 0.04
+    - Class: rviz_default_plugins/Image
+      Name: Front Camera
+      Enabled: true
+      Topic:
+        Value: /usv_1/sensors/camera/front_cam/image_raw
+        Reliability Policy: Best Effort
+        Depth: 2
+    - Class: rviz_default_plugins/Path
+      Name: Global Path
+      Enabled: true
+      Topic:
+        Value: /usv_1/plan
+        Depth: 5
+      Line Width: 0.06
+    - Class: rviz_default_plugins/TF
+      Name: Vessel Frames
+      Enabled: true
+      Marker Scale: 0.6
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: nav2_rviz_plugins/GoalTool
+      Topic: /goal_pose
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Target Frame: usv_1/base_link
+      Scale: 25
+Window Geometry:
+  Width: 1400
+  Height: 900
