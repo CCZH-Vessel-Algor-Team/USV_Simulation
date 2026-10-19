@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QTimer>
 #include <QVBoxLayout>
 
@@ -27,38 +28,57 @@ GroundingWarningPanel::GroundingWarningPanel(QWidget * parent)
   auto * ns_row = new QHBoxLayout;
   ns_row->addWidget(new QLabel("Namespace:"));
   ns_edit_ = new QLineEdit(QString::fromStdString(ns_));
-  ns_row->addWidget(ns_edit_);
+  ns_edit_->setMinimumWidth(0);
+  ns_row->addWidget(ns_edit_, 1);
   apply_button_ = new QPushButton("Apply");
   ns_row->addWidget(apply_button_);
   root->addLayout(ns_row);
 
-  auto * ukc_box = new QGroupBox("UKC");
+  // RViz owns the dock size. Keep the namespace controls visible and let the
+  // status section scroll when the dock is shorter than the messages' natural
+  // height instead of squeezing the labels to zero height.
+  auto * status_scroll = new QScrollArea(this);
+  status_scroll->setWidgetResizable(true);
+  status_scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  status_scroll->setFrameShape(QFrame::NoFrame);
+
+  auto * status_widget = new QWidget(status_scroll);
+  auto * status_layout = new QVBoxLayout(status_widget);
+  status_layout->setContentsMargins(0, 0, 0, 0);
+  status_layout->setSpacing(2);
+  status_layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+
+  auto * ukc_box = new QGroupBox("UKC", status_widget);
+  ukc_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
   auto * ukc_layout = new QVBoxLayout;
   ukc_label_ = new QLabel("waiting for /safety/ukc_state ...");
   ukc_label_->setWordWrap(true);
   ukc_layout->addWidget(ukc_label_);
   ukc_box->setLayout(ukc_layout);
-  root->addWidget(ukc_box);
+  status_layout->addWidget(ukc_box);
 
-  auto * alert_box = new QGroupBox("Grounding Alert");
+  auto * alert_box = new QGroupBox("Grounding Alert", status_widget);
+  alert_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
   auto * alert_layout = new QVBoxLayout;
   alert_label_ = new QLabel("no alert");
   alert_label_->setWordWrap(true);
   alert_layout->addWidget(alert_label_);
   alert_box->setLayout(alert_layout);
-  root->addWidget(alert_box);
+  status_layout->addWidget(alert_box);
 
-  auto * grid_box = new QGroupBox("Depth Grid");
+  auto * grid_box = new QGroupBox("Depth Grid", status_widget);
+  grid_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
   auto * grid_layout = new QVBoxLayout;
   grid_label_ = new QLabel("waiting for /safety/depth_grid ...");
   grid_label_->setWordWrap(true);
   grid_layout->addWidget(grid_label_);
   grid_box->setLayout(grid_layout);
-  root->addWidget(grid_box);
+  status_layout->addWidget(grid_box);
 
+  status_scroll->setWidget(status_widget);
+  root->addWidget(status_scroll, 1);
   setLayout(root);
-  setMaximumHeight(260);
-  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
   connect(apply_button_, &QPushButton::clicked, this, &GroundingWarningPanel::onApplyNamespace);
 }

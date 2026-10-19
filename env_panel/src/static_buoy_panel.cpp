@@ -25,15 +25,28 @@ StaticBuoyPanel::StaticBuoyPanel(QWidget * parent)
 void StaticBuoyPanel::setupUi()
 {
   auto main_layout = new QVBoxLayout;
+  main_layout->setContentsMargins(12, 10, 12, 12);
+  main_layout->setSpacing(10);
+  setStyleSheet(
+    "QGroupBox { font-weight: 600; margin-top: 10px; }"
+    "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }"
+    "QPushButton { min-height: 28px; padding: 3px 10px; }");
 
-  auto config_group = new QGroupBox("Spawn Config");
+  const int group_content_top_margin = fontMetrics().height() + 8;
+
+  auto config_group = new QGroupBox("生成配置");
   auto form = new QFormLayout;
+  form->setContentsMargins(12, group_content_top_margin, 12, 10);
+  form->setHorizontalSpacing(14);
+  form->setVerticalSpacing(8);
+  form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
   buoy_type_combo_ = new QComboBox;
   buoy_type_combo_->addItems({
       "rgb", "rgy", "yrg", "bgr", "bgy", "gbr", "rbg", "ybr", "ygb"});
   buoy_type_combo_->setCurrentText("rgb");
-  form->addRow("Light Sequence:", buoy_type_combo_);
+  form->addRow("灯序：", buoy_type_combo_);
   QObject::connect(
       buoy_type_combo_,
       QOverload<const QString &>::of(&QComboBox::currentTextChanged),
@@ -44,27 +57,33 @@ void StaticBuoyPanel::setupUi()
   radius_slider_->setValue(static_cast<int>(radius_m_ * 10.0));
   radius_label_ = new QLabel("0.8 m");
   auto radius_row = new QHBoxLayout;
-  radius_row->addWidget(radius_slider_);
+  radius_row->setContentsMargins(0, 0, 0, 0);
+  radius_row->setSpacing(12);
+  radius_row->addWidget(radius_slider_, 1);
   radius_row->addWidget(radius_label_);
-  form->addRow("Radius:", radius_row);
+  form->addRow("半径：", radius_row);
   QObject::connect(radius_slider_, &QSlider::valueChanged,
                    this, &StaticBuoyPanel::onRadiusChanged);
 
   config_group->setLayout(form);
   main_layout->addWidget(config_group);
 
-  auto list_group = new QGroupBox("Active Static Buoys");
+  auto list_group = new QGroupBox("在用静态浮标");
   auto list_layout = new QVBoxLayout;
+  list_layout->setContentsMargins(12, group_content_top_margin, 12, 10);
+  list_layout->setSpacing(8);
   buoy_list_ = new QListWidget;
   list_layout->addWidget(buoy_list_);
 
   auto btn_layout = new QHBoxLayout;
-  auto delete_btn = new QPushButton("Delete Selected");
+  btn_layout->setContentsMargins(0, 0, 0, 0);
+  btn_layout->setSpacing(10);
+  auto delete_btn = new QPushButton("删除所选");
   QObject::connect(delete_btn, &QPushButton::clicked,
                    this, &StaticBuoyPanel::onDeleteClicked);
   btn_layout->addWidget(delete_btn);
 
-  clear_all_button_ = new QPushButton("Clear All");
+  clear_all_button_ = new QPushButton("全部清除");
   QObject::connect(clear_all_button_, &QPushButton::clicked,
                    this, &StaticBuoyPanel::onClearAllClicked);
   btn_layout->addWidget(clear_all_button_);
@@ -73,14 +92,8 @@ void StaticBuoyPanel::setupUi()
   list_group->setLayout(list_layout);
   main_layout->addWidget(list_group);
 
-  auto hint = new QLabel(
-      "Use RViz 'Static Buoy Point' tool to click in 3D view.\n"
-      "Static VRX light buoys spawn at the clicked position.\n"
-      "BuoyArray, markers, and COLREGS/ground-truth bridges update automatically.");
-  hint->setWordWrap(true);
-  main_layout->addWidget(hint);
-
-  main_layout->setContentsMargins(8, 8, 8, 8);
+  radius_label_->setMinimumWidth(76);
+  radius_label_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
   setLayout(main_layout);
 
   config_timer_ = new QTimer(this);

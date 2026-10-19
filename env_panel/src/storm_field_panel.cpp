@@ -26,18 +26,36 @@ StormFieldPanel::StormFieldPanel(QWidget * parent)
 void StormFieldPanel::setupUi()
 {
   auto main_layout = new QVBoxLayout;
+  main_layout->setContentsMargins(12, 10, 12, 12);
+  main_layout->setSpacing(10);
+  setStyleSheet(
+    "QGroupBox { font-weight: 600; margin-top: 10px; }"
+    "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }"
+    "QPushButton { min-height: 28px; padding: 3px 10px; }");
 
-  auto config_group = new QGroupBox("Storm Config");
+  const int group_content_top_margin = fontMetrics().height() + 8;
+  const auto configure_slider_row = [](QHBoxLayout * layout) {
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(12);
+  };
+
+  auto config_group = new QGroupBox("风暴配置");
   auto form = new QFormLayout;
+  form->setContentsMargins(12, group_content_top_margin, 12, 10);
+  form->setHorizontalSpacing(14);
+  form->setVerticalSpacing(8);
+  form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
   drift_heading_slider_ = new QSlider(Qt::Horizontal);
   drift_heading_slider_->setRange(0, 359);
   drift_heading_slider_->setValue(static_cast<int>(drift_heading_deg_));
   drift_heading_label_ = new QLabel("0 deg");
   auto heading_row = new QHBoxLayout;
-  heading_row->addWidget(drift_heading_slider_);
+  configure_slider_row(heading_row);
+  heading_row->addWidget(drift_heading_slider_, 1);
   heading_row->addWidget(drift_heading_label_);
-  form->addRow("Drift Dir:", heading_row);
+  form->addRow("漂移方向：", heading_row);
   QObject::connect(drift_heading_slider_, &QSlider::valueChanged,
                    this, &StormFieldPanel::onDriftHeadingChanged);
 
@@ -46,9 +64,10 @@ void StormFieldPanel::setupUi()
   drift_speed_slider_->setValue(static_cast<int>(drift_speed_ * 10.0));
   drift_speed_label_ = new QLabel("0.0 m/s");
   auto speed_row = new QHBoxLayout;
-  speed_row->addWidget(drift_speed_slider_);
+  configure_slider_row(speed_row);
+  speed_row->addWidget(drift_speed_slider_, 1);
   speed_row->addWidget(drift_speed_label_);
-  form->addRow("Drift Speed:", speed_row);
+  form->addRow("漂移速度：", speed_row);
   QObject::connect(drift_speed_slider_, &QSlider::valueChanged,
                    this, &StormFieldPanel::onDriftSpeedChanged);
 
@@ -57,9 +76,10 @@ void StormFieldPanel::setupUi()
   radius_slider_->setValue(static_cast<int>(radius_ * 10.0));
   radius_label_ = new QLabel("30.0 m");
   auto radius_row = new QHBoxLayout;
-  radius_row->addWidget(radius_slider_);
+  configure_slider_row(radius_row);
+  radius_row->addWidget(radius_slider_, 1);
   radius_row->addWidget(radius_label_);
-  form->addRow("Radius:", radius_row);
+  form->addRow("半径：", radius_row);
   QObject::connect(radius_slider_, &QSlider::valueChanged,
                    this, &StormFieldPanel::onRadiusChanged);
 
@@ -69,9 +89,10 @@ void StormFieldPanel::setupUi()
       static_cast<int>(weather_validity_duration_s_ / 60.0));
   weather_validity_label_ = new QLabel("60 min");
   auto validity_row = new QHBoxLayout;
-  validity_row->addWidget(weather_validity_slider_);
+  configure_slider_row(validity_row);
+  validity_row->addWidget(weather_validity_slider_, 1);
   validity_row->addWidget(weather_validity_label_);
-  form->addRow("Weather Validity:", validity_row);
+  form->addRow("有效时长：", validity_row);
   QObject::connect(weather_validity_slider_, &QSlider::valueChanged,
                    this, &StormFieldPanel::onWeatherValidityChanged);
 
@@ -80,27 +101,32 @@ void StormFieldPanel::setupUi()
   weather_grid_slider_->setValue(static_cast<int>(weather_grid_resolution_m_));
   weather_grid_label_ = new QLabel("100 m");
   auto grid_row = new QHBoxLayout;
-  grid_row->addWidget(weather_grid_slider_);
+  configure_slider_row(grid_row);
+  grid_row->addWidget(weather_grid_slider_, 1);
   grid_row->addWidget(weather_grid_label_);
-  form->addRow("Weather Grid:", grid_row);
+  form->addRow("网格间距：", grid_row);
   QObject::connect(weather_grid_slider_, &QSlider::valueChanged,
                    this, &StormFieldPanel::onWeatherGridChanged);
 
   config_group->setLayout(form);
   main_layout->addWidget(config_group);
 
-  auto list_group = new QGroupBox("Active Storm");
+  auto list_group = new QGroupBox("在用风暴");
   auto list_layout = new QVBoxLayout;
+  list_layout->setContentsMargins(12, group_content_top_margin, 12, 10);
+  list_layout->setSpacing(8);
   storm_list_ = new QListWidget;
   list_layout->addWidget(storm_list_);
 
   auto btn_layout = new QHBoxLayout;
-  auto delete_btn = new QPushButton("Delete Selected");
+  btn_layout->setContentsMargins(0, 0, 0, 0);
+  btn_layout->setSpacing(10);
+  auto delete_btn = new QPushButton("删除所选");
   QObject::connect(delete_btn, &QPushButton::clicked,
                    this, &StormFieldPanel::onDeleteClicked);
   btn_layout->addWidget(delete_btn);
 
-  clear_all_button_ = new QPushButton("Clear All");
+  clear_all_button_ = new QPushButton("全部清除");
   QObject::connect(clear_all_button_, &QPushButton::clicked,
                    this, &StormFieldPanel::onClearAllClicked);
   btn_layout->addWidget(clear_all_button_);
@@ -109,13 +135,13 @@ void StormFieldPanel::setupUi()
   list_group->setLayout(list_layout);
   main_layout->addWidget(list_group);
 
-  auto hint = new QLabel(
-      "Use RViz 'Storm Point' tool to add storm centers.\n"
-      "Storms publish /storm_field/markers and TrackedShipList hazards.");
-  hint->setWordWrap(true);
-  main_layout->addWidget(hint);
-
-  main_layout->setContentsMargins(8, 8, 8, 8);
+  for (auto * label : {
+      drift_heading_label_, drift_speed_label_, radius_label_,
+      weather_validity_label_, weather_grid_label_})
+  {
+    label->setMinimumWidth(76);
+    label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+  }
   setLayout(main_layout);
 
   config_timer_ = new QTimer(this);

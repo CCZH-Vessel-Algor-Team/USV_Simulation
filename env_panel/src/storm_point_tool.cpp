@@ -15,7 +15,7 @@ StormPointTool::StormPointTool()
 void StormPointTool::onInitialize()
 {
   PointTool::onInitialize();
-  setName("Storm Point");
+  setName("风暴取点");
   setIcon(rviz_common::loadPixmap("package://rviz_default_plugins/icons/classes/PublishPoint.png"));
   topic_property_->setString("/storm_field/clicked_point");
   updateTopic();
