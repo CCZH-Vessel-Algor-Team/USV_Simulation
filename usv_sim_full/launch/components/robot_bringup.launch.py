@@ -19,44 +19,10 @@ from launch.actions import IncludeLaunchDescription
 from launch.actions import ExecuteProcess, OpaqueFunction, TimerAction
 from launch_ros.descriptions import ParameterValue
 from usv_sim_full.launch_config_helpers import quiet_ros_node_kwargs
-import os
+from usv_sim_full.model_description import convert_model_uri_to_package_uri
+from copy import deepcopy
+import math
 import re
-
-
-def _convert_model_uri_to_package_uri(urdf_content):
-    """将 Gazebo 专用的 model:// URI 转换为 RViz 可识别的 package:// URI。"""
-    from ament_index_python.packages import get_package_share_directory
-
-    model_to_pkg = {}
-
-    try:
-        wamv_desc_share = get_package_share_directory('wamv_description')
-        wamv_models_dir = os.path.join(wamv_desc_share, 'models')
-        if os.path.isdir(wamv_models_dir):
-            for name in os.listdir(wamv_models_dir):
-                if os.path.isdir(os.path.join(wamv_models_dir, name)):
-                    model_to_pkg[name] = f'package://wamv_description/models/{name}/'
-    except Exception:
-        pass
-
-    try:
-        usv_sim_share = get_package_share_directory('usv_sim_full')
-        usv_models_dir = os.path.join(usv_sim_share, 'description', 'models')
-        if os.path.isdir(usv_models_dir):
-            for name in os.listdir(usv_models_dir):
-                if os.path.isdir(os.path.join(usv_models_dir, name)):
-                    model_to_pkg[name] = f'package://usv_sim_full/description/models/{name}/'
-    except Exception:
-        pass
-
-    def replace_model_uri(match):
-        model_name = match.group(1)
-        sub_path = match.group(2)
-        if model_name in model_to_pkg:
-            return model_to_pkg[model_name] + sub_path
-        return match.group(0)
-
-    return re.sub(r'model://([^/]+)/(.+)', replace_model_uri, urdf_content)
 
 
 def generate_launch_description():
@@ -107,6 +73,16 @@ def generate_launch_description():
         'enable_robot_localization',
         default_value='false',
         description='启用 robot_localization (EKF + navsat_transform) 计算 map->odom'
+    )
+
+    external_localization_arg = DeclareLaunchArgument(
+        'external_localization',
+        default_value='false',
+        description=(
+            'Remap only Gazebo bridge ROS odom/GPS/IMU to source/gazebo; '
+            'external localization owns model TF; disable legacy '
+            'robot_state_publisher, odom TF and robot_localization, even if enabled'
+        ),
     )
 
     localization_params_file_arg = DeclareLaunchArgument(
@@ -198,6 +174,7 @@ def generate_launch_description():
     radar_ros_topic = LaunchConfiguration('radar_ros_topic')
     enable_maritime_radar_bridge = LaunchConfiguration('enable_maritime_radar_bridge')
     enable_robot_localization = LaunchConfiguration('enable_robot_localization')
+    external_localization = LaunchConfiguration('external_localization')
     localization_params_file = LaunchConfiguration('localization_params_file')
     localization_start_delay = LaunchConfiguration('localization_start_delay')
     x_pose = LaunchConfiguration('x')
@@ -216,12 +193,14 @@ def generate_launch_description():
     # 启动robot_state_publisher - 使用 OpaqueFunction 在运行时读取并转换 URDF 路径
     # 将 session_manager 输出的 model:// URI 还原为 RViz 可识别的 package:// URI
     def launch_robot_state_publisher(context, *args, **kwargs):
+        if IfCondition(external_localization).evaluate(context):
+            return []
         actual_urdf_path = urdf_path.perform(context)
         rn = robot_name.perform(context)
         use_sim_time_val = use_sim_time.perform(context).lower() == 'true'
         v = verbose_launch.perform(context)
         with open(actual_urdf_path, 'r') as f:
-            robot_desc = _convert_model_uri_to_package_uri(f.read())
+            robot_desc = convert_model_uri_to_package_uri(f.read())
         kw = quiet_ros_node_kwargs(v)
         node = Node(
             package='robot_state_publisher',
@@ -282,6 +261,14 @@ def generate_launch_description():
         odom_kw = quiet_ros_node_kwargs(v)
         bridge_path = bridge_config_path.perform(context)
         bridge_on = enable_maritime_radar_bridge.perform(context).lower() == 'true'
+        external = IfCondition(external_localization).evaluate(context)
+        truth_odom_topic = f'/{rn}/source/gazebo/odom' if external else f'/{rn}/odom'
+        if external:
+            bridge_kw['remappings'] = [
+                (f'/{rn}/odom', truth_odom_topic),
+                (f'/{rn}/sensors/gps/gps_sensor/data', f'/{rn}/source/gazebo/gps'),
+                (f'/{rn}/sensors/imu/imu_sensor/data', f'/{rn}/source/gazebo/imu'),
+            ]
         radar_sensor_name_str = radar_sensor_name.perform(context)
         radar_ros_topic_str = radar_ros_topic.perform(context)
         if not radar_ros_topic_str.startswith('/'):
@@ -301,6 +288,19 @@ def generate_launch_description():
                 **bridge_kw,
             ),
             Node(
+                package='env_panel',
+                executable='hull_draft_publisher',
+                name=f'hull_draft_publisher_{safe}',
+                parameters=[{
+                    'odom_topic': truth_odom_topic,
+                    'draft_topic': f'/{rn}/hull_draft',
+                    'use_sim_time': use_sim_time_val,
+                }],
+                **odom_kw,
+            ),
+        ]
+        if not external:
+            nodes.insert(1, Node(
                 package='usv_sim_full',
                 executable='odom_tf_broadcaster',
                 name=f'odom_tf_broadcaster_{safe}',
@@ -310,19 +310,7 @@ def generate_launch_description():
                     'use_sim_time': use_sim_time_val,
                 }],
                 **odom_kw,
-            ),
-            Node(
-                package='env_panel',
-                executable='hull_draft_publisher',
-                name=f'hull_draft_publisher_{safe}',
-                parameters=[{
-                    'odom_topic': f'/{rn}/odom',
-                    'draft_topic': f'/{rn}/hull_draft',
-                    'use_sim_time': use_sim_time_val,
-                }],
-                **odom_kw,
-            ),
-        ]
+            ))
         if bridge_on:
             radar_kw = quiet_ros_node_kwargs(v)
             nodes.append(
@@ -371,6 +359,13 @@ def generate_launch_description():
     # ekf_localization_node = Node(...)         # EKF定位节点
 
     def launch_robot_localization(context, *args, **kwargs):
+        if IfCondition(external_localization).evaluate(context):
+            if IfCondition(enable_robot_localization).evaluate(context):
+                print(
+                    '[usv_sim_full] external_localization=true overrides '
+                    'enable_robot_localization=true; skipping legacy localization.'
+                )
+            return []
         robot_name_str = robot_name.perform(context)
         use_sim_time_val = use_sim_time.perform(context).lower() == 'true'
         localization_params = localization_params_file.perform(context)
@@ -425,14 +420,34 @@ def generate_launch_description():
 
         return [navsat_node, ekf_map_node]
 
+    def schedule_robot_localization(context, *args, **kwargs):
+        if IfCondition(external_localization).evaluate(context):
+            return launch_robot_localization(context)
+        if not IfCondition(enable_robot_localization).evaluate(context):
+            return []
+        delay = float(localization_start_delay.perform(context))
+        if not math.isfinite(delay) or delay < 0.0:
+            raise ValueError('localization_start_delay must be finite and nonnegative')
+        configurations = deepcopy(context.launch_configurations)
+
+        def start_localization(event_context):
+            # Humble TimerAction only saves locals, not the launch configuration stack.
+            event_context.launch_configurations.clear()
+            event_context.launch_configurations.update(deepcopy(configurations))
+            return launch_robot_localization(event_context)
+
+        return [TimerAction(
+            period=delay,
+            actions=[GroupAction(scoped=True, actions=[
+                OpaqueFunction(function=start_localization),
+            ])],
+        )]
+
     robot_scoped_group = GroupAction(
         actions=[
             PushRosNamespace(namespace=robot_name),
             OpaqueFunction(function=launch_robot_state_publisher),
-            TimerAction(
-                period=localization_start_delay,
-                actions=[OpaqueFunction(function=launch_robot_localization)]
-            ),
+            OpaqueFunction(function=schedule_robot_localization),
         ]
     )
 
@@ -445,6 +460,7 @@ def generate_launch_description():
         radar_ros_topic_arg,
         enable_maritime_radar_bridge_arg,
         enable_robot_localization_arg,
+        external_localization_arg,
         localization_params_file_arg,
         localization_start_delay_arg,
         x_arg,

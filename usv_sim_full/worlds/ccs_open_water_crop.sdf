@@ -53,7 +53,10 @@
       <disable_on_drained_battery>true</disable_on_drained_battery>
     </plugin>
     <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu" />
-    <plugin filename="gz-sim-magnetometer-system" name="gz::sim::systems::Magnetometer" />
+    <plugin filename="gz-sim-magnetometer-system" name="gz::sim::systems::Magnetometer">
+      <use_units_gauss>false</use_units_gauss>
+      <use_earth_frame_ned>false</use_earth_frame_ned>
+    </plugin>
     <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque" />
     <plugin filename="gz-sim-particle-emitter-system" name="gz::sim::systems::ParticleEmitter" />
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
