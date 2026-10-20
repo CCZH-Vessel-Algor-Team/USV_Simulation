@@ -171,6 +171,9 @@ def launch_setup(context, *args, **kwargs):
         'enable_dynamic_buoy_manager'
     ).perform(context).strip().lower()
     buoy_gt_merge_enabled = enable_dynamic_buoy_manager in ('true', '1', 'yes')
+    enable_radar_mapping = LaunchConfiguration(
+        'enable_radar_mapping'
+    ).perform(context).strip().lower() in ('true', '1', 'yes')
 
     with open(config_path, 'r') as f:
         user_config = yaml.safe_load(f)
@@ -589,7 +592,7 @@ def launch_setup(context, *args, **kwargs):
                     'enable_data': 'false',
                     'enable_arpa': 'false',
                     'enable_tf': 'false',
-                    'enable_mapping': 'true',
+                    'enable_mapping': str(enable_radar_mapping).lower(),
                     'enable_converter': 'true',
                     'mapping_input_topic': mapping_input_topic,
                     'converter_input_topic': mapping_input_topic,
@@ -727,6 +730,14 @@ def generate_launch_description():
             'enable_dynamic_buoy_manager',
             default_value='true',
             description='true：启动动态浮标管理、COLREGS/GT 合并链（默认开启）',
+        ),
+        DeclareLaunchArgument(
+            'enable_radar_mapping',
+            default_value='true',
+            description=(
+                'true：存在 maritime_radar 时启动雷达建图和点云转换；'
+                'false：仅启动雷达点云转换，不启动 adaptive_radar_grid_map_node'
+            ),
         ),
         OpaqueFunction(function=launch_setup)
     ])
