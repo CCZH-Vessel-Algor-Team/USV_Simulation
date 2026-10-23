@@ -13,7 +13,7 @@
       type="env_panel::DynamicShipPanel"
       base_class_type="rviz_common::Panel">
     <description>
-      动态目标船生成配置面板（航向、速度、形状和半长距离）。
+      动态目标船生成配置面板（航向、速度、形状和单程距离）。
     </description>
   </class>
 

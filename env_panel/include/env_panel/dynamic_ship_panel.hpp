@@ -37,7 +37,7 @@ public:
 private Q_SLOTS:
   void onHeadingChanged(int value);
   void onSpeedChanged(int value);
-  void onHalfDistChanged(int value);
+  void onLegDistChanged(int value);
   void onShapeChanged(const QString & text);
   void onDeleteClicked();
   void onClearAllClicked();
@@ -68,11 +68,11 @@ private:
 
   QSlider * heading_slider_;
   QSlider * speed_slider_;
-  QSlider * half_dist_slider_;
+  QSlider * leg_dist_slider_;
   QComboBox * shape_combo_;
   QLabel * heading_label_;
   QLabel * speed_label_;
-  QLabel * half_dist_label_;
+  QLabel * leg_dist_label_;
   QListWidget * ship_list_;
   QPushButton * clear_all_button_;
   QTimer * config_timer_;

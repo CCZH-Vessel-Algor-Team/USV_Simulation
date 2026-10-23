@@ -507,7 +507,7 @@ class DynamicShipManager(Node):
         self.declare_parameter('heading_deg', 0.0)
         self.declare_parameter('speed', 3.0)
         self.declare_parameter('shape', 'mesh_profile')
-        self.declare_parameter('half_distance', 50.0)
+        self.declare_parameter('half_distance', 100.0)
         self.declare_parameter('pose_feedback_timeout', 1.0)
         self.declare_parameter(
             'spawn_pose_topic', '/dynamic_ship/spawn_pose',
@@ -698,7 +698,7 @@ class DynamicShipManager(Node):
                 1.0 - 2.0 * (request.pose.orientation.y * request.pose.orientation.y
                              + request.pose.orientation.z * request.pose.orientation.z))
 
-            half_dist = request.half_distance if request.half_distance > 0 else 50.0
+            half_dist = request.half_distance if request.half_distance > 0 else 100.0
             speed = request.speed if request.speed > 0.0 else 3.0
             shape = request.shape.strip() or 'mesh_profile'
 

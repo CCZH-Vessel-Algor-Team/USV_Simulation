@@ -68,7 +68,7 @@ void StaticBuoyPanel::setupUi()
   config_group->setLayout(form);
   main_layout->addWidget(config_group);
 
-  auto list_group = new QGroupBox("在用静态浮标");
+  auto list_group = new QGroupBox("静态浮标列表");
   auto list_layout = new QVBoxLayout;
   list_layout->setContentsMargins(12, group_content_top_margin, 12, 10);
   list_layout->setSpacing(8);
