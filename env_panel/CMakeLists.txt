@@ -23,6 +23,7 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(ros_gz_interfaces REQUIRED)
 find_package(rcl_interfaces REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(usv_interfaces REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
@@ -38,6 +39,12 @@ add_library(${PROJECT_NAME} SHARED
   src/storm_point_tool.cpp
   src/static_buoy_panel.cpp
   src/static_buoy_point_tool.cpp
+  include/env_panel/cpu_panel.hpp
+  src/cpu_panel.cpp
+  include/env_panel/radar_panel.hpp
+  src/radar_panel.cpp
+  include/env_panel/usv_view_panel.hpp
+  src/usv_view_panel.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -55,6 +62,7 @@ ament_target_dependencies(${PROJECT_NAME}
   geometry_msgs
   ros_gz_interfaces
   rcl_interfaces
+  std_srvs
   usv_interfaces
 )
 

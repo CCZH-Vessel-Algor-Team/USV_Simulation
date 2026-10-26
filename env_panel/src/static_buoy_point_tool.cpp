@@ -15,7 +15,7 @@ StaticBuoyPointTool::StaticBuoyPointTool()
 void StaticBuoyPointTool::onInitialize()
 {
   PointTool::onInitialize();
-  setName("Static Buoy Point");
+  setName("静态浮标取点");
   setIcon(rviz_common::loadPixmap(
       "package://rviz_default_plugins/icons/classes/PublishPoint.png"));
   topic_property_->setString("/dynamic_buoy/clicked_point");

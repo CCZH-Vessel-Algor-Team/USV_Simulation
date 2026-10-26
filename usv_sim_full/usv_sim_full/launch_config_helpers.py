@@ -273,10 +273,13 @@ def block_env_dynamics_k_gains(block):
     )
 
 
-def build_mmwave_4d_cloud_parameters(mm_defs: dict, input_topic: str, output_topic: str, odom_topic: str):
+def build_mmwave_4d_cloud_parameters(
+    mm_defs: dict, input_topic: str, output_topic: str, odom_topic: str,
+    *, truth_sensor: Optional[dict] = None,
+):
     """mmwave_4d_cloud_node 参数字典（与 sensor_config mmwave.default 对齐）。"""
     md = mm_defs or {}
-    return {
+    params = {
         'use_sim_time': True,
         'input_topic': input_topic,
         'output_topic': output_topic,
@@ -299,6 +302,16 @@ def build_mmwave_4d_cloud_parameters(mm_defs: dict, input_topic: str, output_top
         'azimuth_error_std_deg': float(md.get('azimuth_error_std_deg', 0.5)),
         'output_use_reliable_qos': _yaml_bool(md.get('output_use_reliable_qos'), True),
     }
+    if truth_sensor is not None:
+        # CCS mounts are base_link-relative; reject other parents rather than use estimated TF.
+        if truth_sensor.get('parent_link', 'base_link') != 'base_link':
+            raise ValueError('mmwave truth pose requires sensor parent_link=base_link')
+        params.update({
+            'use_truth_pose': True,
+            'sensor_xyz': [float(v) for v in truth_sensor.get('xyz', [0.0, 0.0, 0.0])],
+            'sensor_rpy': [float(v) for v in truth_sensor.get('rpy', [0.0, 0.0, 0.0])],
+        })
+    return params
 
 
 def build_mmwave_cluster_parameters(

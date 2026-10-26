@@ -14,3 +14,4 @@ flowchart LR
 - `VrxEnvPanel`：发布环境控制参数。
 - `DynamicShipPanel`：发布目标船配置。
 - `StormFieldPanel` 和 `StormPointTool`：发布风暴场配置和中心点。
+- `RadarPanel`：通过参数服务和控制服务配置 `/radar_control_node`。

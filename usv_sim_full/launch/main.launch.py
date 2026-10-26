@@ -144,12 +144,23 @@ def _append_displays_to_rviz_config(rviz_config_path: str, primary_name: str) ->
 
 def launch_setup(context, *args, **kwargs):
     config_path = LaunchConfiguration('config_path').perform(context)
+    model_manifest_file = LaunchConfiguration('model_manifest_file').perform(context).strip()
+    launch_rviz_s = LaunchConfiguration('launch_rviz').perform(context).strip()
     verbose_s = LaunchConfiguration('verbose_launch').perform(context)
     gz_headless_s = LaunchConfiguration('gz_headless').perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time')
+    external_localization_s = LaunchConfiguration('external_localization').perform(context)
+    external_localization = IfCondition(external_localization_s).evaluate(context)
     enable_robot_localization = LaunchConfiguration('enable_robot_localization').perform(
         context
     )
+    if external_localization:
+        enable_robot_localization = 'false'
+        print(
+            '[usv_sim_full] external_localization=true: disabling legacy '
+            'usv_sim_wrapper, robot_localization and static map->odom TF '
+            '(overrides enable_robot_localization/use_static_map_odom_tf).'
+        )
     localization_params_file = LaunchConfiguration('localization_params_file').perform(
         context
     )
@@ -160,6 +171,9 @@ def launch_setup(context, *args, **kwargs):
         'enable_dynamic_buoy_manager'
     ).perform(context).strip().lower()
     buoy_gt_merge_enabled = enable_dynamic_buoy_manager in ('true', '1', 'yes')
+    enable_radar_mapping = LaunchConfiguration(
+        'enable_radar_mapping'
+    ).perform(context).strip().lower() in ('true', '1', 'yes')
 
     with open(config_path, 'r') as f:
         user_config = yaml.safe_load(f)
@@ -171,6 +185,8 @@ def launch_setup(context, *args, **kwargs):
 
     world_name = user_config.get('environment', {}).get('world_name', 'sydney_regatta')
     launch_rviz = user_config.get('visualization', {}).get('launch_rviz', True)
+    if launch_rviz_s:
+        launch_rviz = IfCondition(launch_rviz_s).evaluate(context)
 
     radar_processing_enabled = False
     mmwave_enabled = False
@@ -235,6 +251,40 @@ def launch_setup(context, *args, **kwargs):
         raise e
 
     session_robots = resolve_session_robots(session_info, user_config)
+    if model_manifest_file:
+        manifest_path = os.path.abspath(model_manifest_file)
+        temporary_manifest_path = None
+        try:
+            manifest = {
+                'schema_version': 1,
+                'kind': 'robot_model_manifest',
+                'robots': [
+                    {
+                        'name': ship['name'],
+                        'urdf_path': os.path.abspath(ship['urdf_path']),
+                        'joint_states_topic': f'/model/{ship["name"]}/joint_state',
+                    }
+                    for ship in session_robots
+                ],
+            }
+            manifest_dir = os.path.dirname(manifest_path)
+            os.makedirs(manifest_dir, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                mode='w', encoding='utf-8', dir=manifest_dir,
+                prefix='.robot_model_', suffix='.yaml', delete=False,
+            ) as stream:
+                temporary_manifest_path = stream.name
+                yaml.safe_dump(manifest, stream, sort_keys=False)
+            os.replace(temporary_manifest_path, manifest_path)
+        except Exception as e:
+            if temporary_manifest_path is not None:
+                try:
+                    os.unlink(temporary_manifest_path)
+                except OSError:
+                    pass
+            raise RuntimeError(
+                f'Failed to export robot model manifest to {manifest_path!r}: {e}'
+            ) from e
     ship_blocks = ship_config_blocks(user_config)
     primary_name = session_robots[0]['name']
 
@@ -268,28 +318,29 @@ def launch_setup(context, *args, **kwargs):
     launch_items.append(infra_sim_include)
 
     # session.rviz 的 Fixed Frame 为 map；发布 map->{robot}/odom，否则点云/相机等无法变换到 map
-    for ship in session_robots:
-        rname = ship['name']
-        sanitized = re.sub(r"[^A-Za-z0-9_\-]", '_', str(rname))
-        launch_items.append(
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                name=f'map_to_odom_tf_{sanitized}',
-                # use_sim_time 须与 Gazebo /clock 一致，否则 TF 墙钟戳与 Nav2 仿真时刻不一致
-                parameters=[{'use_sim_time': True}],
-                condition=IfCondition(LaunchConfiguration('use_static_map_odom_tf')),
-                **quiet_ros_node_kwargs(
-                    verbose_s,
-                    [
-                        '--frame-id',
-                        'map',
-                        '--child-frame-id',
-                        f'{sanitized}/odom',
-                    ],
-                ),
+    if not external_localization:
+        for ship in session_robots:
+            rname = ship['name']
+            sanitized = re.sub(r"[^A-Za-z0-9_\-]", '_', str(rname))
+            launch_items.append(
+                Node(
+                    package='tf2_ros',
+                    executable='static_transform_publisher',
+                    name=f'map_to_odom_tf_{sanitized}',
+                    # use_sim_time 须与 Gazebo /clock 一致，否则 TF 墙钟戳与 Nav2 仿真时刻不一致
+                    parameters=[{'use_sim_time': True}],
+                    condition=IfCondition(LaunchConfiguration('use_static_map_odom_tf')),
+                    **quiet_ros_node_kwargs(
+                        verbose_s,
+                        [
+                            '--frame-id',
+                            'map',
+                            '--child-frame-id',
+                            f'{sanitized}/odom',
+                        ],
+                    ),
+                )
             )
-        )
 
     for idx, ship in enumerate(session_robots):
         block = ship_blocks[idx] if idx < len(ship_blocks) else {}
@@ -316,6 +367,7 @@ def launch_setup(context, *args, **kwargs):
                 'enable_obstacle_spawner': 'true' if idx == 0 else 'false',
                 'spawn_stagger_sec': str(float(idx) * 2.0),
                 'gz_world_name': world_name,
+                'external_localization': external_localization_s,
                 'enable_robot_localization': enable_robot_localization,
                 'localization_params_file': localization_params_file,
                 'localization_start_delay': localization_start_delay,
@@ -436,7 +488,11 @@ def launch_setup(context, *args, **kwargs):
                                 mm_defs,
                                 input_topic,
                                 output_topic,
-                                f'/{sanitized}/odom',
+                                (
+                                    f'/{sanitized}/source/gazebo/odom'
+                                    if external_localization else f'/{sanitized}/odom'
+                                ),
+                                truth_sensor=sensor if external_localization else None,
                             )
                         ],
                         **quiet_ros_node_kwargs(verbose_s),
@@ -493,24 +549,25 @@ def launch_setup(context, *args, **kwargs):
     )
     launch_items.append(scenario_manager_node)
 
-    for ship in session_robots:
-        rname = ship['name']
-        sanitized = re.sub(r"[^A-Za-z0-9_\-]", '_', str(rname))
-        wrapper_node = Node(
-            package='usv_sim_full',
-            executable='usv_sim_wrapper',
-            name=f'usv_sim_wrapper_{sanitized}',
-            namespace=rname,
-            parameters=[{
-                'odom_topic': f'/{sanitized}/odom',
-                'gps_topic': f'/{sanitized}/sensors/gps/gps_sensor/data'
-            }],
-            remappings=[
-                ('/usv/state/vessel', f'/{sanitized}/state/vessel'),
-            ],
-            **quiet_ros_node_kwargs(verbose_s),
-        )
-        launch_items.append(wrapper_node)
+    if not external_localization:
+        for ship in session_robots:
+            rname = ship['name']
+            sanitized = re.sub(r"[^A-Za-z0-9_\-]", '_', str(rname))
+            wrapper_node = Node(
+                package='usv_sim_full',
+                executable='usv_sim_wrapper',
+                name=f'usv_sim_wrapper_{sanitized}',
+                namespace=rname,
+                parameters=[{
+                    'odom_topic': f'/{sanitized}/odom',
+                    'gps_topic': f'/{sanitized}/sensors/gps/gps_sensor/data'
+                }],
+                remappings=[
+                    ('/usv/state/vessel', f'/{sanitized}/state/vessel'),
+                ],
+                **quiet_ros_node_kwargs(verbose_s),
+            )
+            launch_items.append(wrapper_node)
 
     if radar_processing_enabled:
         for idx, ship in enumerate(session_robots):
@@ -535,7 +592,7 @@ def launch_setup(context, *args, **kwargs):
                     'enable_data': 'false',
                     'enable_arpa': 'false',
                     'enable_tf': 'false',
-                    'enable_mapping': 'true',
+                    'enable_mapping': str(enable_radar_mapping).lower(),
                     'enable_converter': 'true',
                     'mapping_input_topic': mapping_input_topic,
                     'converter_input_topic': mapping_input_topic,
@@ -582,6 +639,14 @@ def generate_launch_description():
             default_value=default_config_path,
             description='Path to the full_config.yaml file'
         ),
+        DeclareLaunchArgument(
+            'model_manifest_file',
+            default_value='',
+            description=(
+                'Optional runtime robot model manifest YAML output path; '
+                'atomically exported from the resolved session before node actions'
+            ),
+        ),
 
         DeclareLaunchArgument(
             'use_sim_time',
@@ -595,6 +660,15 @@ def generate_launch_description():
             description='Nav2 动作服务命名空间；非空时透传给 visualization.launch.py 供 RViz remap'
         ),
 
+        DeclareLaunchArgument(
+            'external_localization',
+            default_value='false',
+            description=(
+                'Isolate Gazebo ROS odom/GPS/IMU under /{robot}/source/gazebo; '
+                'external localization owns public outputs and all model TF. '
+                'The parent launch must also set enable_tf_namespace_relay=false.'
+            ),
+        ),
         DeclareLaunchArgument(
             'enable_robot_localization',
             default_value='false',
@@ -624,6 +698,14 @@ def generate_launch_description():
             ),
         ),
         DeclareLaunchArgument(
+            'launch_rviz',
+            default_value='',
+            description=(
+                'Empty follows visualization.launch_rviz in the scenario YAML; '
+                'true/false explicitly overrides it, independently of gz_headless'
+            ),
+        ),
+        DeclareLaunchArgument(
             'rviz_config_path_override',
             default_value='',
             description=(
@@ -642,12 +724,20 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'gz_headless',
             default_value='false',
-            description='true 时 Gazebo 以 server-only 运行，不启动 GUI 渲染窗口'
+            description='true: Gazebo server-only with EGL offscreen rendering; no GUI'
         ),
         DeclareLaunchArgument(
             'enable_dynamic_buoy_manager',
             default_value='true',
             description='true：启动动态浮标管理、COLREGS/GT 合并链（默认开启）',
+        ),
+        DeclareLaunchArgument(
+            'enable_radar_mapping',
+            default_value='true',
+            description=(
+                'true：存在 maritime_radar 时启动雷达建图和点云转换；'
+                'false：仅启动雷达点云转换，不启动 adaptive_radar_grid_map_node'
+            ),
         ),
         OpaqueFunction(function=launch_setup)
     ])

@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
+import math
+from time import monotonic
+
 import rclpy
+from rcl_interfaces.msg import ParameterDescriptor
+from rclpy.clock import Clock, ClockType
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float64
+from std_msgs.msg import Bool, Float64
 
 
 class PID:
@@ -41,14 +47,23 @@ class PID:
 
 
 class CmdVelToThruster(Node):
-    def __init__(self):
-        super().__init__('cmd_vel_to_thruster')
+    def __init__(self, **kwargs):
+        super().__init__('cmd_vel_to_thruster', **kwargs)
 
         self.declare_parameter('namespace', 'usv_1')
         ns = self.get_parameter('namespace').get_parameter_value().string_value.strip('/')
         self.namespace = ns if ns else 'usv_1'
+        self._require_navigation_ready = self.declare_parameter(
+            'require_navigation_ready', False,
+            descriptor=ParameterDescriptor(read_only=True),
+        ).value
+        self._navigation_ready = False
+        self._ready_stamp = None
 
-        cmd_vel_topic = f'/{self.namespace}/cmd_vel'
+        cmd_vel_topic = (
+            f'/{self.namespace}/control/cmd_vel'
+            if self._require_navigation_ready else f'/{self.namespace}/cmd_vel'
+        )
         cmd_vel_fallback_topic = '/cmd_vel'
         odom_topic = f'/{self.namespace}/odom'
         left_thrust_topic = f'/{self.namespace}/thrusters/left/thrust'
@@ -57,7 +72,11 @@ class CmdVelToThruster(Node):
         right_pos_topic = f'/{self.namespace}/thrusters/right/pos'
 
         self.cmd_sub = self.create_subscription(Twist, cmd_vel_topic, self.cmd_callback, 10)
-        self.cmd_sub_fallback = self.create_subscription(Twist, cmd_vel_fallback_topic, self.cmd_callback, 10)
+        self.cmd_sub_fallback = None
+        if not self._require_navigation_ready:
+            self.cmd_sub_fallback = self.create_subscription(
+                Twist, cmd_vel_fallback_topic, self.cmd_callback, 10,
+            )
         self.odom_sub = self.create_subscription(Odometry, odom_topic, self.odom_callback, 10)
 
         self.left_pub = self.create_publisher(Float64, left_thrust_topic, 10)
@@ -81,16 +100,29 @@ class CmdVelToThruster(Node):
         self.desired_w = 0.0
         self.actual_v = 0.0
         self.actual_w = 0.0
-        self._odom_stamp = self.get_clock().now()
-        self._cmd_stamp = self.get_clock().now()
+        self._odom_stamp = None
+        self._cmd_stamp = None
         self._last_control = self.get_clock().now()
         self._cmd_active = False
 
         rate = self.get_parameter('control_rate').value
-        self.timer = self.create_timer(1.0 / rate, self.control_loop)
+        timer_clock = (
+            Clock(clock_type=ClockType.STEADY_TIME)
+            if self._require_navigation_ready else self.get_clock()
+        )
+        self.timer = self.create_timer(1.0 / rate, self.control_loop, clock=timer_clock)
 
         self._last_left = 0.0
         self._last_right = 0.0
+        self.ready_sub = None
+        if self._require_navigation_ready:
+            # No retained Bool can prove a live heartbeat; the topic is fixed
+            # by the vessel namespace and cannot be changed by a ROS parameter.
+            self.ready_sub = self.create_subscription(
+                Bool, f'/{self.namespace}/navigation/ready', self.ready_callback,
+                QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
+                           durability=DurabilityPolicy.VOLATILE),
+            )
 
         self.get_logger().info(
             f'PID cmd_vel->thruster started for {self.namespace}: '
@@ -98,12 +130,43 @@ class CmdVelToThruster(Node):
         )
 
     def cmd_callback(self, msg):
+        if (
+            not self._navigation_ready_ok()
+            or not all(math.isfinite(value) for value in (
+                msg.linear.x, msg.linear.y, msg.linear.z,
+                msg.angular.x, msg.angular.y, msg.angular.z,
+            ))
+            or (self._require_navigation_ready
+                and msg.linear.x == 0.0 and msg.angular.z == 0.0)
+        ):
+            self._publish_zero_thrust()
+            return
         self.desired_v = msg.linear.x
         self.desired_w = msg.angular.z
-        self._cmd_stamp = self.get_clock().now()
+        self._cmd_stamp = monotonic()
         self._cmd_active = True
 
+    def _navigation_ready_ok(self):
+        return not self._require_navigation_ready or (
+            self._navigation_ready and self._ready_stamp is not None
+            and 0.0 <= monotonic() - self._ready_stamp <= 1.5
+        )
+
+    def ready_callback(self, msg):
+        if not msg.data or not self._navigation_ready_ok():
+            self._publish_zero_thrust()
+        self._navigation_ready = msg.data
+        self._ready_stamp = monotonic()
+
     def _publish_zero_thrust(self):
+        self.desired_v = self.desired_w = 0.0
+        self._cmd_active = False
+        self._cmd_stamp = None
+        self._last_left = self._last_right = 0.0
+        if hasattr(self, '_v_pid'):
+            self._v_pid.reset()
+        if hasattr(self, '_w_pid'):
+            self._w_pid.reset()
         z = Float64(data=0.0)
         self.left_pub.publish(z)
         self.right_pub.publish(z)
@@ -111,9 +174,17 @@ class CmdVelToThruster(Node):
         self.right_pos_pub.publish(z)
 
     def odom_callback(self, msg):
+        twist = msg.twist.twist
+        if not all(math.isfinite(value) for value in (
+            twist.linear.x, twist.linear.y, twist.linear.z,
+            twist.angular.x, twist.angular.y, twist.angular.z,
+        )):
+            self._odom_stamp = None
+            self._publish_zero_thrust()
+            return
         self.actual_v = msg.twist.twist.linear.x
         self.actual_w = msg.twist.twist.angular.z
-        self._odom_stamp = self.get_clock().now()
+        self._odom_stamp = monotonic()
 
     def control_loop(self):
         now = self.get_clock().now()
@@ -133,20 +204,17 @@ class CmdVelToThruster(Node):
         cmd_timeout = self.get_parameter('cmd_timeout').value
         odom_timeout = self.get_parameter('odom_timeout').value
 
-        cmd_age = (now - self._cmd_stamp).nanoseconds * 1e-9
-        if cmd_age > cmd_timeout:
-            self.desired_v = 0.0
-            self.desired_w = 0.0
+        steady_now = monotonic()
+        if (
+            not self._navigation_ready_ok()
+            or not self._cmd_active
+            or self._cmd_stamp is None or self._odom_stamp is None
+            or not math.isfinite(cmd_timeout) or not math.isfinite(odom_timeout)
+            or not 0.0 <= steady_now - self._cmd_stamp <= cmd_timeout
+            or not 0.0 <= steady_now - self._odom_stamp <= odom_timeout
+        ):
             self._publish_zero_thrust()
-            if hasattr(self, '_v_pid'):
-                self._v_pid.reset()
-                self._w_pid.reset()
-            self._cmd_active = False
             return
-
-        if (now - self._odom_stamp).nanoseconds * 1e-9 > odom_timeout:
-            self.actual_v = self.desired_v
-            self.actual_w = self.desired_w
 
         if not hasattr(self, '_v_pid') or v_kp != self._last_v_kp or v_ki != self._last_v_ki or v_kd != self._last_v_kd:
             self._v_pid = PID(v_kp, v_ki, v_kd, -max_t, max_t)
@@ -157,6 +225,9 @@ class CmdVelToThruster(Node):
 
         base = self._v_pid.update(self.desired_v - self.actual_v, dt)
         diff = self._w_pid.update(self.desired_w - self.actual_w, dt)
+        if not math.isfinite(base) or not math.isfinite(diff):
+            self._publish_zero_thrust()
+            return
 
         left = base - diff
         right = base + diff
@@ -201,6 +272,8 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
+        if rclpy.ok():
+            node._publish_zero_thrust()
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

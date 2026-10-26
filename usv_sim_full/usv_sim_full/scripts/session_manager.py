@@ -418,8 +418,13 @@ def generate_sensors_overlay(
             topic = sensor.get('override_topic') or f'/sensors/magnetometer/{sensor_name}/data'
             update_rate = sensor.get('update_rate', 50)
             topic_ns = topic.lstrip('/')
+            overrides = ' '.join(
+                f'{key}="{float(sensor[key])}"'
+                for key in ('field_tesla_x', 'field_tesla_y', 'field_tesla_z', 'noise_stddev')
+                if key in sensor
+            )
             sensors_content += f'''
-    <xacro:magnetometer_macro name="$(arg namespace)/{sensor_name}" parent_link="$(arg namespace)/{parent_link}" xyz="{xyz}" rpy="{rpy}" topic="$(arg namespace)/{topic_ns}" update_rate="{update_rate}"/>
+    <xacro:magnetometer_macro name="$(arg namespace)/{sensor_name}" parent_link="$(arg namespace)/{parent_link}" xyz="{xyz}" rpy="{rpy}" topic="$(arg namespace)/{topic_ns}" update_rate="{update_rate}" {overrides}/>
 '''
         elif sensor_type in ['barometer', 'air_pressure', 'pressure']:
             topic = sensor.get('override_topic') or f'/sensors/barometer/{sensor_name}/fluid_pressure'

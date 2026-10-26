@@ -16,7 +16,7 @@ DynamicShipPanel::DynamicShipPanel(QWidget * parent)
 : rviz_common::Panel(parent),
   heading_deg_(0.0),
   speed_(3.0),
-  half_distance_(50.0),
+  half_distance_(100.0),
   shape_("mesh_profile")
 {
   setupUi();
@@ -25,18 +25,36 @@ DynamicShipPanel::DynamicShipPanel(QWidget * parent)
 void DynamicShipPanel::setupUi()
 {
   auto main_layout = new QVBoxLayout;
+  main_layout->setContentsMargins(12, 10, 12, 12);
+  main_layout->setSpacing(10);
+  setStyleSheet(
+    "QGroupBox { font-weight: 600; margin-top: 10px; }"
+    "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }"
+    "QPushButton { min-height: 28px; padding: 3px 10px; }");
 
-  auto config_group = new QGroupBox("Spawn Config");
+  const int group_content_top_margin = fontMetrics().height() + 8;
+  const auto configure_slider_row = [](QHBoxLayout * layout) {
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(12);
+  };
+
+  auto config_group = new QGroupBox("生成配置");
   auto form = new QFormLayout;
+  form->setContentsMargins(12, group_content_top_margin, 12, 10);
+  form->setHorizontalSpacing(14);
+  form->setVerticalSpacing(8);
+  form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
   heading_slider_ = new QSlider(Qt::Horizontal);
   heading_slider_->setRange(0, 359);
   heading_slider_->setValue(static_cast<int>(heading_deg_));
   heading_label_ = new QLabel("0 deg");
   auto heading_row = new QHBoxLayout;
-  heading_row->addWidget(heading_slider_);
+  configure_slider_row(heading_row);
+  heading_row->addWidget(heading_slider_, 1);
   heading_row->addWidget(heading_label_);
-  form->addRow("Heading:", heading_row);
+  form->addRow("航向：", heading_row);
   QObject::connect(heading_slider_, &QSlider::valueChanged,
                    this, &DynamicShipPanel::onHeadingChanged);
 
@@ -45,28 +63,32 @@ void DynamicShipPanel::setupUi()
   speed_slider_->setValue(static_cast<int>(speed_ * 10.0));
   speed_label_ = new QLabel("3.0 m/s");
   auto speed_row = new QHBoxLayout;
-  speed_row->addWidget(speed_slider_);
+  configure_slider_row(speed_row);
+  speed_row->addWidget(speed_slider_, 1);
   speed_row->addWidget(speed_label_);
-  form->addRow("Speed:", speed_row);
+  form->addRow("速度：", speed_row);
   QObject::connect(speed_slider_, &QSlider::valueChanged,
                    this, &DynamicShipPanel::onSpeedChanged);
 
-  half_dist_slider_ = new QSlider(Qt::Horizontal);
-  half_dist_slider_->setRange(10, 5000);
-  half_dist_slider_->setValue(static_cast<int>(half_distance_ * 10.0));
-  half_dist_label_ = new QLabel("50.0 m");
+  // 界面显示单程行程长度（A→B），服务接口字段为 half_distance（单程的一半）
+  leg_dist_slider_ = new QSlider(Qt::Horizontal);
+  leg_dist_slider_->setRange(20, 10000);  // 单程 2 m ~ 1000 m
+  leg_dist_slider_->setValue(
+      static_cast<int>(half_distance_ * 2.0 * 10.0));
+  leg_dist_label_ = new QLabel("200.0 m");
   auto hd_row = new QHBoxLayout;
-  hd_row->addWidget(half_dist_slider_);
-  hd_row->addWidget(half_dist_label_);
-  form->addRow("Half Dist:", hd_row);
-  QObject::connect(half_dist_slider_, &QSlider::valueChanged,
-                   this, &DynamicShipPanel::onHalfDistChanged);
+  configure_slider_row(hd_row);
+  hd_row->addWidget(leg_dist_slider_, 1);
+  hd_row->addWidget(leg_dist_label_);
+  form->addRow("单程距离：", hd_row);
+  QObject::connect(leg_dist_slider_, &QSlider::valueChanged,
+                   this, &DynamicShipPanel::onLegDistChanged);
 
   shape_combo_ = new QComboBox;
   shape_combo_->addItem("mesh_profile");
   shape_combo_->addItem("box");
   shape_combo_->addItem("cylinder");
-  form->addRow("Shape:", shape_combo_);
+  form->addRow("形状：", shape_combo_);
   QObject::connect(shape_combo_,
                    QOverload<const QString &>::of(&QComboBox::currentTextChanged),
                    this, &DynamicShipPanel::onShapeChanged);
@@ -74,18 +96,22 @@ void DynamicShipPanel::setupUi()
   config_group->setLayout(form);
   main_layout->addWidget(config_group);
 
-  auto list_group = new QGroupBox("Active Ships");
+  auto list_group = new QGroupBox("目标船列表");
   auto list_layout = new QVBoxLayout;
+  list_layout->setContentsMargins(12, group_content_top_margin, 12, 10);
+  list_layout->setSpacing(8);
   ship_list_ = new QListWidget;
   list_layout->addWidget(ship_list_);
 
   auto btn_layout = new QHBoxLayout;
-  auto delete_btn = new QPushButton("Delete Selected");
+  btn_layout->setContentsMargins(0, 0, 0, 0);
+  btn_layout->setSpacing(10);
+  auto delete_btn = new QPushButton("删除所选");
   QObject::connect(delete_btn, &QPushButton::clicked,
                    this, &DynamicShipPanel::onDeleteClicked);
   btn_layout->addWidget(delete_btn);
 
-  clear_all_button_ = new QPushButton("Clear All");
+  clear_all_button_ = new QPushButton("全部清除");
   QObject::connect(clear_all_button_, &QPushButton::clicked,
                    this, &DynamicShipPanel::onClearAllClicked);
   btn_layout->addWidget(clear_all_button_);
@@ -94,15 +120,10 @@ void DynamicShipPanel::setupUi()
   list_group->setLayout(list_layout);
   main_layout->addWidget(list_group);
 
-  auto hint = new QLabel(
-      "Use RViz 'Publish Point' tool to click in 3D view.\n"
-      "A target ship will spawn at the clicked position\n"
-      "and move back and forth, and publishes\n"
-      "TrackedShipList msg.");
-  hint->setWordWrap(true);
-  main_layout->addWidget(hint);
-
-  main_layout->setContentsMargins(8, 8, 8, 8);
+  for (auto * label : {heading_label_, speed_label_, leg_dist_label_}) {
+    label->setMinimumWidth(76);
+    label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+  }
   setLayout(main_layout);
 
   config_timer_ = new QTimer(this);
@@ -169,11 +190,12 @@ void DynamicShipPanel::onSpeedChanged(int value)
       QString("%1 m/s").arg(speed_, 0, 'f', 1));
 }
 
-void DynamicShipPanel::onHalfDistChanged(int value)
+void DynamicShipPanel::onLegDistChanged(int value)
 {
-  half_distance_ = static_cast<double>(value) / 10.0;
-  half_dist_label_->setText(
-      QString("%1 m").arg(half_distance_, 0, 'f', 1));
+  const double leg_distance = static_cast<double>(value) / 10.0;
+  half_distance_ = leg_distance / 2.0;
+  leg_dist_label_->setText(
+      QString("%1 m").arg(leg_distance, 0, 'f', 1));
 }
 
 void DynamicShipPanel::onShapeChanged(const QString & text)
