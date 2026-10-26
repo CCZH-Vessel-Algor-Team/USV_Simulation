@@ -29,6 +29,7 @@ from usv_interfaces.srv import (
 from usv_sim_full.pose_feedback import (
     PoseTracker, fresh_sample, is_feedback_fresh_ns, yaw_from_quaternion,
 )
+from usv_sim_full.scene_inventory import SceneInventoryClient
 
 
 def _fmt_pose_xyzrpy(xyz, rpy):
@@ -76,6 +77,7 @@ class GazeboPoseCache:
         self._now_ns = now_ns
         self._future_window_ns = int(pose_feedback_timeout * 1e9)
         self._node = None
+        self._inventory = SceneInventoryClient()
         self._topic = f'/world/{world_name}/dynamic_pose/info'
         try:
             import gz.transport13 as gz_transport
@@ -87,6 +89,9 @@ class GazeboPoseCache:
             return
         self._node = gz_transport.Node()
         self._node.subscribe(Pose_V, self._topic, self._on_pose_v)
+        # Warm discovery and the one service connection before advertising spawn
+        # services. Normal lifecycle queries keep their existing 1 s budget.
+        self._inventory.model_names(world_name, timeout_ms=3000)
         if logger is not None:
             logger.info(f'GazeboPoseCache 订阅 {self._topic}')
 
@@ -192,7 +197,7 @@ class GazeboPoseCache:
             # A clock rewind does not discharge a physical deletion witness.
 
     def model_names(self, world_name, timeout_ms=1000):
-        """Query scene inventory in a process isolated from the pose callback.
+        """Query scene inventory using an isolated, persistent service client.
 
         :param world_name: Gazebo world whose model inventory is requested.
         :param timeout_ms: Total query budget, including process overhead, in milliseconds.
@@ -200,37 +205,7 @@ class GazeboPoseCache:
         """
         if self._node is None or timeout_ms <= 0:
             return None
-        timeout_sec = timeout_ms / 1000.0
-        deadline = time.monotonic() + timeout_sec
-        try:
-            from google.protobuf import text_format
-            from gz.msgs10.scene_pb2 import Scene
-        except ImportError:
-            return None
-        if time.monotonic() >= deadline:
-            return None
-
-        cmd = [
-            'gz', 'service', '-s', f'/world/{world_name}/scene/info',
-            '--reqtype', 'gz.msgs.Empty', '--reptype', 'gz.msgs.Scene',
-            '--timeout', str(timeout_ms), '--req', '',
-        ]
-        try:
-            # Isolate the synchronous transport wait from high-rate pose callback
-            # processing; the CLI owns its separate request connection.
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=timeout_sec)
-            if (time.monotonic() > deadline or result.returncode != 0
-                    or not result.stdout.strip()):
-                return None
-            scene = text_format.Parse(result.stdout, Scene())
-        except (OSError, subprocess.TimeoutExpired, text_format.ParseError):
-            return None
-        if not scene.ListFields():
-            return None
-        names = {model.name for model in scene.model}
-        # Popen startup and protobuf parsing are not covered by run's wait timeout.
-        return names if time.monotonic() <= deadline else None
+        return self._inventory.model_names(world_name, timeout_ms)
 
     def forget(self, name):
         """Discard previous feedback before reserving an absent model name.
@@ -245,6 +220,7 @@ class GazeboPoseCache:
 
     def close(self):
         """Stop the existing pose subscription at shutdown."""
+        self._inventory.close()
         if self._node is not None:
             self._node.unsubscribe(self._topic)
 

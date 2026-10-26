@@ -36,6 +36,7 @@
 #include <sdf/sdf.hh>
 
 #include "LightBuoyPlugin.hh"
+#include "LightBuoySequence.hh"
 
 using namespace gz;
 using namespace vrx;
@@ -85,14 +86,8 @@ class LightBuoyPlugin::Implementation
   /// \brief The color pattern.
   public: Pattern_t pattern;
 
-  /// \brief Track current index in pattern.
-  public: uint8_t state = 0u;
-
-  /// \brief Next time where the plugin should be updated.
-  public: std::chrono::duration<double> nextUpdateTime{0.0};
-
-  /// \brief Current time (simulation).
-  public: std::chrono::duration<double> currentTime;
+  /// \brief Color cycle timing, protected by mutex.
+  public: LightBuoySequence sequence;
 
   /// \brief Locks state and pattern member variables.
   public: std::mutex mutex;
@@ -261,18 +256,16 @@ void LightBuoyPlugin::Implementation::Update()
     }
   }
 
-  std::lock_guard<std::mutex> lock(this->mutex);
-
-  if (this->currentTime < this->nextUpdateTime)
+  // Do not consume colors while the rendering scene is still being created.
+  if (this->visuals.empty())
     return;
 
-  this->nextUpdateTime += std::chrono::duration<double>(1.0);
+  std::lock_guard<std::mutex> lock(this->mutex);
+  const auto state = this->sequence.Next();
+  if (!state)
+    return;
 
-  // Start over if at end of pattern
-  if (this->state > 4u)
-    this->state = 0u;
-
-  auto color = this->kColors[this->pattern[this->state]];
+  auto color = this->kColors[this->pattern[*state]];
 
   // Update the visuals.
   for (auto visual : this->visuals)
@@ -292,9 +285,6 @@ void LightBuoyPlugin::Implementation::Update()
     mat->SetAmbient(gazeboColor);
     mat->SetDiffuse(gazeboColor);
   }
-
-  // Increment index for next timer callback
-  ++this->state;
 }
 
 /////////////////////////////////////////////////
@@ -331,7 +321,7 @@ void LightBuoyPlugin::PreUpdate(const sim::UpdateInfo &_info,
   sim::EntityComponentManager &_ecm)
 {
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
-  this->dataPtr->currentTime = _info.simTime;
+  this->dataPtr->sequence.SetTime(_info.simTime);
 }
 
 GZ_ADD_PLUGIN(LightBuoyPlugin,
