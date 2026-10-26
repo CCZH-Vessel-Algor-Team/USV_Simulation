@@ -4,7 +4,7 @@
       type="env_panel::VrxEnvPanel"
       base_class_type="rviz_common::Panel">
     <description>
-      VRX environment control panel with safe ramping for wind, waves, and current.
+      VRX 环境控制面板，可安全渐变调节风、浪和水流。
     </description>
   </class>
 
@@ -13,7 +13,7 @@
       type="env_panel::DynamicShipPanel"
       base_class_type="rviz_common::Panel">
     <description>
-      Dynamic target ship spawn config panel (heading, speed, shape, half-distance).
+      动态目标船生成配置面板（航向、速度、形状和单程距离）。
     </description>
   </class>
 
@@ -22,7 +22,7 @@
       type="env_panel::StormFieldPanel"
       base_class_type="rviz_common::Panel">
     <description>
-      Circular storm-field config panel publishing TrackedShipList-compatible hazards.
+      圆形风暴场配置面板，发布兼容 TrackedShipList 的危险目标。
     </description>
   </class>
 
@@ -31,7 +31,7 @@
       type="env_panel::StormPointTool"
       base_class_type="rviz_common::Tool">
     <description>
-      Publish a storm-field center point on /storm_field/clicked_point.
+      向 /storm_field/clicked_point 发布风暴场中心点。
     </description>
   </class>
 
@@ -40,7 +40,7 @@
       type="env_panel::StaticBuoyPanel"
       base_class_type="rviz_common::Panel">
     <description>
-      Static VRX light buoy spawn config panel (type, radius, list management).
+      静态 VRX 灯光浮标生成配置面板（类型、半径和列表管理）。
     </description>
   </class>
 
@@ -49,7 +49,28 @@
       type="env_panel::StaticBuoyPointTool"
       base_class_type="rviz_common::Tool">
     <description>
-      Publish a static buoy spawn point on /dynamic_buoy/clicked_point.
+      向 /dynamic_buoy/clicked_point 发布静态浮标生成点。
+    </description>
+  </class>
+  <class name="env_panel/CpuPanel"
+         type="env_panel::CpuPanel"
+         base_class_type="rviz_common::Panel">
+    <description>
+      CPU 占用最高的 N 个进程（名称/PID/CPU%），读取 Linux /proc 差分，进程级，1 Hz 刷新。
+    </description>
+  </class>
+  <class name="env_panel/RadarPanel"
+         type="env_panel::RadarPanel"
+         base_class_type="rviz_common::Panel">
+    <description>
+      船用雷达控制面板，提供电源、发射、量程、增益、杂波抑制及惯导参数配置。
+    </description>
+  </class>
+  <class name="env_panel/UsvViewPanel"
+         type="env_panel::UsvViewPanel"
+         base_class_type="rviz_common::Panel">
+    <description>
+      无人船快捷视角面板，使用 RViz 原生视角控制器切换全局、跟随与自由视角。
     </description>
   </class>
 </library>

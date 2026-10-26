@@ -121,28 +121,51 @@ void VrxEnvPanel::setupUi()
 {
   auto * content_widget = new QWidget(this);
   auto * main_layout = new QVBoxLayout();
-  main_layout->setContentsMargins(8, 8, 8, 8);
-  main_layout->setSpacing(6);
+  main_layout->setContentsMargins(12, 10, 12, 12);
+  main_layout->setSpacing(10);
   setStyleSheet(
-    "QGroupBox { font-weight: 600; margin-top: 8px; }"
-    "QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 3px; }"
-    "QPushButton { min-height: 26px; padding: 2px 8px; }");
+    "QGroupBox { font-weight: 600; margin-top: 10px; }"
+    "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }"
+    "QPushButton { min-height: 28px; padding: 3px 10px; }");
+
+  // Keep the first row below the group-box frame even with large fonts or HiDPI scaling.
+  const int group_content_top_margin = fontMetrics().height() + 8;
+  const auto configure_form_layout = [group_content_top_margin](QFormLayout * layout) {
+    layout->setContentsMargins(12, group_content_top_margin, 12, 10);
+    layout->setHorizontalSpacing(14);
+    layout->setVerticalSpacing(8);
+    layout->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    layout->setFormAlignment(Qt::AlignTop);
+    layout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+  };
+
+  const auto configure_slider_row = [](QHBoxLayout * layout) {
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(12);
+  };
 
   auto * mode_row = new QHBoxLayout();
+  mode_row->setContentsMargins(2, 0, 2, 0);
+  mode_row->setSpacing(10);
   physics_coupling_checkbox_ =
-    new QCheckBox("Couple Wind to Wave Gain and flow", this);
-  mode_status_label_ = new QLabel("Independent", this);
+    new QCheckBox("风与波增益/流耦合", this);
+  mode_status_label_ = new QLabel("独立", this);
   mode_status_label_->setMinimumWidth(72);
   mode_row->addWidget(physics_coupling_checkbox_);
   mode_row->addStretch();
   mode_row->addWidget(mode_status_label_);
   main_layout->addLayout(mode_row);
   physics_coupling_checkbox_->setToolTip(
-    "Derive wave gain, wave direction and flow from the applied wind. "
-    "Wave period remains independent.");
+    "根据实际风况推导波增益、波向和流场；波周期保持独立设置。");
 
-  coupling_preview_group_ = new QGroupBox("Coupled Values", this);
+  coupling_preview_group_ = new QGroupBox("耦合数值", this);
   auto * coupling_preview_layout = new QGridLayout();
+  coupling_preview_layout->setContentsMargins(12, group_content_top_margin, 12, 10);
+  coupling_preview_layout->setHorizontalSpacing(24);
+  coupling_preview_layout->setVerticalSpacing(8);
+  coupling_preview_layout->setColumnStretch(0, 1);
+  coupling_preview_layout->setColumnStretch(1, 1);
+  coupling_preview_layout->setColumnStretch(2, 1);
   coupling_amplitude_label_ = new QLabel("0.00", coupling_preview_group_);
   coupling_period_label_ = new QLabel("0.00 s", coupling_preview_group_);
   coupling_current_speed_label_ = new QLabel("0.00 m/s", coupling_preview_group_);
@@ -153,100 +176,113 @@ void VrxEnvPanel::setupUi()
   coupling_published_current_speed_label_ = new QLabel("0.00 m/s", coupling_preview_group_);
   coupling_published_current_direction_label_ = new QLabel("0 deg", coupling_preview_group_);
 
-  coupling_preview_layout->addWidget(new QLabel("Metric", coupling_preview_group_), 0, 0);
-  coupling_preview_layout->addWidget(new QLabel("Target", coupling_preview_group_), 0, 1);
-  coupling_preview_layout->addWidget(new QLabel("Applied", coupling_preview_group_), 0, 2);
+  coupling_preview_layout->addWidget(
+    new QLabel("指标", coupling_preview_group_), 0, 0, Qt::AlignLeft | Qt::AlignVCenter);
+  coupling_preview_layout->addWidget(
+    new QLabel("目标", coupling_preview_group_), 0, 1, Qt::AlignCenter);
+  coupling_preview_layout->addWidget(
+    new QLabel("实际", coupling_preview_group_), 0, 2, Qt::AlignCenter);
 
-  coupling_preview_layout->addWidget(new QLabel("Wave Gain", coupling_preview_group_), 1, 0);
-  coupling_preview_layout->addWidget(coupling_amplitude_label_, 1, 1);
-  coupling_preview_layout->addWidget(coupling_published_amplitude_label_, 1, 2);
+  coupling_preview_layout->addWidget(new QLabel("波增益", coupling_preview_group_), 1, 0);
+  coupling_preview_layout->addWidget(coupling_amplitude_label_, 1, 1, Qt::AlignCenter);
+  coupling_preview_layout->addWidget(coupling_published_amplitude_label_, 1, 2, Qt::AlignCenter);
 
-  coupling_preview_layout->addWidget(new QLabel("Wave Period", coupling_preview_group_), 2, 0);
-  coupling_preview_layout->addWidget(coupling_period_label_, 2, 1);
-  coupling_preview_layout->addWidget(coupling_published_period_label_, 2, 2);
+  coupling_preview_layout->addWidget(new QLabel("波周期", coupling_preview_group_), 2, 0);
+  coupling_preview_layout->addWidget(coupling_period_label_, 2, 1, Qt::AlignCenter);
+  coupling_preview_layout->addWidget(coupling_published_period_label_, 2, 2, Qt::AlignCenter);
 
-  coupling_preview_layout->addWidget(new QLabel("Current Speed", coupling_preview_group_), 3, 0);
-  coupling_preview_layout->addWidget(coupling_current_speed_label_, 3, 1);
-  coupling_preview_layout->addWidget(coupling_published_current_speed_label_, 3, 2);
+  coupling_preview_layout->addWidget(new QLabel("流速", coupling_preview_group_), 3, 0);
+  coupling_preview_layout->addWidget(coupling_current_speed_label_, 3, 1, Qt::AlignCenter);
+  coupling_preview_layout->addWidget(
+    coupling_published_current_speed_label_, 3, 2, Qt::AlignCenter);
 
-  coupling_preview_layout->addWidget(new QLabel("Current Direction", coupling_preview_group_), 4, 0);
-  coupling_preview_layout->addWidget(coupling_current_direction_label_, 4, 1);
-  coupling_preview_layout->addWidget(coupling_published_current_direction_label_, 4, 2);
+  coupling_preview_layout->addWidget(new QLabel("流向", coupling_preview_group_), 4, 0);
+  coupling_preview_layout->addWidget(coupling_current_direction_label_, 4, 1, Qt::AlignCenter);
+  coupling_preview_layout->addWidget(
+    coupling_published_current_direction_label_, 4, 2, Qt::AlignCenter);
 
   coupling_preview_group_->setLayout(coupling_preview_layout);
   coupling_preview_group_->setVisible(false);
   main_layout->addWidget(coupling_preview_group_);
 
-  auto * wind_group = new QGroupBox("Wind", this);
+  auto * wind_group = new QGroupBox("风", this);
   auto * wind_layout = new QFormLayout();
+  configure_form_layout(wind_layout);
 
   wind_speed_slider_ = new QSlider(Qt::Horizontal, wind_group);
   wind_speed_slider_->setRange(0, static_cast<int>(20.0 * kWindSpeedScale));
   wind_speed_slider_->setValue(0);
-  wind_speed_slider_->setToolTip("World-frame wind speed. Changes are ramp limited.");
+  wind_speed_slider_->setToolTip("世界坐标系下的风速；变化速率受限。");
   wind_speed_label_ = new QLabel("0.0 m/s", wind_group);
 
   auto * wind_speed_row = new QHBoxLayout();
-  wind_speed_row->addWidget(wind_speed_slider_);
+  configure_slider_row(wind_speed_row);
+  wind_speed_row->addWidget(wind_speed_slider_, 1);
   wind_speed_row->addWidget(wind_speed_label_);
-  wind_layout->addRow("Speed", wind_speed_row);
+  wind_layout->addRow("风速", wind_speed_row);
 
   wind_direction_slider_ = new QSlider(Qt::Horizontal, wind_group);
   wind_direction_slider_->setRange(-180, 180);
   wind_direction_slider_->setValue(0);
-  wind_direction_slider_->setToolTip("Direction the wind is blowing toward in ENU coordinates.");
+  wind_direction_slider_->setToolTip("ENU 坐标系中风吹向的方向。");
   wind_direction_label_ = new QLabel("0 deg", wind_group);
 
   auto * wind_dir_row = new QHBoxLayout();
-  wind_dir_row->addWidget(wind_direction_slider_);
+  configure_slider_row(wind_dir_row);
+  wind_dir_row->addWidget(wind_direction_slider_, 1);
   wind_dir_row->addWidget(wind_direction_label_);
-  wind_layout->addRow("Direction", wind_dir_row);
+  wind_layout->addRow("风向", wind_dir_row);
 
   wind_group->setLayout(wind_layout);
   main_layout->addWidget(wind_group);
 
-  auto * wave_group = new QGroupBox("Waves", this);
+  auto * wave_group = new QGroupBox("浪", this);
   auto * wave_layout = new QFormLayout();
+  configure_form_layout(wave_layout);
 
   wave_amplitude_slider_ = new QSlider(Qt::Horizontal, wave_group);
   wave_amplitude_slider_->setRange(0, static_cast<int>(kMaxWaveGain * kWaveScale));
   wave_amplitude_slider_->setValue(static_cast<int>(0.3 * kWaveScale));
-  wave_amplitude_slider_->setToolTip("PMS spectrum gain. This is not wave height in metres.");
+  wave_amplitude_slider_->setToolTip("PMS 波谱增益，并非以米为单位的波高。");
   wave_amplitude_label_ = new QLabel("0.30", wave_group);
 
   auto * wave_amp_row = new QHBoxLayout();
-  wave_amp_row->addWidget(wave_amplitude_slider_);
+  configure_slider_row(wave_amp_row);
+  wave_amp_row->addWidget(wave_amplitude_slider_, 1);
   wave_amp_row->addWidget(wave_amplitude_label_);
-  wave_layout->addRow("Gain", wave_amp_row);
+  wave_layout->addRow("增益", wave_amp_row);
 
   wave_period_slider_ = new QSlider(Qt::Horizontal, wave_group);
   wave_period_slider_->setRange(static_cast<int>(1.0 * kWaveScale), static_cast<int>(20.0 * kWaveScale));
   wave_period_slider_->setValue(static_cast<int>(5.0 * kWaveScale));
   wave_period_slider_->setToolTip(
-    "Shorter periods create stronger spatial variation across the hull.");
+    "周期越短，船体范围内的空间变化越明显。");
   wave_period_label_ = new QLabel("5.00 s", wave_group);
 
   auto * wave_period_row = new QHBoxLayout();
-  wave_period_row->addWidget(wave_period_slider_);
+  configure_slider_row(wave_period_row);
+  wave_period_row->addWidget(wave_period_slider_, 1);
   wave_period_row->addWidget(wave_period_label_);
-  wave_layout->addRow("Period", wave_period_row);
+  wave_layout->addRow("周期", wave_period_row);
 
   wave_direction_slider_ = new QSlider(Qt::Horizontal, wave_group);
   wave_direction_slider_->setRange(-180, 180);
   wave_direction_slider_->setValue(0);
   wave_direction_slider_->setToolTip(
-    "Wave travel direction. Use 90 deg for cross-sea roll when the ship points +X.");
+    "波浪传播方向。船艏指向 +X 时，设为 90 deg 可模拟横浪横摇。");
   wave_direction_label_ = new QLabel("0 deg", wave_group);
   auto * wave_direction_row = new QHBoxLayout();
-  wave_direction_row->addWidget(wave_direction_slider_);
+  configure_slider_row(wave_direction_row);
+  wave_direction_row->addWidget(wave_direction_slider_, 1);
   wave_direction_row->addWidget(wave_direction_label_);
-  wave_layout->addRow("Direction", wave_direction_row);
+  wave_layout->addRow("波向", wave_direction_row);
 
   wave_group->setLayout(wave_layout);
   main_layout->addWidget(wave_group);
 
-  auto * current_group = new QGroupBox("flow", this);
+  auto * current_group = new QGroupBox("流", this);
   auto * current_layout = new QFormLayout();
+  configure_form_layout(current_layout);
 
   current_x_slider_ = new QSlider(Qt::Horizontal, current_group);
   current_x_slider_->setRange(
@@ -256,9 +292,10 @@ void VrxEnvPanel::setupUi()
   current_x_label_ = new QLabel("0.00 m/s", current_group);
 
   auto * current_x_row = new QHBoxLayout();
-  current_x_row->addWidget(current_x_slider_);
+  configure_slider_row(current_x_row);
+  current_x_row->addWidget(current_x_slider_, 1);
   current_x_row->addWidget(current_x_label_);
-  current_layout->addRow("X", current_x_row);
+  current_layout->addRow("X 分量", current_x_row);
 
   current_y_slider_ = new QSlider(Qt::Horizontal, current_group);
   current_y_slider_->setRange(
@@ -268,36 +305,41 @@ void VrxEnvPanel::setupUi()
   current_y_label_ = new QLabel("0.00 m/s", current_group);
 
   auto * current_y_row = new QHBoxLayout();
-  current_y_row->addWidget(current_y_slider_);
+  configure_slider_row(current_y_row);
+  current_y_row->addWidget(current_y_slider_, 1);
   current_y_row->addWidget(current_y_label_);
-  current_layout->addRow("Y", current_y_row);
+  current_layout->addRow("Y 分量", current_y_row);
 
   current_group->setLayout(current_layout);
   main_layout->addWidget(current_group);
 
-  auto * lighting_group = new QGroupBox("Lighting", this);
+  auto * lighting_group = new QGroupBox("光照", this);
   auto * lighting_layout = new QFormLayout();
+  configure_form_layout(lighting_layout);
 
   sun_brightness_slider_ = new QSlider(Qt::Horizontal, lighting_group);
   sun_brightness_slider_->setRange(0, static_cast<int>(kSunBrightnessScale));
   sun_brightness_slider_->setValue(static_cast<int>(kSunBrightnessScale));
   sun_brightness_slider_->setToolTip(
-    "Scale the Gazebo sun directional light. Scene ambient light is unchanged.");
+    "调整 Gazebo 太阳方向光的强度，不改变场景环境光。");
   sun_brightness_label_ = new QLabel("100%", lighting_group);
 
   auto * sun_brightness_row = new QHBoxLayout();
-  sun_brightness_row->addWidget(sun_brightness_slider_);
+  configure_slider_row(sun_brightness_row);
+  sun_brightness_row->addWidget(sun_brightness_slider_, 1);
   sun_brightness_row->addWidget(sun_brightness_label_);
-  lighting_layout->addRow("Sun Brightness", sun_brightness_row);
+  lighting_layout->addRow("太阳亮度", sun_brightness_row);
 
   lighting_group->setLayout(lighting_layout);
   main_layout->addWidget(lighting_group);
 
   auto * control_row = new QHBoxLayout();
-  emergency_stop_button_ = new QPushButton("Calm Water", this);
-  emergency_stop_button_->setToolTip("Ramp wind, waves and current down to zero.");
-  reset_button_ = new QPushButton("Reset Defaults", this);
-  reset_button_->setToolTip("Restore the default coupled environment state.");
+  control_row->setContentsMargins(0, 2, 0, 0);
+  control_row->setSpacing(10);
+  emergency_stop_button_ = new QPushButton("静水", this);
+  emergency_stop_button_->setToolTip("将风、浪和水流逐渐降至零。");
+  reset_button_ = new QPushButton("恢复默认", this);
+  reset_button_->setToolTip("恢复默认的耦合环境状态。");
   control_row->addWidget(emergency_stop_button_);
   control_row->addWidget(reset_button_);
   main_layout->addLayout(control_row);
@@ -340,7 +382,7 @@ void VrxEnvPanel::setupUi()
       wave_period_label_, wave_direction_label_, current_x_label_, current_y_label_,
       sun_brightness_label_})
   {
-    label->setMinimumWidth(64);
+    label->setMinimumWidth(76);
     label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
   }
 
@@ -427,7 +469,7 @@ void VrxEnvPanel::onPhysicsCouplingToggled(bool checked)
   current_x_slider_->setEnabled(!checked);
   current_y_slider_->setEnabled(!checked);
   coupling_preview_group_->setVisible(checked);
-  mode_status_label_->setText(checked ? "Coupled" : "Independent");
+  mode_status_label_->setText(checked ? "耦合" : "独立");
 
   if (checked) {
     const double wind_speed = target_values_.wind_speed;
