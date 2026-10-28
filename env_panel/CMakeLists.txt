@@ -33,12 +33,14 @@ add_library(${PROJECT_NAME} SHARED
   include/env_panel/storm_point_tool.hpp
   include/env_panel/static_buoy_panel.hpp
   include/env_panel/static_buoy_point_tool.hpp
+  include/env_panel/virtual_ship_point_tool.hpp
   src/vrx_env_panel.cpp
   src/dynamic_ship_panel.cpp
   src/storm_field_panel.cpp
   src/storm_point_tool.cpp
   src/static_buoy_panel.cpp
   src/static_buoy_point_tool.cpp
+  src/virtual_ship_point_tool.cpp
   include/env_panel/cpu_panel.hpp
   src/cpu_panel.cpp
   include/env_panel/radar_panel.hpp

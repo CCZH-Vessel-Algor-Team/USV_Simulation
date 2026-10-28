@@ -737,6 +737,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /fusion/target_markers
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: virtual_dynamic_ship
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_ship/markers
+      Value: true
     - Alpha: 0.699999988079071
       Class: rviz_default_plugins/Map
       Color Scheme: map
@@ -805,6 +817,14 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /dynamic_buoy/clicked_point
+    - Class: env_panel/VirtualShipPoint
+      Single click: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_ship/virtual_clicked_point
   Transformation:
     Current:
       Class: rviz_default_plugins/TF
