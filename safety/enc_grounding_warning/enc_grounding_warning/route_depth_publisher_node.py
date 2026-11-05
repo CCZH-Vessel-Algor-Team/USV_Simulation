@@ -20,7 +20,12 @@ from visualization_msgs.msg import Marker, MarkerArray
 from enc_grounding_warning_msgs.msg import DepthGrid
 
 from .bathymetry import SimGridProvider, UNKNOWN_DEPTH
-from .common import default_config_path, load_ukc_params, path_to_points
+from .common import (
+    default_config_path,
+    load_grid_publish_flags,
+    load_ukc_params,
+    path_to_points,
+)
 
 
 _DEPTH_COLOR_STOPS = [
@@ -62,6 +67,7 @@ class RouteDepthPublisherNode(Node):
         if not params_file:
             params_file = default_config_path("grounding_warning_params.yaml")
         self.params = load_ukc_params(params_file)
+        self.grid_publish = load_grid_publish_flags(params_file)
 
         depth_grid_file = self.get_parameter("depth_grid_file").value
         if not depth_grid_file:
@@ -70,12 +76,26 @@ class RouteDepthPublisherNode(Node):
 
         qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE)
         self.plan_sub = self.create_subscription(Path, "plan", self.plan_cb, qos)
-        self.grid_pub = self.create_publisher(
-            DepthGrid, "safety/route_depth_grid", qos
-        )
-        self.marker_pub = self.create_publisher(
-            MarkerArray, "safety/route_depth_markers", qos
-        )
+
+        self.grid_pub = None
+        if self.grid_publish.get("route_depth_grid", True):
+            self.grid_pub = self.create_publisher(
+                DepthGrid, "safety/route_depth_grid", qos
+            )
+        else:
+            self.get_logger().info(
+                "grid_publish.route_depth_grid=false：不创建航路水深栅格发布者"
+            )
+
+        self.marker_pub = None
+        if self.grid_publish.get("route_depth_markers", True):
+            self.marker_pub = self.create_publisher(
+                MarkerArray, "safety/route_depth_markers", qos
+            )
+        else:
+            self.get_logger().info(
+                "grid_publish.route_depth_markers=false：不创建航路水深 Marker 发布者"
+            )
 
         self.latest_plan = None
         self._last_immediate = 0.0
@@ -109,6 +129,8 @@ class RouteDepthPublisherNode(Node):
         self.run_once()
 
     def run_once(self):
+        if self.grid_pub is None and self.marker_pub is None:
+            return
         if self.latest_plan is None or len(self.latest_plan.poses) < 2:
             return
 
@@ -126,6 +148,8 @@ class RouteDepthPublisherNode(Node):
         self._publish_markers(data)
 
     def _publish_grid(self, data: dict):
+        if self.grid_pub is None:
+            return
         msg = DepthGrid()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = self.provider.frame_id
@@ -141,6 +165,8 @@ class RouteDepthPublisherNode(Node):
         self.grid_pub.publish(msg)
 
     def _publish_markers(self, data: dict):
+        if self.marker_pub is None:
+            return
         marker = Marker()
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.header.frame_id = self.provider.frame_id

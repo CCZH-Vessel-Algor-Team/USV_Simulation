@@ -63,6 +63,7 @@ def generate_launch_description():
                         parameters=[
                             {
                                 "use_sim_time": use_sim_time,
+                                "params_file": params_file,
                                 "depth_grid_file": depth_grid_file,
                                 "robot_base_frame": robot_base_frame,
                             }

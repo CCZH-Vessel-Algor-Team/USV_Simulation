@@ -11,7 +11,11 @@ from usv_interfaces.msg import VesselState
 from enc_grounding_warning_msgs.msg import DepthGrid
 
 from .bathymetry import SimGridProvider
-from .common import default_config_path, lookup_map_pose
+from .common import (
+    default_config_path,
+    load_grid_publish_flags,
+    lookup_map_pose,
+)
 from .ukc_model import yaw_from_quaternion
 
 
@@ -19,11 +23,17 @@ class DepthProviderNode(Node):
     def __init__(self):
         super().__init__("depth_provider_node")
 
+        self.declare_parameter("params_file", "")
         self.declare_parameter("depth_grid_file", "")
         self.declare_parameter("publish_hz", 1.0)
         self.declare_parameter("near_extent_m", 500.0)
         self.declare_parameter("near_resolution_m", 2.0)
         self.declare_parameter("robot_base_frame", "usv_1/base_link")
+
+        params_file = self.get_parameter("params_file").value
+        if not params_file:
+            params_file = default_config_path("grounding_warning_params.yaml")
+        self.grid_publish = load_grid_publish_flags(params_file)
 
         depth_grid_file = self.get_parameter("depth_grid_file").value
         if not depth_grid_file:
@@ -35,7 +45,14 @@ class DepthProviderNode(Node):
             depth=1,
             reliability=ReliabilityPolicy.RELIABLE,
         )
-        self.pub = self.create_publisher(DepthGrid, "safety/depth_grid", qos)
+        self.pub = None
+        if self.grid_publish.get("depth_grid", True):
+            self.pub = self.create_publisher(DepthGrid, "safety/depth_grid", qos)
+        else:
+            self.get_logger().info(
+                "grid_publish.depth_grid=false：不创建 safety/depth_grid 发布者"
+            )
+
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.vessel_sub = self.create_subscription(
@@ -60,6 +77,8 @@ class DepthProviderNode(Node):
         )
 
     def timer_cb(self):
+        if self.pub is None:
+            return
         try:
             x, y, _yaw = lookup_map_pose(
                 self.tf_buffer,
