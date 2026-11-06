@@ -16,7 +16,12 @@ from visualization_msgs.msg import Marker, MarkerArray
 from enc_grounding_warning_msgs.msg import GroundingRiskGrid, UKCState
 
 from .bathymetry import SimGridProvider
-from .common import default_config_path, load_ukc_params, lookup_map_pose
+from .common import (
+    default_config_path,
+    load_grid_publish_flags,
+    load_ukc_params,
+    lookup_map_pose,
+)
 from .markers import risk_rgba
 from .ukc_model import (
     RISK_WARNING,
@@ -40,6 +45,7 @@ class UkcEstimatorNode(Node):
         if not params_file:
             params_file = default_config_path("grounding_warning_params.yaml")
         self.params = load_ukc_params(params_file)
+        self.grid_publish = load_grid_publish_flags(params_file)
 
         depth_grid_file = self.get_parameter("depth_grid_file").value
         if not depth_grid_file:
@@ -52,12 +58,26 @@ class UkcEstimatorNode(Node):
         )
         self.plan_sub = self.create_subscription(Path, "plan", self.plan_cb, qos)
         self.ukc_pub = self.create_publisher(UKCState, "safety/ukc_state", qos)
-        self.risk_pub = self.create_publisher(
-            GroundingRiskGrid, "safety/grounding_risk_grid", qos
-        )
-        self.marker_pub = self.create_publisher(
-            MarkerArray, "safety/current_risk_marker", 1
-        )
+
+        self.risk_pub = None
+        if self.grid_publish.get("grounding_risk_grid", True):
+            self.risk_pub = self.create_publisher(
+                GroundingRiskGrid, "safety/grounding_risk_grid", qos
+            )
+        else:
+            self.get_logger().info(
+                "grid_publish.grounding_risk_grid=false：不创建风险栅格发布者"
+            )
+
+        self.marker_pub = None
+        if self.grid_publish.get("current_risk_marker", True):
+            self.marker_pub = self.create_publisher(
+                MarkerArray, "safety/current_risk_marker", 1
+            )
+        else:
+            self.get_logger().info(
+                "grid_publish.current_risk_marker=false：不创建当前风险 Marker 发布者"
+            )
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -68,7 +88,9 @@ class UkcEstimatorNode(Node):
 
         hz = float(self.get_parameter("publish_hz").value)
         self.timer = self.create_timer(1.0 / hz, self.timer_cb)
-        self.risk_timer = self.create_timer(1.0, self.publish_risk_grid)
+        self.risk_timer = None
+        if self.risk_pub is not None:
+            self.risk_timer = self.create_timer(1.0, self.publish_risk_grid)
 
     def vessel_cb(self, msg: VesselState):
         self.latest_vessel = msg
@@ -154,6 +176,8 @@ class UkcEstimatorNode(Node):
         self.publish_current_marker(x, y, result)
 
     def publish_current_marker(self, x, y, result):
+        if self.marker_pub is None:
+            return
         arr = MarkerArray()
 
         sphere = Marker()
@@ -219,6 +243,8 @@ class UkcEstimatorNode(Node):
         return self._active_risk if self._active_risk is not None else risk
 
     def publish_risk_grid(self):
+        if self.risk_pub is None:
+            return
         try:
             x, y, _yaw = lookup_map_pose(
                 self.tf_buffer,

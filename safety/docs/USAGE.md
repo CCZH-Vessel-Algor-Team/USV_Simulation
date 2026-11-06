@@ -202,7 +202,18 @@ ros2 run enc_grounding_warning generate_depth_grid --config config/sim_depth_gri
 
 ## 4. 常用参数说明
 
-`grounding_warning_params.yaml` 中 `ukc:` 下的关键参数：
+`grounding_warning_params.yaml`（bringup 侧为 `usv_bringup/config/safety/safety.yaml`）中 `ukc:` 下的关键参数：
+
+同文件顶层还有统一的网格/可视化开关 `grid_publish:`（默认全 `true`，行为与改前一致）。关掉高资源项可显著降负载，例如：
+
+```yaml
+grid_publish:
+  route_depth_markers: false   # RViz CUBE_LIST，通常最吃资源
+  grounding_risk_grid: false   # 近场风险栅格，逐格算 UKC，很吃 CPU
+  depth_grid: false            # 近场水深栅格
+```
+
+
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|

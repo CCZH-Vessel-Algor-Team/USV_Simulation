@@ -22,7 +22,13 @@ from enc_grounding_warning_msgs.msg import (
 from enc_grounding_warning_msgs.srv import RouteCheck
 
 from .bathymetry import SimGridProvider, UNKNOWN_DEPTH
-from .common import default_config_path, load_ukc_params, lookup_map_pose, path_to_points
+from .common import (
+    default_config_path,
+    load_grid_publish_flags,
+    load_ukc_params,
+    lookup_map_pose,
+    path_to_points,
+)
 from .markers import risk_rgba
 from .ukc_model import RISK_UNKNOWN, RISK_WARNING, compute_ukc, yaw_from_quaternion
 
@@ -40,6 +46,7 @@ class GroundingWarningNode(Node):
         if not params_file:
             params_file = default_config_path("grounding_warning_params.yaml")
         self.params = load_ukc_params(params_file)
+        self.grid_publish = load_grid_publish_flags(params_file)
 
         depth_grid_file = self.get_parameter("depth_grid_file").value
         if not depth_grid_file:
@@ -54,9 +61,15 @@ class GroundingWarningNode(Node):
         self.alert_pub = self.create_publisher(
             GroundingAlert, "safety/grounding_alerts", qos
         )
-        self.marker_pub = self.create_publisher(
-            MarkerArray, "safety/grounding_markers", 1
-        )
+        self.marker_pub = None
+        if self.grid_publish.get("grounding_markers", True):
+            self.marker_pub = self.create_publisher(
+                MarkerArray, "safety/grounding_markers", 1
+            )
+        else:
+            self.get_logger().info(
+                "grid_publish.grounding_markers=false：不创建前瞻 Marker 发布者"
+            )
         self.route_srv = self.create_service(
             RouteCheck, "safety/route_check", self.route_check_cb
         )
@@ -201,6 +214,8 @@ class GroundingWarningNode(Node):
         self.publish_route_markers(samples, first_danger)
 
     def publish_route_markers(self, samples, first_danger):
+        if self.marker_pub is None:
+            return
         arr = MarkerArray()
 
         points = Marker()
