@@ -153,6 +153,7 @@ install(
 list(APPEND VRX_GZ_PLUGINS
   AcousticPingerPlugin
   BallShooterPlugin
+  FossenPlanar
   LightBuoyPlugin
   NavigationScoringPlugin
   GymkhanaScoringPlugin
@@ -188,6 +189,11 @@ target_link_libraries(USVWind PUBLIC
 )
 
 target_link_libraries(TargetShipController PUBLIC
+  gz-msgs10::gz-msgs10
+  gz-transport13::gz-transport13
+)
+
+target_link_libraries(FossenPlanar PUBLIC
   gz-msgs10::gz-msgs10
   gz-transport13::gz-transport13
 )

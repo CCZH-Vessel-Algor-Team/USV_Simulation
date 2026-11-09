@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <!-- M5 identified planar model on the real ~5.2 m hull mesh ("_20型船").
+       Numbers trace to M5Experiment simple delivery (2026-11):
+         M = diag(2299.1122192994344, 2141.8764579801687, 7634.790244773224)
+         D = diag(353.20671159902133*|u|, 1127.5985545842075, 16716.966075882865)
+         B arms +-0.715 m  -> thruster_spacing 1.43
+       Channel ownership (see description/models/m5/README.md):
+         * FossenPlanar owns M, C(M), linear sway/yaw damping, thrust/wind
+           generalized forces: exact via the identified M.
+         * Quadratic surge damping is applied by the stock Hydrodynamics
+           system below. The carrier link mass (1800 kg, the physical
+           estimate used for draft/buoyancy) converts that external force
+           into acceleration, so the coefficient is pre-scaled:
+             xUabsU = 353.20671159902133 * 1800 / 2299.1122192994344
+                    = 276.5293818811 kg/m
+           and appears negated per the signed-SNAME convention of
+           gz-sim Hydrodynamics.
+         * Heave/roll/pitch are physical: gravity + the 4-point Surface
+           buoyancy model (hull_length sized so 1800 kg floats at ~0.28 m
+           draft with equilibrium margin; points at the hull quarter
+           stations and near-propeller lateral offsets).
+       Carrier inertia diag(1800, 3200, 3200) is a physical estimate; the
+       planar response does not depend on it (feedback-equivalent wrench). -->
+  <model name="usv_1">
+    <pose>0 0 0 0 0 0</pose>
+    <link name="base_link">
+      <inertial>
+        <mass>1800</mass>
+        <inertia>
+          <ixx>1800</ixx><iyy>3200</iyy><izz>3200</izz>
+        </inertia>
+      </inertial>
+      <visual name="hull">
+        <!-- Mesh spans X 1.948..7.211, Y 0.528..2.725, Z 0.121..2.737;
+             offset places hull centre at the origin and the keel at z=0. -->
+        <pose>-4.5795 -1.6265 -0.121 0 0 0</pose>
+        <geometry><mesh>
+          <uri>package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae</uri>
+        </mesh></geometry>
+      </visual>
+      <collision name="hull">
+        <pose>0 0 0.5 0 0 0</pose>
+        <geometry><box><size>5.26 2.20 1.0</size></box></geometry>
+      </collision>
+    </link>
+    <plugin filename="libFossenPlanar.so" name="vrx::FossenPlanar">
+      <link_name>base_link</link_name>
+      <namespace>usv_1</namespace>
+      <m11>2299.1122192994344</m11>
+      <m22>2141.8764579801687</m22>
+      <m33>7634.790244773224</m33>
+      <X_u>0.0</X_u>
+      <Y_v>1127.5985545842075</Y_v>
+      <N_r>16716.966075882865</N_r>
+      <thruster_spacing>1.43</thruster_spacing>
+      <max_thrust>2773.67</max_thrust>
+      <command_timeout>0.5</command_timeout>
+      <input_mode>power</input_mode>
+      <max_power>20.0</max_power>
+      <reverse_scale>0.5</reverse_scale>
+      <wind_enable>true</wind_enable>
+      <!-- USVWind-compatible degrees: 0 = +X (East), CCW positive. -->
+      <wind_direction>0.0</wind_direction>
+      <wind_mean_velocity>0.0</wind_mean_velocity>
+      <wind_coeffs>0.5 0.5 0.33</wind_coeffs>
+    </plugin>
+    <plugin filename="gz-sim-hydrodynamics-system" name="gz::sim::systems::Hydrodynamics">
+      <link_name>base_link</link_name>
+      <xUabsU>-276.5293818811</xUabsU>
+      <!-- Physical seakeeping damping only (heave/roll/pitch are outside the
+           identified planar model); sized for zeta ~0.25 at the 1800 kg
+           carrier so the buoyancy equilibrium settles instead of ringing. -->
+      <zW>-8000</zW>
+      <kP>-5000</kP>
+      <mQ>-12000</mQ>
+      <disable_added_mass>true</disable_added_mass>
+      <disable_coriolis>true</disable_coriolis>
+      <default_current>0 0 0</default_current>
+    </plugin>
+    <plugin filename="libSurface.so" name="vrx::Surface">
+      <link_name>base_link</link_name>
+      <hull_length>28.0</hull_length>
+      <hull_radius>0.25</hull_radius>
+      <fluid_level>0.0</fluid_level>
+      <fluid_density>1000.0</fluid_density>
+      <points>
+        <point>1.32 0.72 0.10</point>
+        <point>-1.32 0.72 0.10</point>
+        <point>1.32 -0.72 0.10</point>
+        <point>-1.32 -0.72 0.10</point>
+      </points>
+      <wavefield>
+        <topic>/vrx/wavefield/parameters</topic>
+        <wave>
+          <model>PMS</model>
+          <period>5.0</period>
+          <direction>0.0</direction>
+          <gain>0.3</gain>
+          <steepness>0.0</steepness>
+        </wave>
+      </wavefield>
+    </plugin>
+    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>usv_1/odom</odom_frame>
+      <robot_base_frame>usv_1/base_link</robot_base_frame>
+      <odom_topic>/usv_1/odom</odom_topic>
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <dimensions>3</dimensions>
+    </plugin>
+  </model>
+</sdf>
