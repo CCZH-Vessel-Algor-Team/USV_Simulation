@@ -57,6 +57,15 @@ class CmdVelToThruster(Node):
             'require_navigation_ready', False,
             descriptor=ParameterDescriptor(read_only=True),
         ).value
+        # 输出通道：thrust（默认，每侧推力 N，WAM-V 链）或 power（每侧电功率
+        # kW，M5/FossenPlanar 在 Gazebo 侧查表功率->推力；反向系数等在插件侧）。
+        self._output_mode = self.declare_parameter(
+            'output_mode', 'thrust',
+            descriptor=ParameterDescriptor(read_only=True),
+        ).value.strip().lower()
+        if self._output_mode not in ('thrust', 'power'):
+            raise ValueError(
+                f"output_mode must be 'thrust' or 'power', got {self._output_mode!r}")
         self._navigation_ready = False
         self._ready_stamp = None
 
@@ -66,8 +75,8 @@ class CmdVelToThruster(Node):
         )
         cmd_vel_fallback_topic = '/cmd_vel'
         odom_topic = f'/{self.namespace}/odom'
-        left_thrust_topic = f'/{self.namespace}/thrusters/left/thrust'
-        right_thrust_topic = f'/{self.namespace}/thrusters/right/thrust'
+        left_thrust_topic = f'/{self.namespace}/thrusters/left/{self._output_mode}'
+        right_thrust_topic = f'/{self.namespace}/thrusters/right/{self._output_mode}'
         left_pos_topic = f'/{self.namespace}/thrusters/left/pos'
         right_pos_topic = f'/{self.namespace}/thrusters/right/pos'
 
@@ -81,11 +90,16 @@ class CmdVelToThruster(Node):
 
         self.left_pub = self.create_publisher(Float64, left_thrust_topic, 10)
         self.right_pub = self.create_publisher(Float64, right_thrust_topic, 10)
-        self.left_pos_pub = self.create_publisher(Float64, left_pos_topic, 10)
-        self.right_pos_pub = self.create_publisher(Float64, right_pos_topic, 10)
+        self.left_pos_pub = None
+        self.right_pos_pub = None
+        if self._output_mode == 'thrust':
+            # 矢量推进舵角通道仅存在于 thrust 模式（M5 固定桨无此通道）。
+            self.left_pos_pub = self.create_publisher(Float64, left_pos_topic, 10)
+            self.right_pos_pub = self.create_publisher(Float64, right_pos_topic, 10)
 
         self.declare_parameter('control_rate', 20.0)
         self.declare_parameter('max_thrust', 1000.0)
+        self.declare_parameter('max_power', 20.0)
         self.declare_parameter('v_kp', 2000.0)
         self.declare_parameter('v_ki', 60.0)
         self.declare_parameter('v_kd', 0.0)
@@ -125,7 +139,7 @@ class CmdVelToThruster(Node):
             )
 
         self.get_logger().info(
-            f'PID cmd_vel->thruster started for {self.namespace}: '
+            f'PID cmd_vel->{self._output_mode} started for {self.namespace}: '
             f'cmd={cmd_vel_topic}, odom={odom_topic}, rate={rate:.0f}Hz'
         )
 
@@ -170,8 +184,9 @@ class CmdVelToThruster(Node):
         z = Float64(data=0.0)
         self.left_pub.publish(z)
         self.right_pub.publish(z)
-        self.left_pos_pub.publish(z)
-        self.right_pos_pub.publish(z)
+        if self.left_pos_pub is not None:
+            self.left_pos_pub.publish(z)
+            self.right_pos_pub.publish(z)
 
     def odom_callback(self, msg):
         twist = msg.twist.twist
@@ -192,7 +207,12 @@ class CmdVelToThruster(Node):
         self._last_control = now
         dt = max(dt, 0.001)
 
-        max_t = self.get_parameter('max_thrust').value
+        # 限幅上限按输出通道选择：power 模式以 max_power (kW) 为 PID 与分配
+        # 的对称限幅（反向功率不经脚本额外缩放——FossenPlanar 侧统一 0.5 反向系数）。
+        if self._output_mode == 'power':
+            max_t = abs(self.get_parameter('max_power').value)
+        else:
+            max_t = abs(self.get_parameter('max_thrust').value)
 
         v_kp = self.get_parameter('v_kp').value
         v_ki = self.get_parameter('v_ki').value
@@ -259,9 +279,10 @@ class CmdVelToThruster(Node):
         self.left_pub.publish(lt_msg)
         self.right_pub.publish(rt_msg)
 
-        pos_msg = Float64(data=0.0)
-        self.left_pos_pub.publish(pos_msg)
-        self.right_pos_pub.publish(pos_msg)
+        if self.left_pos_pub is not None:
+            pos_msg = Float64(data=0.0)
+            self.left_pos_pub.publish(pos_msg)
+            self.right_pos_pub.publish(pos_msg)
 
 
 def main(args=None):

@@ -715,43 +715,31 @@ def generate_bridge_config(config_data):
         namespaces = [sanitized_bridge_ns]
         if thrusters_config.get('enable_legacy_wamv_alias', False):
             namespaces.append('wamv')
-        
+        # 推进指令通道：thrust（默认，WAM-V 推力+舵角）或 power（M5 每侧电功率
+        # kW，由 FossenPlanar 在 Gazebo 侧完成功率->推力映射，无舵角话题）。
+        channel = str(thrusters_config.get('channel', 'thrust')).lower()
+        if channel not in ('thrust', 'power'):
+            raise ValueError(f"thrusters.channel must be 'thrust' or 'power', got {channel!r}")
+
         for ns in namespaces:
-            # 左推进器推力控制
-            bridges.append({
-                "ros_topic_name": f"/{ns}/thrusters/left/thrust",
-                "gz_topic_name": f"/{sanitized_bridge_ns}/thrusters/left/thrust",
-                "ros_type_name": "std_msgs/msg/Float64",
-                "gz_type_name": "gz.msgs.Double",
-                "direction": "ROS_TO_GZ"
-            })
-            
-            # 左推进器角度控制
-            bridges.append({
-                "ros_topic_name": f"/{ns}/thrusters/left/pos",
-                "gz_topic_name": f"/{sanitized_bridge_ns}/thrusters/left/pos",
-                "ros_type_name": "std_msgs/msg/Float64",
-                "gz_type_name": "gz.msgs.Double",
-                "direction": "ROS_TO_GZ"
-            })
-            
-            # 右推进器推力控制
-            bridges.append({
-                "ros_topic_name": f"/{ns}/thrusters/right/thrust",
-                "gz_topic_name": f"/{sanitized_bridge_ns}/thrusters/right/thrust",
-                "ros_type_name": "std_msgs/msg/Float64",
-                "gz_type_name": "gz.msgs.Double",
-                "direction": "ROS_TO_GZ"
-            })
-            
-            # 右推进器角度控制
-            bridges.append({
-                "ros_topic_name": f"/{ns}/thrusters/right/pos",
-                "gz_topic_name": f"/{sanitized_bridge_ns}/thrusters/right/pos",
-                "ros_type_name": "std_msgs/msg/Float64",
-                "gz_type_name": "gz.msgs.Double",
-                "direction": "ROS_TO_GZ"
-            })
+            for side in ('left', 'right'):
+                bridges.append({
+                    "ros_topic_name": f"/{ns}/thrusters/{side}/{channel}",
+                    "gz_topic_name": f"/{sanitized_bridge_ns}/thrusters/{side}/{channel}",
+                    "ros_type_name": "std_msgs/msg/Float64",
+                    "gz_type_name": "gz.msgs.Double",
+                    "direction": "ROS_TO_GZ"
+                })
+            if channel == 'thrust':
+                # 推进器角度控制（矢量推进专用；M5 固定桨无此通道）
+                for side in ('left', 'right'):
+                    bridges.append({
+                        "ros_topic_name": f"/{ns}/thrusters/{side}/pos",
+                        "gz_topic_name": f"/{sanitized_bridge_ns}/thrusters/{side}/pos",
+                        "ros_type_name": "std_msgs/msg/Float64",
+                        "gz_type_name": "gz.msgs.Double",
+                        "direction": "ROS_TO_GZ"
+                    })
 
     # 处理传感器桥接
     sensors_input = config_data.get('sensors', [])

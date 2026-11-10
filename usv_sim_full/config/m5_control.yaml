@@ -1,0 +1,21 @@
+# M5 power-mode thruster allocation (cmd_vel -> per-side electrical power kW).
+# Consumed by usv_sim_full/cmd_vel_to_thruster with output_mode:=power;
+# FossenPlanar maps kW -> N on the Gazebo side (reverse factor 0.5 there).
+# Fast-response simulation PI profile, validated with the full sensor rig.
+# No derivative term; the identified model and power/thrust limits are unchanged.
+# These gains are not a real-vessel controller certification.
+/**:
+  ros__parameters:
+    control_rate: 50.0
+    output_mode: power
+    max_power: 20.0
+    v_kp: 60.0
+    v_ki: 100.0
+    v_kd: 0.0
+    w_kp: 180.0
+    w_ki: 350.0
+    w_kd: 0.0
+    odom_timeout: 0.5
+    cmd_timeout: 0.5
+    # kW per control update, NOT m/s^2 or kW/s; safety zero bypasses this slew.
+    thrust_rate_limit: 2.0

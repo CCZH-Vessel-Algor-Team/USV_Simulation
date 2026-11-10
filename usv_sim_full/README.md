@@ -29,6 +29,20 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 
 主配置文件为 `config/full_config.yaml`。
 
+### M5 辨识模型的独立系统入口
+
+已安装配套 `usv_bringup`、导航和感知依赖后：
+
+```bash
+ros2 launch usv_sim_full usv_bringup_system_m5.launch.py
+```
+
+该入口使用仓库内 M5 场景、功率控制和 system profile；普通
+`usv_bringup system.launch.py` 及原 WAM-V 入口保持不变，不统一或隐式替换。
+配置与模型边界见 [M5 模型说明](description/models/m5/README.md)。M5 RViz 配置排除
+当前版本未实现的虚拟目标取点入口，真实目标船仍由 Publish Point 或拖拽 Pose
+生成；Nav2 Goal 不变。Spin 恢复策略按当前阶段约定暂缓，不作为已验收功能。
+
 ### RViz导航目标
 
 CCS使用 **Nav2 Goal** 工具（快捷键 `g`）向唯一的 **Navigation 2** 面板输入本船导航目标。

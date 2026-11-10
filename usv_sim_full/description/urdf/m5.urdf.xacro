@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+<!--
+  M5 identified planar model, full-stack template (v2).
+
+  Selected from the robot config via session_manager:
+      xacro_template: m5.urdf.xacro
+  (session_manager resolves any template under description/urdf/, so no
+  generator changes are needed.)
+
+  Dynamics ownership is identical to description/models/m5/model.sdf
+  (see that README for the identification provenance and boundaries):
+    * vrx::FossenPlanar in power mode: identified M/C, linear sway/yaw
+      damping, thruster generalized force (per-side kW commands on
+      /{namespace}/thrusters/{left,right}/power), still-air wind.
+    * gz Hydrodynamics: quadratic surge damping pre-scaled by
+      carrier_mass/M11 (353.2067*1800/2299.1122 = 276.5293818811) plus
+      physical heave/roll/pitch damping.
+    * vrx::Surface: 4-point buoyancy sized for the 1800 kg carrier
+      (equilibrium draft ~0.28 m; spawn_pose z in the robot config).
+  Not instantiated on purpose: USVWind (wind lives inside FossenPlanar),
+  engine/propeller joints and the gz Thruster chain (FossenPlanar owns
+  actuation), DetachableJoint (no VRX platform).
+
+  The sensor rig comes from the session-generated overlay (extra_sensors),
+  exactly like the WAM-V chain, so sensor frames/topics stay identical.
+  m5_ccs_config.yaml applies the visual's (-0.0995, +0.029, +0.472)
+  translation to the inherited WAM-V sensor mounts as well. This preserves
+  their sensor-to-hull transforms after keel/centre alignment, keeping the
+  cameras above the cabin without changing frame names or orientations.
+  GPU ray sensors also depend on these physical mounts; they are not merely
+  frame definitions. Do not realign the mesh without updating the rig.
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="$(arg name)">
+
+  <!-- ==== session_manager interface ==== -->
+  <xacro:arg name="name" default="usv_1"/>
+  <xacro:arg name="namespace" default="usv_1"/>
+  <!-- Passed unconditionally by session_manager; accepted, unused. -->
+  <xacro:arg name="thruster_config" default="M5"/>
+  <!-- Multi-vehicle sessions pass this; no VRX platform here, unused. -->
+  <xacro:arg name="enable_detachable_joint" default="false"/>
+  <!-- Session-generated sensor overlay (same mechanism as the WAM-V). -->
+  <xacro:arg name="has_extra_sensors" default="false"/>
+  <xacro:arg name="extra_sensors" default=""/>
+  <!-- Compatibility args: configs copied from the WAM-V may still carry
+       robot.overrides / buoyancy_params keys, which session_manager forwards
+       as xacro args. They are accepted and IGNORED here; the M5 dynamics
+       values are baked in below (models/m5/model.sdf parity). -->
+  <xacro:arg name="visual_mesh" default=""/>
+  <xacro:arg name="mass" default="1800"/>
+  <xacro:arg name="ixx" default="1800"/>
+  <xacro:arg name="iyy" default="3200"/>
+  <xacro:arg name="izz" default="3200"/>
+  <xacro:arg name="locked" default="true"/>
+  <xacro:arg name="ground_truth_enabled" default="true"/>
+  <xacro:arg name="hull_length" default="28.0"/>
+  <xacro:arg name="hull_radius" default="0.25"/>
+  <xacro:arg name="fluid_level" default="0.0"/>
+  <xacro:arg name="xDotU" default="0.0"/>
+  <xacro:arg name="yDotV" default="0.0"/>
+  <xacro:arg name="nDotR" default="0.0"/>
+  <xacro:arg name="xU" default="0.0"/>
+  <xacro:arg name="xUU" default="0.0"/>
+  <xacro:arg name="yV" default="0.0"/>
+  <xacro:arg name="yVV" default="0.0"/>
+  <xacro:arg name="zW" default="0.0"/>
+  <xacro:arg name="kP" default="0.0"/>
+  <xacro:arg name="kPP" default="0.0"/>
+  <xacro:arg name="mQ" default="0.0"/>
+  <xacro:arg name="mQQ" default="0.0"/>
+  <xacro:arg name="nR" default="0.0"/>
+  <xacro:arg name="nRR" default="0.0"/>
+
+  <xacro:property name="namespace" value="$(arg namespace)" scope="global"/>
+  <!-- Sensor macros (sensor_macros.xacro) reference these global properties;
+       mirror the wamv_no_battery declarations so the session-generated
+       overlay compiles unchanged. -->
+  <xacro:property name="thruster_namespace" value="thrusters/"/>
+  <xacro:property name="camera_namespace" value="cameras/"/>
+  <xacro:property name="sensor_namespace" value="sensors/"/>
+  <xacro:property name="acoustic_namespace" value="acoustics/"/>
+  <xacro:property name="shooter_namespace" value="shooters/"/>
+
+  <!-- ==== Carrier: single rigid body with the real ~5.26 m hull mesh ====
+       Root link carries no inertial (KDL, mirroring wamv_base); the 1800 kg
+       physical carrier lives on the fixed base_footprint child and lumps
+       into base_link in Gazebo. Origin: hull-centred, keel at z=0. -->
+  <link name="${namespace}/base_link">
+    <visual>
+      <!-- The DAE scene node already centres the hull (its own transform);
+           this origin only trims the residual: hull centre to the link
+           origin and the keel (scene z -0.472) to z=0. -->
+      <origin xyz="-0.0995 0.029 0.472" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae"/>
+      </geometry>
+    </visual>
+    <collision name="hull">
+      <origin xyz="0 0 0.5" rpy="0 0 0"/>
+      <geometry>
+        <box size="5.26 2.20 1.0"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="${namespace}/base_footprint_joint" type="fixed">
+    <parent link="${namespace}/base_link"/>
+    <child link="${namespace}/base_footprint"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="${namespace}/base_footprint">
+    <inertial>
+      <!-- Physical carrier estimate (draft/buoyancy); planar response is
+           governed by FossenPlanar's identified M, not by these values. -->
+      <mass value="1800"/>
+      <inertia ixx="1800" ixy="0" ixz="0" iyy="3200" iyz="0" izz="3200"/>
+    </inertial>
+  </link>
+
+  <!-- ==== Pose / joint state / odometry publishers (company-chain parity) ==== -->
+  <gazebo>
+    <plugin filename="libgz-sim-pose-publisher-system.so"
+      name="gz::sim::systems::PosePublisher">
+      <publish_link_pose>false</publish_link_pose>
+      <publish_sensor_pose>true</publish_sensor_pose>
+      <publish_collision_pose>false</publish_collision_pose>
+      <publish_visual_pose>false</publish_visual_pose>
+      <publish_nested_model_pose>false</publish_nested_model_pose>
+      <publish_model_pose>false</publish_model_pose>
+      <use_pose_vector_msg>true</use_pose_vector_msg>
+      <static_publisher>false</static_publisher>
+      <static_update_frequency>1</static_update_frequency>
+    </plugin>
+    <plugin filename="gz-sim-joint-state-publisher-system"
+      name="gz::sim::systems::JointStatePublisher">
+    </plugin>
+    <!-- Truth odometry on gz /model/{namespace}/odometry, bridged by the
+         session bridge config to /{namespace}/odom (wamv_p3d equivalent). -->
+    <plugin filename="gz-sim-odometry-publisher-system"
+      name="gz::sim::systems::OdometryPublisher">
+      <dimensions>3</dimensions>
+      <odom_publish_frequency>30.0</odom_publish_frequency>
+      <odom_frame>${namespace}/odom</odom_frame>
+      <robot_base_frame>${namespace}/base_link</robot_base_frame>
+    </plugin>
+  </gazebo>
+
+  <!-- ==== M5 dynamics (values trace to models/m5/model.sdf) ==== -->
+  <gazebo>
+    <plugin filename="libFossenPlanar.so" name="vrx::FossenPlanar">
+      <link_name>${namespace}/base_link</link_name>
+      <namespace>${namespace}</namespace>
+      <m11>2299.1122192994344</m11>
+      <m22>2141.8764579801687</m22>
+      <m33>7634.790244773224</m33>
+      <X_u>0.0</X_u>
+      <Y_v>1127.5985545842075</Y_v>
+      <N_r>16716.966075882865</N_r>
+      <thruster_spacing>1.43</thruster_spacing>
+      <max_thrust>2773.67</max_thrust>
+      <command_timeout>0.5</command_timeout>
+      <input_mode>power</input_mode>
+      <max_power>20.0</max_power>
+      <reverse_scale>0.5</reverse_scale>
+      <wind_enable>true</wind_enable>
+      <!-- USVWind-compatible degrees: 0 = +X (East), CCW positive. -->
+      <wind_direction>0.0</wind_direction>
+      <wind_mean_velocity>0.0</wind_mean_velocity>
+      <wind_coeffs>0.5 0.5 0.33</wind_coeffs>
+    </plugin>
+
+    <plugin filename="gz-sim-hydrodynamics-system" name="gz::sim::systems::Hydrodynamics">
+      <link_name>${namespace}/base_link</link_name>
+      <!-- xUabsU = 353.20671159902133 * 1800 / 2299.1122 (carrier-mass
+           bookkeeping, see models/m5/README.md); zW/kP/mQ are physical
+           seakeeping damping only. -->
+      <xUabsU>-276.5293818811</xUabsU>
+      <zW>-8000</zW>
+      <kP>-5000</kP>
+      <mQ>-12000</mQ>
+      <disable_added_mass>true</disable_added_mass>
+      <disable_coriolis>true</disable_coriolis>
+      <default_current>0 0 0</default_current>
+    </plugin>
+
+    <plugin filename="libSurface.so" name="vrx::Surface">
+      <link_name>${namespace}/base_link</link_name>
+      <hull_length>28.0</hull_length>
+      <hull_radius>0.25</hull_radius>
+      <fluid_level>0.0</fluid_level>
+      <fluid_density>1000.0</fluid_density>
+      <points>
+        <point>1.32 0.72 0.10</point>
+        <point>-1.32 0.72 0.10</point>
+        <point>1.32 -0.72 0.10</point>
+        <point>-1.32 -0.72 0.10</point>
+      </points>
+      <wavefield>
+        <topic>/vrx/wavefield/parameters</topic>
+        <wave>
+          <model>PMS</model>
+          <period>5.0</period>
+          <direction>0.0</direction>
+          <gain>0.3</gain>
+          <steepness>0.0</steepness>
+        </wave>
+      </wavefield>
+    </plugin>
+  </gazebo>
+
+  <!-- ==== Session sensor overlay (identical frames/topics to the WAM-V) ==== -->
+  <xacro:if value="$(arg has_extra_sensors)">
+    <xacro:include filename="$(arg extra_sensors)"/>
+  </xacro:if>
+
+</robot>

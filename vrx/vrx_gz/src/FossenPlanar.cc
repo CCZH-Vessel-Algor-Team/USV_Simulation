@@ -11,6 +11,7 @@
 #include <Eigen/Core>
 #include <gz/msgs/double.pb.h>
 #include <gz/msgs/double_v.pb.h>
+#include <gz/msgs/vector3d.pb.h>
 #include <gz/plugin/Register.hh>
 #include <gz/sim/Link.hh>
 #include <gz/sim/Model.hh>
@@ -36,9 +37,11 @@ namespace vrx
 ///     assumption (default 0.5, ePropulsion-typical).
 ///   * Wind: the vrx::USVWind still-air model embedded as part of the
 ///     generalized force tau so every planar force shares the same
-///     M^{-1} bookkeeping. Static mean flow only (gain/random walk of the
-///     original is not implemented; deployment config uses gain 0).
-///     wind_direction keeps the USVWind unit convention (degrees).
+///     M^{-1} bookkeeping. Static mean flow by default, plus the
+///     USVWind-compatible runtime velocity command topic (gz Vector3d,
+///     default /vrx/wind/velocity_cmd, e.g. from the RViz env panel) that
+///     replaces the parametric flow. The random gust walk of the original
+///     is not implemented. wind_direction keeps USVWind units (degrees).
 ///
 /// Telemetry derivatives: fields 7..9 are the PLUGIN-INTERNAL derivatives
 /// (they exclude forces applied by other systems, e.g. the Hydrodynamics
@@ -97,6 +100,10 @@ class FossenPlanar : public gz::sim::System,
     const auto coeffs = _sdf->Get<gz::math::Vector3d>(
       "wind_coeffs", gz::math::Vector3d(0.5, 0.5, 0.33)).first;
     this->windCoeffs = coeffs;
+    // Runtime wind override from the RViz env panel (USVWind-compatible):
+    // a gz Vector3d world velocity that replaces the parametric mean flow.
+    const auto windCmdTopic = _sdf->Get<std::string>(
+      "topic_wind_velocity_cmd", "/vrx/wind/velocity_cmd").first;
 
     if (!this->M.allFinite() || !this->D.allFinite() ||
       (this->M.array() <= 0).any() || (this->D.array() < 0).any() ||
@@ -139,6 +146,17 @@ class FossenPlanar : public gz::sim::System,
     }
     this->telemetry = this->node.Advertise<gz::msgs::Double_V>(
       "/" + ns + "/fossen/state");
+    this->node.Subscribe<gz::msgs::Vector3d>(windCmdTopic,
+      [this](const gz::msgs::Vector3d &_msg)
+      {
+        // USVWind semantics: horizontal world velocity, z must be zero.
+        if (!std::isfinite(_msg.x()) || !std::isfinite(_msg.y())
+          || !std::isfinite(_msg.z()) || std::abs(_msg.z()) > 1e-9)
+          return;
+        std::lock_guard<std::mutex> guard(this->mutex);
+        this->windCmdVelocity = gz::math::Vector3d(_msg.x(), _msg.y(), 0.0);
+        this->windCmdValid = true;
+      });
     gzmsg << "FossenPlanar: complete M/C/D; input=" << mode
       << ", +/-" << this->limit << " N per side, spacing "
       << this->spacing << " m, wind "
@@ -187,13 +205,22 @@ class FossenPlanar : public gz::sim::System,
     Eigen::Vector3d tau(thrust[0] + thrust[1], 0.0,
       (thrust[1] - thrust[0]) * this->spacing / 2.0);
     // Still-air/wind drag, USVWind algebra, applied here as part of tau so
-    // it shares the identified M^{-1} instead of the carrier mass.
+    // it shares the identified M^{-1} instead of the carrier mass. The
+    // runtime panel command (world velocity vector) replaces the parametric
+    // mean flow, mirroring USVWind's velocity_cmd override.
     gz::math::Vector3d windForceBody(0, 0, 0);
     double windTorque = 0.0;
     if (this->windEnable)
     {
-      const gz::math::Vector3d relativeWind =
-        this->windUnit * this->windVelocity - *linear;
+      gz::math::Vector3d flow(0, 0, 0);
+      {
+        std::lock_guard<std::mutex> guard(this->mutex);
+        if (this->windCmdValid)
+          flow = this->windCmdVelocity;
+        else
+          flow = this->windUnit * this->windVelocity;
+      }
+      const gz::math::Vector3d relativeWind = flow - *linear;
       const gz::math::Vector3d windForce(
         this->windCoeffs.X() * relativeWind.X() * std::abs(relativeWind.X()),
         this->windCoeffs.Y() * relativeWind.Y() * std::abs(relativeWind.Y()),
@@ -260,6 +287,8 @@ class FossenPlanar : public gz::sim::System,
     this->consumed = {};
     this->received = {{-1e9, -1e9}};
     this->hasPrev = false;
+    this->windCmdValid = false;
+    this->windCmdVelocity = {0, 0, 0};
   }
 
   private: double ThrustFromPower(double powerKw, std::size_t side)
@@ -321,6 +350,8 @@ class FossenPlanar : public gz::sim::System,
   private: double windDirection{0.0}, windVelocity{0.0};
   private: gz::math::Vector3d windCoeffs{0.5, 0.5, 0.33};
   private: gz::math::Vector3d windUnit{1, 0, 0};
+  private: gz::math::Vector3d windCmdVelocity{0, 0, 0};
+  private: bool windCmdValid{false};
   private: std::mutex mutex;
   private: std::array<double, 2> commands{};
   private: std::array<double, 2> lastPower{};

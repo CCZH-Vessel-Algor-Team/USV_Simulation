@@ -1,0 +1,253 @@
+# M5 full-stack scene config: bringup ccs_config with the robot
+# section swapped to the m5.urdf.xacro identified planar model.
+# World/perception interfaces retain the company configuration. Sensor mounts
+# follow the same translation as the M5 visual, preserving the legacy rig's
+# sensor-to-hull geometry rather than leaving the cameras inside the cabin.
+environment:
+  world_name: ccs_open_water_crop
+sensor_config_path: sensor_config.yaml
+obstacles:
+  fixed_list: []
+scenario:
+  dynamic_obstacles: []
+  ground_truth_sim:
+    enabled: false
+    gazebo_visual: true
+    motion_mode: waypoint
+    spawn_delay_sec: 10.0
+    truth_velocity_lowpass_tau: 0.2
+    update_dt: 0.02
+    model_mass_kg: 50.0
+    waypoint_kinematics: arc
+    waypoint_omega_limit: 0.22
+    waypoint_turn_radius_min_m: 10.0
+    waypoint_align_threshold_deg: 12.0
+    cmd_vel_omega_limit: 0.22
+    cmd_vel_turn_radius_min_m: 10.0
+    cmd_vel_align_threshold_deg: 12.0
+    heading_sync_enabled: true
+    heading_sync_interval_sec: 1.0
+    gazebo_target_geometry: mesh_profile
+    gazebo_mesh_profile: package://usv_sim_full/description/models/target_ship/10m_mesh_profile.yaml
+    cylinder_radius_cap_m: 4.0
+    cylinder_height_cap_m: 5.0
+    attitude_monitor_enabled: true
+    attitude_max_roll_pitch_deg: 10.0
+    attitude_max_z_error_m: 2.0
+    attitude_monitor_interval_sec: 0.1
+    attitude_respawn_cooldown_sec: 2.0
+    spawn_thread_pool_size: 4
+    fence_enabled: true
+    fence_min_x: -1000.0
+    fence_max_x: 1000.0
+    fence_min_y: -1000.0
+    fence_max_y: 1000.0
+    fence_maintain_target_count: false
+    collision_debounce_sec: 0.5
+    world_service_wait_sec: 1.0
+    reference_robot: usv_1
+    reference_frame: map
+    reference_tf_timeout_sec: 30.0
+    frame_id: map
+    waypoint_arrival_threshold_m: 0.5
+    size_width_min: 3.6
+    size_width_max: 3.6
+    size_length_min: 10.0
+    size_length_max: 10.0
+    size_height_min: 2.0
+    size_height_max: 2.0
+    fixed_targets: []
+visualization:
+  launch_rviz: true
+  enable_telemetry: true
+  # This bringup RViz entry has neither a plugin nor a virtual-point consumer
+  # in the paired simulation branch. Keep the existing real-target tools.
+  disabled_rviz_tools:
+  - env_panel/VirtualShipPoint
+robot_1:
+  name: usv_1
+  xacro_template: m5.urdf.xacro
+  thruster_config: M5
+  thrusters:
+    enabled: true
+    channel: power
+  spawn_pose:
+  - 0.0
+  - 0.0
+  - -0.28
+  - 0.0
+  - 0.0
+  - 0.0
+  overrides:
+    ground_truth_enabled: true
+  # The legacy WAM-V template rendered this DAE at identity. The M5 template
+  # moves the same mesh by (-0.0995, +0.029, +0.472) to centre the hull and
+  # place its keel at z=0. Apply that translation to EVERY mount as well:
+  # T_mesh_new^-1 * T_sensor_new = T_mesh_old^-1 * T_sensor_old.
+  # Names, orientations and topic contracts stay unchanged. These remain
+  # legacy assumed mounts, not independently surveyed M5 installation data.
+  sensors:
+  - name: front_lidar
+    type: lidar
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - 0.029
+    - 2.272
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/lidar/front_lidar/points
+    enabled: true
+  - name: front_cam
+    type: camera
+    parent_link: base_link
+    xyz:
+    - 0.1505
+    - 0.029
+    - 2.272
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/camera/front_cam/image_raw
+    enabled: true
+    perception:
+      id: front
+      detection_topic: /vision/front/detections
+      ai_objects_topic: /perception/camera/front/objects
+      marker_topic: /vision/front/markers
+      max_range_m: 300.0
+      focal_length_px: 800.0
+  - name: left_cam
+    type: camera
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - 0.279
+    - 2.272
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.7853981634
+    override_topic: /sensors/camera/left_cam/image_raw
+    enabled: true
+    perception:
+      id: left
+      detection_topic: /vision/left/detections
+      ai_objects_topic: /perception/camera/left/objects
+      marker_topic: /vision/left/markers
+      max_range_m: 300.0
+      focal_length_px: 800.0
+  - name: right_cam
+    type: camera
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - -0.221
+    - 2.272
+    rpy:
+    - 0.0
+    - 0.0
+    - -0.7853981634
+    override_topic: /sensors/camera/right_cam/image_raw
+    enabled: true
+    perception:
+      id: right
+      detection_topic: /vision/right/detections
+      ai_objects_topic: /perception/camera/right/objects
+      marker_topic: /vision/right/markers
+      max_range_m: 300.0
+      focal_length_px: 800.0
+  - name: imu_sensor
+    type: imu
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - 0.029
+    - 2.272
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/imu/imu_sensor/data
+    update_rate: 100
+    enabled: true
+  - name: gps_sensor
+    type: gps
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - 0.029
+    - 2.372
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/gps/gps_sensor/data
+    update_rate: 20
+    enabled: true
+  - name: mag_sensor
+    type: magnetometer
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - 0.029
+    - 2.322
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/magnetometer/mag_sensor/data
+    update_rate: 50
+    field_tesla_x: 0.0
+    field_tesla_y: 0.0
+    field_tesla_z: 0.0
+    noise_stddev: 4.0e-11
+    enabled: true
+  - name: baro_sensor
+    type: barometer
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - 0.029
+    - 2.322
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/barometer/baro_sensor/fluid_pressure
+    update_rate: 20
+    enabled: true
+  - name: mari_radar
+    type: maritime_radar
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - 0.029
+    - 2.472
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/radar/nav/sector
+    enabled: true
+  - name: mmwave_front
+    type: mmwave_radar
+    parent_link: base_link
+    xyz:
+    - -0.0995
+    - 0.029
+    - 2.372
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    override_topic: /sensors/mmwave/mmwave_front/points
+    enabled: true
+    perception:
+      id: front
+      target_topic: /mmwave/front/targets
+      marker_topic: /mmwave/front/markers
+      max_range_m: 300.0

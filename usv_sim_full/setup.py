@@ -27,6 +27,8 @@ setup(
             os.path.join('share', package_name, 'config', 'three_vision_one_mmwave'),
             glob('config/three_vision_one_mmwave/*'),
         ),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'config', 'system'), glob('config/system/*.yaml')),
         (os.path.join('share', package_name, 'tools'), glob('tools/*.py') + glob('tools/*.sh')),
         (
             os.path.join('share', package_name, 'rviz'),

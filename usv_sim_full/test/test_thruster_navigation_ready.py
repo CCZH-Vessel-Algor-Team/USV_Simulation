@@ -38,6 +38,8 @@ def command(v=1.0, w=0.2):
 def controller(monkeypatch):
     # Do not initialize rclpy or create a control node/real ROS publisher.
     node = thruster.CmdVelToThruster.__new__(thruster.CmdVelToThruster)
+    # This fixture bypasses __init__; preserve its legacy channel default.
+    node._output_mode = 'thrust'
     clock = SimpleNamespace(steady=100.0, ros=0.0)
     monkeypatch.setattr(thruster, 'monotonic', lambda: clock.steady)
     node.get_clock = lambda: SimpleNamespace(now=lambda: FakeTime(clock.ros))

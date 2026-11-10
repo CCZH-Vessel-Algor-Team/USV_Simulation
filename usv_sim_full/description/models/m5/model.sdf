@@ -32,9 +32,9 @@
         </inertia>
       </inertial>
       <visual name="hull">
-        <!-- Mesh spans X 1.948..7.211, Y 0.528..2.725, Z 0.121..2.737;
-             offset places hull centre at the origin and the keel at z=0. -->
-        <pose>-4.5795 -1.6265 -0.121 0 0 0</pose>
+        <!-- The DAE scene node already centres the hull; this origin only
+             trims the residual (hull centre to origin, keel to z=0). -->
+        <pose>-0.0995 0.029 0.472 0 0 0</pose>
         <geometry><mesh>
           <uri>package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae</uri>
         </mesh></geometry>

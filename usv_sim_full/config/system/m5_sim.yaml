@@ -1,0 +1,88 @@
+# 文件用途：M5 辨识平面模型的全栈编排配置（随 usv_simulation 交付）。
+# 基线：usv_bringup 的 system_sim.yaml；模块组成与公司链一致。
+# 本文件差异：
+#   1. simulation 场景使用 m5_ccs_config.yaml（robot 段指向 m5.urdf.xacro，
+#      推进通道 thrusters.channel=power）。
+#   2. control 参数使用功率档 cmd_vel_to_thruster（output_mode=power）。
+#   3. navigation 覆盖 M5 运动限制与按模型能力配置的恢复行为。
+#   4. communication/monitor 禁用（本地仿真无外设，与 ccs-local 口径一致）。
+# 未列出的模块参数沿用 usv_bringup 模块默认值（fusion I/O、TS 子系统、
+# monitor 配置等），不传空串覆盖。
+# 启动方式（需 usv_bringup 及其依赖已安装）：
+#   ros2 launch usv_sim_full usv_bringup_system_m5.launch.py
+# 路径规则：{path: ...} 相对本 YAML 所在目录解析（config/system/）。
+launches:
+  simulation:
+    enabled: true
+    launch: simulation.launch.py
+    arguments:
+      config_path: {path: ../three_vision_one_mmwave/m5_ccs_config.yaml}
+      runtime_config_file: /tmp/usv_bringup/m5/simulation_sensors.yaml
+      gz_headless: false
+      enable_static_map: false
+      external_localization: true
+      model_manifest_file: /tmp/usv_bringup/m5/robot_model.yaml
+      auto_cleanup: false
+
+  localization:
+    enabled: true
+    launch: localization.launch.py
+    arguments:
+      nav_source: gazebo
+      model_manifest_file: /tmp/usv_bringup/m5/robot_model.yaml
+      use_sim_time: true
+
+  perception:
+    enabled: true
+    launch: perception_sim.launch.py
+    arguments:
+      enable_ais: true
+      enable_radar_mapping: true
+      enable_radar_converter: true
+      truth_odom_topic: /usv_1/source/gazebo/odom
+      sensor_config_file: /tmp/usv_bringup/m5/simulation_sensors.yaml
+      runtime_config_file: /tmp/usv_bringup/m5/perception_sim_outputs.yaml
+
+  fusion:
+    enabled: true
+    launch: fusion.launch.py
+    arguments:
+      use_sim_time: true
+      runtime_config_file: /tmp/usv_bringup/m5/perception_sim_outputs.yaml
+
+  navigation:
+    enabled: true
+    launch: navigation.launch.py
+    arguments:
+      use_sim_time: true
+      enable_map_server: true
+      enable_front_lidar: true
+      enable_clearing_scan: true
+      enable_route_planning: true
+      wait_for_readiness: true
+      tracked_ship_topic: /dynamic_ship/tracked_ships
+      monitor_tracked_ship_topic: /tracked_ship
+      odom_topic: /usv_1/odom
+      odom_frame: usv_1/odom
+      nav2_overrides_file: {path: ../m5_nav_overrides.yaml}
+
+  control:
+    enabled: true
+    launch: sim_control.launch.py
+    arguments:
+      control_backend: thruster
+      require_navigation_ready: true
+      # cmd_vel_to_thruster 功率档（每侧 kW → FossenPlanar 查表映射）。
+      params_file: {path: ../m5_control.yaml}
+
+  grounding_safety:
+    enabled: true
+    launch: grounding_safety.launch.py
+    arguments:
+      use_sim_time: true
+
+  communication:
+    enabled: false
+
+  monitor:
+    enabled: false

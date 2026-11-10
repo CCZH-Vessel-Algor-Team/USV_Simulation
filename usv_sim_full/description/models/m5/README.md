@@ -1,15 +1,107 @@
-# M5 identified planar model (v1, dynamics layer only)
+# M5 identified planar model
 
 This model realizes the M5 first-round strict identification
 (`fossen_quadratic_bounded`, M5Experiment simple delivery 2026-11) on the
-real ~5.26 m "_20型船" hull mesh, for use through
-`usv_sim_full/launch/m5_dynamics_validation.launch.py`.
+real ~5.26 m "_20型船" hull mesh. The v1 dynamics entry is
+`usv_sim_full/launch/m5_dynamics_validation.launch.py`; the v2 full-stack
+entry and its model-specific configuration are installed with this package.
+
+## Full-stack entry (v2)
+
+With a compatible `usv_bringup` and its navigation/perception dependencies
+installed (the integration baseline uses bringup develop `32618635`):
+
+```bash
+ros2 launch usv_sim_full usv_bringup_system_m5.launch.py
+```
+
+This selects `config/system/m5_sim.yaml`, the M5 scene, the `power` bridge,
+and the kW PID profile together. It does not depend on task-local YAML or
+Docker-specific paths. The original `usv_bringup system.launch.py` default
+and the legacy WAM-V profiles are unchanged; use the M5 entry explicitly.
+Communication and monitoring are disabled in this simulation profile.
+The M5 scene explicitly excludes the unmatched `env_panel/VirtualShipPoint`
+tool from the runtime RViz copy: this software combination has no consumer
+for `/dynamic_ship/virtual_clicked_point`. Actual Gazebo targets still use
+**Publish Point** (`/clicked_point`, panel heading) or **2D Pose Estimate**
+(`/dynamic_ship/spawn_pose`, drag heading). Nav2 Goal is unchanged. This is
+not an implementation of the separate virtual-target feature.
+The v2 navigation/recovery acceptance remains separate from the v1 dynamics
+validation below. Spin tuning/behaviour is deferred; no Spin acceptance is
+claimed.
+
+The current navigation profile uses the inherited position-based goal
+checker (1.5 m XY tolerance), not a stationary-arrival criterion. An earlier
+30 m test using the initial 1.5 m/s profile returned `SUCCEEDED` at 1.43 m
+error while surge was still 1.62 m/s;
+three wall seconds later surge was 1.28 m/s despite zero power. The gated
+controller deliberately resets and commands zero power on a zero Twist or
+fault; it does not promise active braking/position hold. Goal completion
+and cancel-to-zero wiring are therefore not evidence of a stopped vessel.
+Approach-speed planning and stationary-arrival/braking policy need separate
+work; this integration does not silently change fail-closed stop semantics.
+
+### Fast-response simulation profile
+
+The current M5 profile requests **3.0 m/s cruise**. Full-sensor, calm-water
+measurements at 20 kW per side gave 3.96145 m/s steady surge (14.261 km/h,
+7.700 kn), with 2773.67 N per side from the chart endpoint. The often-used
+"2 x 2800 N" is a rounded nominal figure; the power chart/model is unchanged.
+Peak forward acceleration from rest was about 2.412 m/s².
+
+`m5_control.yaml` uses speed PI 60/100 and yaw PI 180/350, with both D terms
+zero. Direct velocity-loop step measurements (10-90% rise time) were:
+
+| step | initial PI | current PI | current overshoot |
+|---|---:|---:|---:|
+| 0 -> 1.5 m/s | 2.236 s | 0.524 s | 1.54% |
+| 1.5 -> 3.0 m/s | 13.600 s | 0.776 s | negligible |
+| yaw 0 -> 0.08 rad/s at 1.5 m/s | 6.724 s | 0.368 s | 5.55% |
+
+3.0 m/s with a sustained 0.06 rad/s turn was also tracked. These are
+simulation response results, not hardware controller certification.
+The 2 kW slew parameter is per control update, not kW/s; safety zero bypasses
+it. Power remains limited to +/-20 kW per side, with reverse scaling only
+in FossenPlanar.
+
+The ALOS/smoother profile uses 2.0 m/s² linear reference limits, 0.08 rad/s
+yaw reference cap, 0.3 rad/s² yaw reference limits, 10 m lookahead and 20 m
+closest-point search. At 3 m/s the steady planar yaw capability is about
+0.083 rad/s; pushing cruise near 3.96 m/s leaves almost no steering reserve.
+The downstream smoother also caps the linear reference at 3.0 m/s, including
+the inherited distance-based final-carrot speed branch. Reference limits
+are not guarantees of instantaneous physical acceleration or stopped arrival.
+
+A full-stack goal with an 80 m / 20 m offset returned `SUCCEEDED` at this
+3.0 m/s cruise setting. Over the steady window (more than 15 m traveled and
+more than 12 m remaining), surge was 3.0002 +/- 0.0042 m/s, with no side at
+the power limit. Maximum surge during the run was 3.0894 m/s; cross-track
+RMS/max were 0.871/1.489 m. This checks one clear-water turning/straight
+route, not every path, encounter or sea condition. Stationary arrival and
+Spin were explicitly excluded.
+
+### Sensor mounts and mesh alignment
+
+The legacy WAM-V template rendered the same DAE without a visual origin.
+The M5 template translates the mesh by `(-0.0995, +0.029, +0.472) m` to
+align the hull centre and keel. The M5 scene applies that **same translation
+to all ten sensor mounts**, preserving the legacy sensor-to-hull geometry:
+
+`inverse(T_mesh_new) * T_sensor_new = inverse(T_mesh_old) * T_sensor_old`.
+
+In particular, camera height is `2.272 m`, not the old `1.8 m` relative to
+the redefined hull origin. This places each optical origin about 7.5 cm
+above the mesh's highest point. Frame names, orientations and topic names
+are unchanged. Camera images and GPU-ray measurements depend on their
+mounts; they are not merely frame definitions. These are legacy assumed
+installation positions, not independently surveyed M5 sensor calibration.
 
 ## Scope and boundaries (read before reuse)
 
-1. **v1 dynamics entry only.** The normal CCS / `main.launch.py` / Nav2
-   chains do NOT use this model yet; no session-manager integration, no
-   sensor rig beyond the odometry publisher, no control chain.
+1. **Validation scope.** The v1 SDF is an isolated dynamics model. The v2
+   M5 entry adds the company sensor/control/navigation chain, but does not
+   establish real-vessel, collision or seakeeping accuracy. Ordinary CCS /
+   `main.launch.py` defaults still select the legacy model.
 2. **Conditional identification, not absolute truth.** M/C/D are the
    first-round strict fit under its recorded conditions (forward or trusted
    zero power per side, 0-20 kW, INS-referenced states). They are not
@@ -22,6 +114,14 @@ real ~5.26 m "_20型船" hull mesh, for use through
    diag(1800, 3200, 3200) and the vertical damping (zW/kP/mQ) exist to make
    the 1800 kg carrier float level and settle; they are NOT identified M5
    6-DOF properties.
+   The full sensor rig adds mass and includes a rotating radar joint, so
+   v1's single-carrier precision is not automatically a full-rig guarantee.
+   A separate full-rig straight/differential/coasting capture (26.02 s of
+   powered/coasting comparison, 4 ms world step) gave maximum position
+   difference 0.01955 m and yaw difference 0.000154 rad against the unchanged
+   v1 RK4 equations using recorded input timing. This includes integration
+   and attached-rig effects; it is not an independent vessel-accuracy test
+   or proof of exact equivalence in every configuration.
 5. **"Feedback-exact" is limited to calm-water planar 3-DOF.** With
    roll/pitch/heave motion (waves on) there are 3-D rotation couplings and
    further external forces; the model-2 horizontal contact-free backing
@@ -50,8 +150,11 @@ derivative fields feed back into the applied wrench.
 
 `wind_direction` keeps the `vrx::USVWind` unit convention (degrees,
 0 = +X, CCW positive); the wind model itself is the USVWind algebra applied
-inside the plugin's tau (static mean flow only; the random gust process of
-the original is not implemented and the deployment config uses gain 0).
+inside the plugin's tau. The runtime world-frame Vector3d command on
+`/vrx/wind/velocity_cmd` overrides the configured mean flow, preserving the
+environment-panel input. Non-finite commands and nonzero z are ignored.
+The original random gust process is not implemented. Nonzero runtime wind
+acceptance is separate from the calm-water checks below.
 
 ## Input
 
@@ -95,8 +198,10 @@ the post-experiment restart are still attempted.
 
 Floating equilibrium: z = −0.2813 m, zero oscillation, zero drift;
 buoyancy-point depth 0.181 m matches the analytic sizing. Wind units are
-USVWind-compatible (code-level check); all runs use mean wind 0, so
-non-zero wind directions are not simulation-validated. With waves on
+USVWind-compatible. The v1 tests use mean wind 0; a separate v2 runtime
+check observed matching Fossen wind-force/torque samples for world-frame
+commands (2,0), (0,2), (2,2) m/s and return to zero. This checks command
+wiring/signs; it is not a gust or environmental-model calibration. With waves on
 (`wave_gain 0.3`, company scene default via the world PublisherPlugin):
 bounded response (heave p2p 0.22 m, pitch 2°) with ~3 m/min wave drift
 inherent to the 4-point Surface model — recorded, not validated.

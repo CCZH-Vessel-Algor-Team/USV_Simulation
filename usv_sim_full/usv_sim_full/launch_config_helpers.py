@@ -12,6 +12,33 @@ from ament_index_python.packages import get_package_prefix, get_package_share_di
 ROBOT_SLOT_KEY_RE = re.compile(r'^robot_(\d+)$')
 
 
+def without_disabled_rviz_tools(config, disabled_classes):
+    """Exclude explicitly disabled tools without changing the source RViz mapping.
+
+    :param config: Parsed RViz configuration.
+    :param disabled_classes: Exact plugin class names to exclude.
+    :return: Original mapping or a mapping with the selected tools removed.
+    """
+    if not isinstance(disabled_classes, list) or any(
+        not isinstance(name, str) or not name.strip() for name in disabled_classes
+    ):
+        raise ValueError('visualization.disabled_rviz_tools must be a list of class names')
+    if not disabled_classes:
+        return config
+    if not isinstance(config, dict):
+        raise ValueError('RViz configuration must be a mapping')
+    manager = config.get('Visualization Manager', {})
+    if not isinstance(manager, dict) or not isinstance(manager.get('Tools', []), list):
+        raise ValueError('RViz Visualization Manager.Tools must be a list')
+    tools = manager.get('Tools', [])
+    filtered = [tool for tool in tools if not (
+        isinstance(tool, dict) and tool.get('Class') in disabled_classes
+    )]
+    if len(filtered) == len(tools):
+        return config
+    return {**config, 'Visualization Manager': {**manager, 'Tools': filtered}}
+
+
 def launch_verbose_enabled(verbose_str: str) -> bool:
     """解析各 launch 中 ``verbose_launch`` 等参数（true/1/yes）。"""
     return str(verbose_str).strip().lower() in ('true', '1', 'yes')

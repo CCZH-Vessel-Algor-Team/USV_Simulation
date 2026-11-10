@@ -53,6 +53,7 @@ from usv_sim_full.launch_config_helpers import (
     ship_config_blocks,
     write_ground_truth_entity_params_yaml,
     write_ground_truth_node_params_yaml,
+    without_disabled_rviz_tools,
 )
 
 
@@ -241,6 +242,16 @@ def launch_setup(context, *args, **kwargs):
                     f"Warning: rviz_config_path_override not found ({rviz_override!r}); "
                     'using session_manager RViz config.'
                 )
+        # Only the session-generated/copied runtime file is edited. Defaults
+        # preserve every tool; M5 explicitly excludes its unmatched virtual tool.
+        with open(rviz_config_path, encoding='utf-8') as stream:
+            rviz_config = yaml.safe_load(stream)
+        disabled_tools = user_config.get('visualization', {}).get('disabled_rviz_tools', [])
+        compatible_rviz = without_disabled_rviz_tools(rviz_config, disabled_tools)
+        if compatible_rviz is not rviz_config:
+            with open(rviz_config_path, 'w', encoding='utf-8') as stream:
+                yaml.safe_dump(compatible_rviz, stream, sort_keys=False)
+            print(f'[usv_sim_full] RViz: excluded explicitly disabled tools: {disabled_tools}')
     except subprocess.CalledProcessError as e:
         print(f"Session manager failed with error: {e}")
         print(f"Stdout: {e.stdout}")
