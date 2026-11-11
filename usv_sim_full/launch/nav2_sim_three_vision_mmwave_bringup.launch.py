@@ -472,8 +472,11 @@ def generate_launch_description():
             'storm_field_manager|'
             'hull_draft_publisher|'
             'controller_server|planner_server|bt_navigator|behavior_server|'
+            'usv_autonomy/lib/usv_autonomy/(mission|motion_gate|regular_safety|maritime_rules|simulation_controls|authority_adapter)|'
+            'usv_autonomy_bt/lib/usv_autonomy_bt/task_tree|'
+            'usv_sim_full/lib/usv_sim_full/cmd_vel_to_thruster|'
             'waypoint_follower|velocity_smoother|smoother_server|'
-            'lifecycle_manager_navigation|lifecycle_manager_map|map_server|cmd_vel_to_thruster.py|'
+            'lifecycle_manager_navigation|lifecycle_manager_map|lifecycle_manager_bt_v2|map_server|cmd_vel_to_thruster.py|'
             'ekf_node|navsat_transform_node|radar_gz_bridge|'
             'adaptive_radar_grid_map_node|usv_sim_wrapper|scenario_manager_node|'
             'nav2_tf_readiness_gate|'
@@ -598,6 +601,11 @@ def generate_launch_description():
                 'use_sim_time': use_sim_time.perform(context),
                 'verbose_launch': verbose_launch.perform(context),
                 'enable_tf_namespace_relay': 'false',
+                'autonomy_v2': LaunchConfiguration('autonomy_v2').perform(context),
+                'enable_autonomy_test_controls': LaunchConfiguration('enable_autonomy_test_controls').perform(context),
+                'left_crossing_stand_on': LaunchConfiguration('left_crossing_stand_on', default='false').perform(context),
+                'autonomy_database': LaunchConfiguration('autonomy_database', default='').perform(context),
+                'autonomy_rules_checkpoint': LaunchConfiguration('autonomy_rules_checkpoint', default='').perform(context),
             }.items(),
         )
 
@@ -730,6 +738,11 @@ def generate_launch_description():
         ]
 
     return LaunchDescription([
+        DeclareLaunchArgument('autonomy_v2', default_value='false'),
+        DeclareLaunchArgument('enable_autonomy_test_controls', default_value='false'),
+        DeclareLaunchArgument('left_crossing_stand_on', default_value='false'),
+        DeclareLaunchArgument('autonomy_database', default_value=''),
+        DeclareLaunchArgument('autonomy_rules_checkpoint', default_value=''),
         DeclareLaunchArgument(
             'config_path',
             default_value=default_config_path,

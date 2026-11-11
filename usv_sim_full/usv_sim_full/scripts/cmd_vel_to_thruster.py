@@ -57,6 +57,16 @@ class CmdVelToThruster(Node):
             'require_navigation_ready', False,
             descriptor=ParameterDescriptor(read_only=True),
         ).value
+        self._managed_output = self.declare_parameter(
+            'managed_output', False, descriptor=ParameterDescriptor(read_only=True),
+        ).value
+        self._managed_intent = 0
+        self._managed_received = None
+        self._managed_boot = None
+        self._managed_sequence = -1
+        self._managed_deadline = float('-inf')
+        self._managed_retired_boots = set()
+        self._managed_identity = None
         self._navigation_ready = False
         self._ready_stamp = None
 
@@ -65,15 +75,24 @@ class CmdVelToThruster(Node):
             if self._require_navigation_ready else f'/{self.namespace}/cmd_vel'
         )
         cmd_vel_fallback_topic = '/cmd_vel'
+        if self._managed_output:
+            cmd_vel_topic = f'/{self.namespace}/control/actuator_command'
         odom_topic = f'/{self.namespace}/odom'
         left_thrust_topic = f'/{self.namespace}/thrusters/left/thrust'
         right_thrust_topic = f'/{self.namespace}/thrusters/right/thrust'
         left_pos_topic = f'/{self.namespace}/thrusters/left/pos'
         right_pos_topic = f'/{self.namespace}/thrusters/right/pos'
 
-        self.cmd_sub = self.create_subscription(Twist, cmd_vel_topic, self.cmd_callback, 10)
+        self.cmd_sub = None
+        if self._managed_output:
+            from usv_interfaces.msg import ActuatorCommand
+            self.cmd_sub = self.create_subscription(
+                ActuatorCommand, f'/{self.namespace}/control/actuator_command',
+                self.managed_callback, 1)
+        else:
+            self.cmd_sub = self.create_subscription(Twist, cmd_vel_topic, self.cmd_callback, 10)
         self.cmd_sub_fallback = None
-        if not self._require_navigation_ready:
+        if not self._require_navigation_ready and not self._managed_output:
             self.cmd_sub_fallback = self.create_subscription(
                 Twist, cmd_vel_fallback_topic, self.cmd_callback, 10,
             )
@@ -108,14 +127,14 @@ class CmdVelToThruster(Node):
         rate = self.get_parameter('control_rate').value
         timer_clock = (
             Clock(clock_type=ClockType.STEADY_TIME)
-            if self._require_navigation_ready else self.get_clock()
+            if self._require_navigation_ready or self._managed_output else self.get_clock()
         )
         self.timer = self.create_timer(1.0 / rate, self.control_loop, clock=timer_clock)
 
         self._last_left = 0.0
         self._last_right = 0.0
         self.ready_sub = None
-        if self._require_navigation_ready:
+        if self._require_navigation_ready and not self._managed_output:
             # No retained Bool can prove a live heartbeat; the topic is fixed
             # by the vessel namespace and cannot be changed by a ROS parameter.
             self.ready_sub = self.create_subscription(
@@ -146,7 +165,47 @@ class CmdVelToThruster(Node):
         self._cmd_stamp = monotonic()
         self._cmd_active = True
 
+    def managed_callback(self, msg):
+        age = (self.get_clock().now().nanoseconds * 1e-9
+               - msg.header.stamp.sec - msg.header.stamp.nanosec * 1e-9)
+        ttl = msg.valid_for.sec + msg.valid_for.nanosec * 1e-9
+        if not msg.boot_id or not -0.05 <= age < min(ttl, 0.3):
+            return
+        if self._managed_boot != msg.boot_id:
+            retired = getattr(self, '_managed_retired_boots', set())
+            if msg.boot_id in retired:
+                return
+            if self._managed_boot:
+                retired.add(self._managed_boot)
+            self._managed_retired_boots = retired
+            self._publish_zero_thrust()
+            self._managed_boot, self._managed_sequence = msg.boot_id, -1
+        if msg.sequence <= self._managed_sequence:
+            return
+        command_identity = (msg.boot_id, msg.execution_id, msg.attempt_id, msg.epoch)
+        if getattr(self, '_managed_identity', None) != command_identity:
+            self._publish_zero_thrust()
+            self._managed_identity = command_identity
+        self._managed_sequence = msg.sequence
+        self._managed_intent, self._managed_received = msg.intent, monotonic()
+        self._managed_deadline = monotonic() + min(ttl, 0.3) - max(age, 0.0)
+        if msg.intent != msg.VELOCITY_CONTROL:
+            # Simulated autonomous channel only. Real FCU input arbitration must
+            # disable this channel rather than compete with manual thrust topics.
+            self._publish_zero_thrust()
+            return
+        v, w = msg.velocity.linear.x, msg.velocity.angular.z
+        if not all(math.isfinite(value) for value in (v, w)):
+            self._publish_zero_thrust()
+            return
+        self.desired_v, self.desired_w = v, w
+        self._cmd_stamp, self._cmd_active = monotonic(), True
+
     def _navigation_ready_ok(self):
+        if getattr(self, '_managed_output', False):
+            return (self._managed_intent == 2 and self._managed_received is not None
+                    and 0.0 <= monotonic() - self._managed_received <= 0.3
+                    and monotonic() <= self._managed_deadline)
         return not self._require_navigation_ready or (
             self._navigation_ready and self._ready_stamp is not None
             and 0.0 <= monotonic() - self._ready_stamp <= 1.5

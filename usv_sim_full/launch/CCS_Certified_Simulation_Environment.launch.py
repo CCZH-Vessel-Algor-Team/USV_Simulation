@@ -6,6 +6,7 @@ default, and adds three camera streams plus the radar occupancy-map stream.
 """
 
 import os
+import tempfile
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
@@ -17,9 +18,11 @@ from launch.actions import (
     IncludeLaunchDescription,
     LogInfo,
     OpaqueFunction,
+    RegisterEventHandler,
     TimerAction,
 )
 from launch.conditions import IfCondition
+from launch.event_handlers import OnShutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, SetRemap
@@ -36,6 +39,12 @@ def _resolve_robot_namespace(config_path: str) -> str:
         return ns or 'usv_1'
     except Exception:
         return 'usv_1'
+
+
+def _controlled_namespace(context):
+    selected = context.launch_configurations.get('nav2_namespace', 'auto').strip('/')
+    return selected if selected and selected != 'auto' else _resolve_robot_namespace(
+        LaunchConfiguration('config_path').perform(context))
 
 
 def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
@@ -164,8 +173,7 @@ def _safety_include(context, *args, **kwargs):
             LogInfo(msg='enable_safety:=false，跳过 enc_grounding_warning 搁浅预警。'),
         ]
 
-    config_path = LaunchConfiguration('config_path').perform(context)
-    ns = _resolve_robot_namespace(config_path)
+    ns = _controlled_namespace(context)
     gw_pkg_share = get_package_share_directory('enc_grounding_warning')
     gw_launch_file = os.path.join(
         gw_pkg_share,
@@ -198,8 +206,7 @@ def _safety_include(context, *args, **kwargs):
 
 def _ccs_map_to_odom_tf(context, *args, **kwargs):
     """Connect chart/ENU frames and provide Humble Nav2's base_link alias."""
-    config_path = LaunchConfiguration('config_path').perform(context)
-    ns = _resolve_robot_namespace(config_path)
+    ns = _controlled_namespace(context)
     return [
         Node(
             package='tf2_ros',
@@ -278,17 +285,68 @@ def _gazebo_camera_follow(context, *args, **kwargs):
     ]
 
 
+def _ccs_base_bringup(context, *args, **kwargs):
+    """Wire the actual CCS entry to v2 and the runtime RViz panel configuration."""
+    def arg(name):
+        return LaunchConfiguration(name).perform(context)
+
+    share = get_package_share_directory('usv_sim_full')
+    v2 = arg('autonomy_v2').lower() == 'true'
+    namespace = _controlled_namespace(context)
+    rviz_path = arg('rviz_config_path')
+    actions = []
+    persistence = {}
+    if v2:
+        from usv_sim_full.autonomy_session import new_autonomy_session, autonomy_session_paths
+        # Only the whole-system entry creates a session. Delayed child launches
+        # and node respawns receive these fixed paths and must never rotate it.
+        key = '_ccs_autonomy_session_directory'
+        if not context.launch_configurations.get(key):
+            root = LaunchConfiguration('ccs_session_root', default='~/.ros/usv_sim_sessions').perform(context)
+            context.launch_configurations[key] = str(new_autonomy_session(root))
+        session = context.launch_configurations[key]
+        persistence = autonomy_session_paths(session, namespace)
+        actions.append(LogInfo(msg=f'CCS fresh autonomy session: {session}, vessel={namespace}, '
+                                   f'database={persistence["autonomy_database"]}, '
+                                   f'rules_checkpoint={persistence["autonomy_rules_checkpoint"]}'))
+        from usv_sim_full.autonomy_rviz import configure_autonomy_panel
+        with open(rviz_path, encoding='utf-8') as stream:
+            config = configure_autonomy_panel(
+                yaml.safe_load(stream), namespace,
+                arg('enable_autonomy_test_controls').lower() == 'true')
+        with tempfile.NamedTemporaryFile(mode='w', prefix='ccs_bt_v2_', suffix='.rviz',
+                                         delete=False, encoding='utf-8') as stream:
+            yaml.safe_dump(config, stream, allow_unicode=True, sort_keys=False)
+            rviz_path = stream.name
+        def cleanup(_context):
+            if os.path.exists(rviz_path):
+                os.unlink(rviz_path)
+        actions.append(RegisterEventHandler(OnShutdown(on_shutdown=[OpaqueFunction(function=cleanup)])))
+        actions.append(LogInfo(msg=f'CCS BT v2 RViz: {rviz_path}, vessel={namespace}'))
+    actions.append(IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            share, 'launch', 'nav2_sim_three_vision_mmwave_bringup.launch.py')),
+        launch_arguments={
+            'config_path': arg('config_path'), 'use_sim_time': arg('use_sim_time'),
+            'use_static_map_odom_tf': 'false', 'nav2_namespace': namespace,
+            'nav2_min_wait_sec': arg('nav2_min_wait_sec'),
+            'nav2_readiness_timeout_sec': arg('nav2_readiness_timeout_sec'),
+            'enable_nav2': arg('enable_nav2'), 'autonomy_v2': arg('autonomy_v2'),
+            'enable_autonomy_test_controls': arg('enable_autonomy_test_controls'),
+            'left_crossing_stand_on': LaunchConfiguration('left_crossing_stand_on', default='false').perform(context),
+            'monitor_publish_frequency': arg('monitor_publish_frequency'),
+            'rviz_config_path': rviz_path,
+            **persistence,
+        }.items()))
+    return actions
+
+
 def generate_launch_description():
     usv_sim_full_share = get_package_share_directory('usv_sim_full')
     usv_vision_share = get_package_share_directory('usv_vision')
     map_streamer_share = get_package_share_directory('usv_map_rtsp_streamer')
     ais_perception_share = get_package_share_directory('ais_perception')
 
-    base_launch_file = os.path.join(
-        usv_sim_full_share,
-        'launch',
-        'nav2_sim_three_vision_mmwave_bringup.launch.py',
-    )
     default_ccs_config = os.path.join(
         usv_sim_full_share,
         'config',
@@ -336,18 +394,7 @@ def generate_launch_description():
     camera_height = LaunchConfiguration('camera_stream_height')
     camera_fps = LaunchConfiguration('camera_stream_fps')
 
-    base_bringup = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(base_launch_file),
-        launch_arguments={
-            'config_path': config_path,
-            'use_sim_time': use_sim_time,
-            # CCS publishes the map -> odom transform below.
-            'use_static_map_odom_tf': 'false',
-            'nav2_min_wait_sec': LaunchConfiguration('nav2_min_wait_sec'),
-            'nav2_readiness_timeout_sec': LaunchConfiguration('nav2_readiness_timeout_sec'),
-            'enable_nav2': LaunchConfiguration('enable_nav2'),
-        }.items(),
-    )
+    base_bringup = OpaqueFunction(function=_ccs_base_bringup)
 
     camera_streams = []
     camera_definitions = (
@@ -373,7 +420,8 @@ def generate_launch_description():
                 package='usv_vision',
                 executable='rtsp_stream_node',
                 name=f'rtsp_stream_{sensor_name}',
-                output='screen',
+                # output='screen',
+                output='log',
                 condition=IfCondition(enable_camera_rtsp),
                 parameters=[
                     rtsp_params_file,
@@ -426,6 +474,19 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument('autonomy_v2', default_value='true',
+                              description='CCS defaults to managed task BT and independent output gate'),
+        DeclareLaunchArgument('ccs_session_root', default_value='~/.ros/usv_sim_sessions',
+                              description='Retained CCS session root; each whole-system launch uses new stores'),
+        DeclareLaunchArgument('left_crossing_stand_on', default_value='false',
+                              description='Opt-in single-target left-crossing stand-on and manual takeover'),
+        DeclareLaunchArgument('enable_autonomy_test_controls', default_value='true',
+                              description='CCS-only simulated authority and fault-test services'),
+        DeclareLaunchArgument('nav2_namespace', default_value='auto'),
+        DeclareLaunchArgument('monitor_publish_frequency', default_value='5.0',
+                              description='Fresh maritime reports for the v2 observation watchdog'),
+        DeclareLaunchArgument('rviz_config_path', default_value=os.path.join(
+            usv_sim_full_share, 'rviz', 'three_vision_one_mmwave.rviz')),
         DeclareLaunchArgument(
             'config_path',
             default_value=default_ccs_config,

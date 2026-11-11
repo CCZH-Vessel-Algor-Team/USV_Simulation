@@ -35,6 +35,10 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 
 ## 功能包
 
+`feat/bt-test-v2` 的 CCS 入口默认启用受管任务树和 **USV BT v2** RViz 面板。
+使用 **USV Test Goal**（U）编辑航点，面板提供任务生命周期、HOLD 和独立仿真测试输入；
+见 [usv_sim_full 的 RViz 说明](usv_sim_full/README.md#rviz导航目标)。
+
 | 功能包 | 作用 | 启动或使用 | 文档 |
 | --- | --- | --- | --- |
 | [`usv_sim_full`](usv_sim_full/README.md) | 统一启动世界、船舶、桥接、传感器和后处理组件。 | `ros2 launch usv_sim_full main.launch.py` | [架构](usv_sim_full/docs/ARCHITECTURE.md) · [数据流](usv_sim_full/docs/DATA_FLOW.md) · [变更](usv_sim_full/CHANGELOG.md) |

@@ -252,6 +252,7 @@ def generate_launch_description():
                 'use_sim_time': use_sim_time.perform(context),
                 'verbose_launch': verbose_launch.perform(context),
                 'enable_tf_namespace_relay': 'false',
+                'autonomy_v2': LaunchConfiguration('autonomy_v2').perform(context),
             }.items(),
         )
 
@@ -341,6 +342,11 @@ def generate_launch_description():
                 '与 radar_nav2_param 中 __ROBOT_NS__ 替换一致。'
                 'auto 或空：取 robot_1（按 slot 数字排序后的首船）。'
             ),
+        ),
+        DeclareLaunchArgument(
+            'autonomy_v2',
+            default_value='false',
+            description='Enable the v2 task BT, lifecycle and managed output chain',
         ),
         DeclareLaunchArgument(
             'params_file',

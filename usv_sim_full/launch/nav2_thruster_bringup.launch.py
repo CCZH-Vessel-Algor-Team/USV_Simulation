@@ -63,6 +63,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     verbose_launch = LaunchConfiguration('verbose_launch')
     enable_tf_namespace_relay = LaunchConfiguration('enable_tf_namespace_relay')
+    autonomy_v2 = LaunchConfiguration('autonomy_v2')
 
     def launch_tf_relay_node(context, *args, **kwargs):
         if enable_tf_namespace_relay.perform(context).lower() != 'true':
@@ -91,6 +92,9 @@ def generate_launch_description():
         ]
 
     def _launch_nav2_with_namespaced_map(context, *args, **kwargs):
+        if (LaunchConfiguration('left_crossing_stand_on', default='false').perform(context).lower() == 'true'
+                and autonomy_v2.perform(context).lower() != 'true'):
+            raise ValueError('left_crossing_stand_on requires autonomy_v2')
         raw_ns = namespace.perform(context).strip().strip('/')
         resolved_params_file = params_file.perform(context)
         resolved_use_sim_time = use_sim_time.perform(context)
@@ -174,6 +178,32 @@ def generate_launch_description():
             )
         )
 
+        navigation_include = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(nav2_launch_file),
+            launch_arguments={'namespace': namespace, 'params_file': tmp_file.name,
+                              'use_sim_time': resolved_use_sim_time}.items())
+        if autonomy_v2.perform(context).lower() == 'true':
+            v2_share = get_package_share_directory('usv_autonomy')
+            persistence = {}
+            database = LaunchConfiguration('autonomy_database', default='').perform(context).strip()
+            checkpoint = LaunchConfiguration('autonomy_rules_checkpoint', default='').perform(context).strip()
+            if bool(database) != bool(checkpoint):
+                raise ValueError('autonomy_database and autonomy_rules_checkpoint must be supplied together')
+            if database:
+                persistence = {'database': database, 'rules_checkpoint': checkpoint}
+            navigation_include = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(os.path.join(v2_share, 'launch', 'autonomy.launch.py')),
+                launch_arguments={
+                    'namespace': resolved_ns, 'nav2_params': tmp_file.name,
+                    'use_sim_time': resolved_use_sim_time, 'simulation_thrusters': 'true',
+                    'thruster_params': resolved_control_params_file,
+                    'authority_adapter': 'false',
+                    'simulation_test_controls': LaunchConfiguration('enable_autonomy_test_controls').perform(context),
+                    'left_crossing_stand_on': LaunchConfiguration('left_crossing_stand_on', default='false').perform(context),
+                    'safety_points': f'/{resolved_ns}/sensors/radar/nav/points',
+                    'safety_sector': f'/{resolved_ns}/sensors/radar/nav/sector',
+                    **persistence,
+                }.items())
         stack = GroupAction([
             PushRosNamespace(namespace=namespace),
             Node(
@@ -190,19 +220,14 @@ def generate_launch_description():
                 }],
                 output='screen',
             ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(nav2_launch_file),
-                launch_arguments={
-                    'namespace': namespace,
-                    'params_file': tmp_file.name,
-                    'use_sim_time': resolved_use_sim_time,
-                }.items()
-            )
+            navigation_include
         ])
 
         return [*prefix_logs, info, stack]
 
     def launch_thruster_bridge(context, *args, **kwargs):
+        if autonomy_v2.perform(context).lower() == 'true':
+            return [LogInfo(msg='BT v2 owns the managed actuator bridge; awaiting explicit control authority.')]
         ns = namespace.perform(context).strip().strip('/')
         v = verbose_launch.perform(context)
         out = 'screen' if launch_verbose_enabled(v) else 'log'
@@ -230,6 +255,12 @@ def generate_launch_description():
         ]
 
     return LaunchDescription([
+        DeclareLaunchArgument('enable_autonomy_test_controls', default_value='false'),
+        DeclareLaunchArgument('left_crossing_stand_on', default_value='false'),
+        DeclareLaunchArgument('autonomy_database', default_value=''),
+        DeclareLaunchArgument('autonomy_rules_checkpoint', default_value=''),
+        DeclareLaunchArgument('autonomy_v2', default_value='false',
+                              description='Use task BT + lifecycle + independent managed output gate'),
         DeclareLaunchArgument(
             'namespace',
             default_value='usv_1',

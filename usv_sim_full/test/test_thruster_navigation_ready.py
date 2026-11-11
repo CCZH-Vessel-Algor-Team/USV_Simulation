@@ -218,3 +218,39 @@ def test_constructor_has_fixed_ready_topic_readonly_guard_and_no_fallback_bypass
         assert timer.call_args.kwargs['clock'].clock_type == ClockType.STEADY_TIME
     else:
         assert node.ready_sub is None
+
+
+def test_managed_neutral_bypasses_pid_even_while_drifting(controller):
+    from usv_interfaces.msg import ActuatorCommand
+    node, clock = controller
+    accumulate_pid_memory(node, clock)
+    node._managed_output = True
+    node._managed_boot, node._managed_sequence = None, -1
+    node.actual_v, node.actual_w = 2.0, .5
+    msg = ActuatorCommand()
+    msg.header.stamp.sec = int(clock.ros)
+    msg.header.stamp.nanosec = round((clock.ros - int(clock.ros)) * 1e9)
+    msg.boot_id, msg.sequence, msg.intent = 'gate', 1, msg.NEUTRAL
+    msg.valid_for.nanosec = 200000000
+    node.managed_callback(msg)
+    node.control_loop()
+    assert_hard_zero(node)
+
+
+def test_managed_command_expiry_drops_old_thrust(controller):
+    from usv_interfaces.msg import ActuatorCommand
+    node, clock = controller
+    accumulate_pid_memory(node, clock)
+    node._managed_output = True
+    node._managed_boot, node._managed_sequence = None, -1
+    msg = ActuatorCommand()
+    msg.boot_id, msg.sequence, msg.intent = 'gate', 1, msg.VELOCITY_CONTROL
+    msg.valid_for.nanosec = 200000000
+    msg.velocity.linear.x = 1.
+    msg.header.stamp.sec = int(clock.ros)
+    msg.header.stamp.nanosec = round((clock.ros - int(clock.ros)) * 1e9)
+    node.managed_callback(msg)
+    clock.steady += .25  # Shorter than the generic 0.3 s heartbeat timeout.
+    node.odom_callback(Odometry())
+    node.control_loop()
+    assert_hard_zero(node)

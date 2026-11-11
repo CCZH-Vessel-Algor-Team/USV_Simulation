@@ -32,6 +32,9 @@
   <exec_depend>vrx_ros</exec_depend>
   <exec_depend>vrx_gz</exec_depend>
   <depend>usv_interfaces</depend>
+  <exec_depend>usv_autonomy</exec_depend>
+  <exec_depend>usv_autonomy_bt</exec_depend>
+  <exec_depend>nav2_rviz_plugins</exec_depend>
   <exec_depend>ground_truth_sim</exec_depend>
   <exec_depend>ground_truth_sensor_sim</exec_depend>
   <exec_depend>usv_late_fusion</exec_depend>

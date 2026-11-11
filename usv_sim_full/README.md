@@ -31,16 +31,31 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 
 ### RViz导航目标
 
-CCS使用 **Nav2 Goal** 工具（快捷键 `g`）向唯一的 **Navigation 2** 面板输入本船导航目标。
-固定坐标系使用 `map`，等待面板显示Navigation active后操作：
+CCS 入口默认 `autonomy_v2:=true`，在现有 `three_vision_one_mmwave.rviz` 显示底稿上生成
+增量加入 **USV BT v2** 页签及 **USV Test Goal** 工具（快捷键 `u`）。原 Navigation 2、G 工具、
+显示、视角与保存布局保留；v2 下原单点/多点和 Pause/Resume/Cancel 通过受管任务接口执行。
+固定坐标系使用 `map`：
 
-- 单点导航：在普通模式下选择Nav2 Goal，按住左键拖拽位置和艏向，释放后发送NavigateToPose。
-- 多点导航：先点击 **Waypoint / Nav Through Poses Mode**，再用Nav2 Goal依次拖拽各目标；
-  累积过程中不发送导航任务，`Nav2 Waypoints`显示所选航点。点击 **Start Nav Through Poses**
-  发送NavigateThroughPoses；**Start Waypoint Following**对应逐点到达的FollowWaypoints。
-- 导航中点击 **Cancel** 取消当前任务；**Cancel Accumulation**退出选点模式。
+- 等待 Nav2/readiness 和任务状态就绪，点击 **仿真自主权**；初始默认人工持权。
+- 用 USV Test Goal 在地图上点击并拖拽设航向，航点进入表格，此时不运动。
+- 在航点页选择 REQUIRED（逐点确认）或 VIA（连续经过点），点击 **新建导航任务**。
+- 顶部常驻 **NAVIGATION / HOLD / DOCK / UNDOCK** 同级模式按钮；NAVIGATION 接续进入 HOLD 前的导航，不重建路线或清零预算。
+- 使用常用页 **暂停、继续、结束** 控制生命周期，进度由服务端持久化。
+- 新面板分常用、航点、模式、测试、诊断五页；暂存任务接续位于模式页。
+- **DOCK/UNDOCK** 后端当前返回 501，不破坏当前任务，按钮不虚假显示已切换。
+- 面板提供仿真人工接管、海事等待、定位失效、急停输入和保护复位测试。
 
-目标通过面板的Nav2 Action客户端发送，使用RViz所在的 `usv_1` 命名空间。
+面板根据当前状态自动填写 boot/revision，请求通过 `/<船>/autonomy/manage` 下达。
+202 是管理确认，不是物理任务完成。默认 `enable_autonomy_test_controls:=true`，仿真信号使用独立
+来源；关闭该选项后需要自己的控制权来源，测试按钮隐藏。
+态势监测在 CCS 中默认 5 Hz，与 v2 数据时效相匹配。
+
+HOLD 在区域内持续监测，越外半径后返航，进入内半径就撤权并退出该次导航，随后继续监测并允许再次返航。
+正常返航不消耗重试次数；持续时间 0 表示不限时。CCS 可用 `python3 scripts/verify_ccs_hold.py --cycles 3`
+在仿真船上注入位移并验收连续返航，脚本结束时停止自建任务、恢复原权限。
+
+配置实际经过 `ccs_bt_v2_*.rviz` 与 main.launch 的 `usv_rviz_*.rviz` 运行时副本，原底稿不改写。
+若显式 `autonomy_v2:=false`，Navigation 2 / Nav2 Goal 使用原直接 Action 流程。
 **2D Pose Estimate**和**Publish Point**用于下述目标船生成，不用于设置本船导航目标。
 
 ### RViz生成动态目标船
