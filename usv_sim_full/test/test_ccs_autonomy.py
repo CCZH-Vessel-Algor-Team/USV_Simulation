@@ -34,6 +34,7 @@ def test_real_three_sensor_template_keeps_displays_and_adds_managed_controls():
     panels = result['Panels']
     panel = next(p for p in panels if p['Class'] == 'nav2_rviz_plugins/USV Autonomy')
     assert panel['Namespace'] == 'test_boat' and panel['Simulation Tests']
+    assert not panel['Simulation Authority']
     legacy = next(p for p in panels if p['Class'] == 'nav2_rviz_plugins/Navigation 2')
     assert legacy['Managed Task'] is True and legacy['Namespace'] == 'test_boat'
     for original_panel in original['Panels']:
@@ -56,14 +57,16 @@ def test_rviz_generation_is_idempotent_and_can_hide_simulation_controls():
 
 
 @pytest.mark.parametrize('stand_on', ['false', 'true'])
-def test_ccs_actual_include_wires_v2_namespace_rviz_and_watchdog_frequency(tmp_path, monkeypatch, stand_on):
+@pytest.mark.parametrize('source,tests', [('cc_state', 'false'), ('cc_state', 'true'), ('simulation', 'true')])
+def test_ccs_actual_include_wires_v2_namespace_rviz_and_watchdog_frequency(tmp_path, monkeypatch, stand_on, source, tests):
     module = load_ccs()
     monkeypatch.setattr(module, 'get_package_share_directory', lambda _: str(ROOT))
     real_temporary = tempfile.NamedTemporaryFile
     monkeypatch.setattr(module.tempfile, 'NamedTemporaryFile', lambda **kw: real_temporary(dir=tmp_path, **kw))
     context = LaunchContext()
     context.launch_configurations.update({
-        'autonomy_v2': 'true', 'enable_autonomy_test_controls': 'true',
+        'autonomy_v2': 'true', 'enable_autonomy_test_controls': tests,
+        'authority_source': source,
         'nav2_namespace': 'test_boat', 'config_path': 'unused-explicit-namespace.yaml',
         'rviz_config_path': str(ROOT / 'rviz/three_vision_one_mmwave.rviz'),
         'use_sim_time': 'true', 'nav2_min_wait_sec': '8.0',
@@ -76,7 +79,10 @@ def test_ccs_actual_include_wires_v2_namespace_rviz_and_watchdog_frequency(tmp_p
     include = next(a for a in actions if isinstance(a, IncludeLaunchDescription))
     arguments = dict(include.launch_arguments)
     assert arguments['autonomy_v2'] == 'true'
-    assert arguments['enable_autonomy_test_controls'] == 'true'
+    assert arguments['enable_autonomy_test_controls'] == tests
+    assert arguments['authority_source'] == source
+    assert arguments['fcu_state_topic'] == '/usv1/cc/state'
+    assert arguments['fcu_state_clock'] == 'system'
     assert arguments['nav2_namespace'] == 'test_boat'
     assert arguments['monitor_publish_frequency'] == '5.0'
     assert arguments['left_crossing_stand_on'] == stand_on
@@ -89,6 +95,9 @@ def test_ccs_actual_include_wires_v2_namespace_rviz_and_watchdog_frequency(tmp_p
     assert not database.exists() and not checkpoint.exists()
     loaded = yaml.safe_load(Path(arguments['rviz_config_path']).read_text())
     assert next(p for p in loaded['Panels'] if p['Class'] == 'nav2_rviz_plugins/USV Autonomy')['Namespace'] == 'test_boat'
+    panel = next(p for p in loaded['Panels'] if p['Class'] == 'nav2_rviz_plugins/USV Autonomy')
+    assert panel['Simulation Tests'] == (tests == 'true')
+    assert panel['Simulation Authority'] == (source == 'simulation' and tests == 'true')
 
 
 def test_ccs_default_entry_selects_v2_and_the_existing_sensor_template(monkeypatch):
@@ -102,10 +111,13 @@ def test_ccs_default_entry_selects_v2_and_the_existing_sensor_template(monkeypat
     description = module.generate_launch_description()
     arguments = {a.name: a for a in description.entities if isinstance(a, DeclareLaunchArgument)}
     context = LaunchContext()
-    for name in ('autonomy_v2', 'enable_autonomy_test_controls', 'monitor_publish_frequency', 'rviz_config_path'):
+    for name in ('autonomy_v2', 'enable_autonomy_test_controls', 'authority_source',
+                 'fcu_state_topic', 'fcu_state_clock', 'monitor_publish_frequency', 'rviz_config_path'):
         arguments[name].execute(context)
     assert context.launch_configurations['autonomy_v2'] == 'true'
     assert context.launch_configurations['enable_autonomy_test_controls'] == 'true'
+    assert context.launch_configurations['authority_source'] == 'cc_state'
+    assert context.launch_configurations['fcu_state_topic'] == '/usv1/cc/state'
     assert context.launch_configurations['monitor_publish_frequency'] == '5.0'
     assert context.launch_configurations['rviz_config_path'] == str(ROOT / 'rviz/three_vision_one_mmwave.rviz')
     next(a for a in description.entities if isinstance(a, OpaqueFunction)).execute(context)

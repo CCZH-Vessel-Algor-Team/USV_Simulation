@@ -2,7 +2,7 @@
 import copy
 
 
-def configure_autonomy_panel(document, namespace, simulation_tests=True):
+def configure_autonomy_panel(document, namespace, simulation_tests=True, simulation_authority=False):
     config = copy.deepcopy(document)
     namespace = namespace.strip('/')
     panel_class = 'nav2_rviz_plugins/USV Autonomy'
@@ -16,7 +16,8 @@ def configure_autonomy_panel(document, namespace, simulation_tests=True):
             original['Namespace'] = namespace
     panel = dict(existing or {})
     panel.update({'Class': panel_class, 'Namespace': namespace, 'Global Frame': 'map',
-                  'Simulation Tests': bool(simulation_tests)})
+                   'Simulation Tests': bool(simulation_tests),
+                   'Simulation Authority': bool(simulation_tests and simulation_authority)})
     panel.setdefault('Name', 'USV BT v2')
     geometry = config.get('Window Geometry', {})
     if isinstance(geometry.get('Width'), int) and isinstance(geometry.get('Height'), int):

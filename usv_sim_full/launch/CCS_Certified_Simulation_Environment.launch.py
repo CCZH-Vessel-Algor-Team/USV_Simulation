@@ -296,7 +296,13 @@ def _ccs_base_bringup(context, *args, **kwargs):
     rviz_path = arg('rviz_config_path')
     actions = []
     persistence = {}
+    authority_source = LaunchConfiguration('authority_source', default='cc_state').perform(context)
+    fcu_state_topic = LaunchConfiguration('fcu_state_topic', default='/usv1/cc/state').perform(context)
+    fcu_state_clock = LaunchConfiguration('fcu_state_clock', default='system').perform(context)
     if v2:
+        from usv_sim_full.authority_config import authority_launch_arguments
+        authority_launch_arguments(authority_source, arg('enable_autonomy_test_controls'),
+                                   fcu_state_topic, fcu_state_clock)
         from usv_sim_full.autonomy_session import new_autonomy_session, autonomy_session_paths
         # Only the whole-system entry creates a session. Delayed child launches
         # and node respawns receive these fixed paths and must never rotate it.
@@ -313,7 +319,8 @@ def _ccs_base_bringup(context, *args, **kwargs):
         with open(rviz_path, encoding='utf-8') as stream:
             config = configure_autonomy_panel(
                 yaml.safe_load(stream), namespace,
-                arg('enable_autonomy_test_controls').lower() == 'true')
+                arg('enable_autonomy_test_controls').lower() == 'true',
+                authority_source == 'simulation')
         with tempfile.NamedTemporaryFile(mode='w', prefix='ccs_bt_v2_', suffix='.rviz',
                                          delete=False, encoding='utf-8') as stream:
             yaml.safe_dump(config, stream, allow_unicode=True, sort_keys=False)
@@ -333,6 +340,9 @@ def _ccs_base_bringup(context, *args, **kwargs):
             'nav2_readiness_timeout_sec': arg('nav2_readiness_timeout_sec'),
             'enable_nav2': arg('enable_nav2'), 'autonomy_v2': arg('autonomy_v2'),
             'enable_autonomy_test_controls': arg('enable_autonomy_test_controls'),
+            'authority_source': authority_source,
+            'fcu_state_topic': fcu_state_topic,
+            'fcu_state_clock': fcu_state_clock,
             'left_crossing_stand_on': LaunchConfiguration('left_crossing_stand_on', default='false').perform(context),
             'monitor_publish_frequency': arg('monitor_publish_frequency'),
             'rviz_config_path': rviz_path,
@@ -481,7 +491,12 @@ def generate_launch_description():
         DeclareLaunchArgument('left_crossing_stand_on', default_value='false',
                               description='Opt-in single-target left-crossing stand-on and manual takeover'),
         DeclareLaunchArgument('enable_autonomy_test_controls', default_value='true',
-                              description='CCS-only simulated authority and fault-test services'),
+                               description='CCS fault injection; synthetic authority only with authority_source=simulation'),
+        DeclareLaunchArgument('authority_source', default_value='cc_state',
+                              description='cc_state observes real FCU; simulation is an explicit test profile'),
+        DeclareLaunchArgument('fcu_state_topic', default_value='/usv1/cc/state'),
+        DeclareLaunchArgument('fcu_state_clock', default_value='system',
+                              description='cc/state header clock; independent of BT use_sim_time'),
         DeclareLaunchArgument('nav2_namespace', default_value='auto'),
         DeclareLaunchArgument('monitor_publish_frequency', default_value='5.0',
                               description='Fresh maritime reports for the v2 observation watchdog'),

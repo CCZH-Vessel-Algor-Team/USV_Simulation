@@ -36,18 +36,57 @@ CCS 入口默认 `autonomy_v2:=true`，在现有 `three_vision_one_mmwave.rviz` 
 显示、视角与保存布局保留；v2 下原单点/多点和 Pause/Resume/Cancel 通过受管任务接口执行。
 固定坐标系使用 `map`：
 
-- 等待 Nav2/readiness 和任务状态就绪，点击 **仿真自主权**；初始默认人工持权。
+- 等待 Nav2/readiness、任务状态及真实 FCU 状态就绪；默认观察 `/usv1/cc/state`，仅已连接、已解锁且 OFFBOARD/GUIDED 时获得自主权。纯模拟权限按钮需显式选择下述测试配置。
 - 用 USV Test Goal 在地图上点击并拖拽设航向，航点进入表格，此时不运动。
 - 在航点页选择 REQUIRED（逐点确认）或 VIA（连续经过点），点击 **新建导航任务**。
 - 顶部常驻 **NAVIGATION / HOLD / DOCK / UNDOCK** 同级模式按钮；NAVIGATION 接续进入 HOLD 前的导航，不重建路线或清零预算。
 - 使用常用页 **暂停、继续、结束** 控制生命周期，进度由服务端持久化。
 - 新面板分常用、航点、模式、测试、诊断五页；暂存任务接续位于模式页。
 - **DOCK/UNDOCK** 后端当前返回 501，不破坏当前任务，按钮不虚假显示已切换。
-- 面板提供仿真人工接管、海事等待、定位失效、急停输入和保护复位测试。
+- 测试页和按钮始终保留。真实 FCU 模式禁用“仿真自主权/仿真人工接管”，保留海事等待、定位失效、急停等仿真故障注入与保护复位；合成控制权仅在显式模拟权限配置下提供。
 
 面板根据当前状态自动填写 boot/revision，请求通过 `/<船>/autonomy/manage` 下达。
-202 是管理确认，不是物理任务完成。默认 `enable_autonomy_test_controls:=true`，仿真信号使用独立
-来源；关闭该选项后需要自己的控制权来源，测试按钮隐藏。
+202 是管理确认，不是物理任务完成。默认 `authority_source:=cc_state`、
+`enable_autonomy_test_controls:=true`。该开关控制故障注入，不再等同于模拟控制权；真实控制权适配器与模拟权限发布者仍不可同时启用。
+
+```bash
+# 真实状态监测：BT 在 /usv_1，FCU 聚合状态在 /usv1，允许显式桥接命名空间。
+ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py \
+  left_crossing_stand_on:=true \
+  authority_source:=cc_state fcu_state_topic:=/usv1/cc/state \
+  fcu_state_clock:=system enable_autonomy_test_controls:=true
+
+# 仅用于不连接真实 FCU 的合成权限/故障测试。
+ros2 launch usv_sim_full CCS_Certified_Simulation_Environment.launch.py \
+  authority_source:=simulation enable_autonomy_test_controls:=true
+```
+
+`authority_source`、`fcu_state_topic`、`fcu_state_clock` 通过 CCS → 三传感器 bringup →
+thruster bringup → autonomy 显式传递。消息类型是 `cc_msgs/USVState`，不是 `mavros_msgs/State`。
+`authority_source=cc_state` 时，故障节点以只读参数 `simulate_authority=false` 启动，只提供三类
+故障服务，不创建 `control/authority` 发布者、`autonomy/test/authority` 或 `control/request_manual`。
+RViz 设置 `Simulation Tests=true`、`Simulation Authority=false`，前两个权限按钮显示但禁用。
+`enable_autonomy_test_controls=false` 可完全禁用故障注入；测试页仍保留并显示禁用原因。
+只有 `authority_source=simulation` 且启用测试时才设置 `simulate_authority=true`，用于纯模拟权限测试。
+测试急停使用独立 `autonomy/test_emergency`，在门控内与真实 `safety/estop` 取或，解除测试输入不能
+覆盖真实急停，也不清除既有保护锁存。该测试输入仅在只读 `enable_simulation_tests` 启用时订阅。
+输入头默认为系统时间，适配器按该时间检查来源新鲜度，并以单调时钟检测停更/重放；输出
+`/<船>/control/authority` 使用 BT 所在 ROS 时钟（可为仿真时钟）。输入确实使用同一 ROS 仿真
+时钟时才配置 `fcu_state_clock:=ros`。默认输入超时 `state_timeout=1.0` 秒，可通过 autonomy 参数文件配置。
+MANUAL/POSCTL、未解锁、断连或超时均不放行自主运动；是否自动恢复任务仍受
+`automatic_authority_return=false` 等既有生命周期策略约束。
+
+适配器只观察、不解锁、不切模式。禁用模拟控制后，模拟 `control/request_manual` 服务也不再存在；
+实际接管应通过遥控器/飞控既有路径操作，不能把“请求人工接管”当作已经完成切换。
+此配置仅更换状态/控制权来源，执行后端仍是本仿真的受管推进器桥，**不自动改为 PX4 输出后端**。
+源码更改需重新构建并在受控停机后重启，不能与旧模拟权限发布者并行运行。
+
+本次验证：197 项 Python 回归与 30 项通信/控制隔离测试通过。随后已将 `usv_autonomy`、
+`usv_sim_full`、`cc_ctrl_interface` 正式安装到容器 `/workspace/install`；新终端只需加载
+`/workspace/install/setup.bash`，无需再加载 `/tmp/opencode` 的测试安装。安装不自动重启节点；
+控制/估计进程也需使用新版，以启用上游 MAVROS 状态超时保护。
+只读现场探针已验证系统时间输入到仿真时间输出的转换；
+真实接管、模式切换和执行后端验收仍需操作员在安全条件下完成。
 态势监测在 CCS 中默认 5 Hz，与 v2 数据时效相匹配。
 
 HOLD 在区域内持续监测，越外半径后返航，进入内半径就撤权并退出该次导航，随后继续监测并允许再次返航。

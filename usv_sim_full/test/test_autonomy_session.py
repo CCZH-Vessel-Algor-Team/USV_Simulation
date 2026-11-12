@@ -24,6 +24,7 @@ def ccs_context(root, **overrides):
     context = LaunchContext()
     context.launch_configurations.update({
         'autonomy_v2': 'true', 'enable_autonomy_test_controls': 'true',
+        'authority_source': 'simulation',
         'nav2_namespace': 'test_boat', 'config_path': 'not-read-with-explicit-namespace.yaml',
         'rviz_config_path': str(ROOT / 'rviz/three_vision_one_mmwave.rviz'),
         'use_sim_time': 'true', 'nav2_min_wait_sec': '8.0',
@@ -121,11 +122,14 @@ def test_paths_reach_deferred_navigation_and_both_node_parameters(tmp_path, monk
     simulation = load(ROOT / 'launch/nav2_sim_three_vision_mmwave_bringup.launch.py', 'session_sim_forwarding')
     monkeypatch.setattr(simulation, 'get_package_share_directory', lambda _: str(ROOT))
     context, callbacks, includes = capture_launch(simulation, monkeypatch)
-    context.launch_configurations.update(paths, nav2_namespace='test_boat', autonomy_v2='true')
+    authority = dict(authority_source='cc_state', fcu_state_topic='/other_fcu/cc/state',
+                     fcu_state_clock='system', enable_autonomy_test_controls='false')
+    context.launch_configurations.update(paths, nav2_namespace='test_boat', autonomy_v2='true', **authority)
     # Call only readiness setup. Never execute prelaunch_cleanup or any process.
     callbacks['nav2_readiness_and_deferred_launch'](context)
     forwarded = next(args for args in includes if 'autonomy_database' in args)
     assert all(forwarded[key] == value for key, value in paths.items())
+    assert all(forwarded[key] == value for key, value in authority.items())
     assert not Path(paths['autonomy_database']).exists()
 
     thruster = load(ROOT / 'launch/nav2_thruster_bringup.launch.py', 'session_thruster_forwarding')
@@ -134,11 +138,15 @@ def test_paths_reach_deferred_navigation_and_both_node_parameters(tmp_path, monk
     monkeypatch.setattr(thruster.tempfile, 'NamedTemporaryFile', lambda **kw: temporary(dir=tmp_path, **kw))
     context, callbacks, includes = capture_launch(thruster, monkeypatch)
     context.launch_configurations.update(paths, namespace='test_boat', autonomy_v2='true',
-                                         control_params_file='')
+                                          control_params_file='', **authority)
     callbacks['_launch_nav2_with_namespaced_map'](context)
     leaf = next(args for args in includes if 'rules_checkpoint' in args)
     assert leaf['database'] == paths['autonomy_database']
     assert leaf['rules_checkpoint'] == paths['autonomy_rules_checkpoint']
+    assert leaf['authority_adapter'] == 'true'
+    assert leaf['simulation_test_controls'] == 'false'
+    assert leaf['fcu_state_topic'] == authority['fcu_state_topic']
+    assert leaf['fcu_state_clock'] == 'system'
     # Recreating a child include does not create a new session or overwrite data.
     Path(paths['autonomy_rules_checkpoint']).write_text('retained risk')
     callbacks['_launch_nav2_with_namespaced_map'](context)
@@ -159,12 +167,17 @@ def test_paths_reach_deferred_navigation_and_both_node_parameters(tmp_path, monk
         if isinstance(action, DeclareLaunchArgument):
             action.execute(context)
     context.launch_configurations.update(database=leaf['database'], rules_checkpoint=leaf['rules_checkpoint'],
-                                         launch_nav2='false', authority_adapter='false')
+                                          launch_nav2='false', authority_adapter='true',
+                                          fcu_state_topic=leaf['fcu_state_topic'], fcu_state_clock='system')
     next(a for a in description.entities if isinstance(a, OpaqueFunction)).execute(context)
     mission = next(n for n in nodes if n['executable'] == 'mission')
     rules = next(n for n in nodes if n['executable'] == 'maritime_rules')
     assert mission['parameters'][-1]['database'] == paths['autonomy_database']
     assert rules['parameters'][-1]['rules_checkpoint'] == paths['autonomy_rules_checkpoint']
+    adapter = next(n for n in nodes if n['executable'] == 'authority_adapter')
+    assert adapter['parameters'][-1]['fcu_state_topic'] == authority['fcu_state_topic']
+    assert adapter['namespace'] == '/usv_1'  # Output namespace is independent of the FCU source.
+    assert not any(n['executable'] == 'simulation_controls' for n in nodes)
 
 
 def test_partial_path_pair_is_rejected_instead_of_mixing_sessions(tmp_path, monkeypatch):

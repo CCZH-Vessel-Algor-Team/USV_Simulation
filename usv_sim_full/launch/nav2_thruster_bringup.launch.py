@@ -16,6 +16,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import PushRosNamespace, Node
 from ament_index_python.packages import get_package_share_directory
 from usv_sim_full.navigation_clock import set_navigation_clock
+from usv_sim_full.authority_config import authority_launch_arguments
 from usv_sim_full.launch_config_helpers import (
     default_radar_nav2_param_yaml,
     launch_verbose_enabled,
@@ -92,6 +93,12 @@ def generate_launch_description():
         ]
 
     def _launch_nav2_with_namespaced_map(context, *args, **kwargs):
+        authority = authority_launch_arguments(
+            LaunchConfiguration('authority_source', default='cc_state').perform(context),
+            LaunchConfiguration('enable_autonomy_test_controls').perform(context),
+            LaunchConfiguration('fcu_state_topic', default='/usv1/cc/state').perform(context),
+            LaunchConfiguration('fcu_state_clock', default='system').perform(context),
+        ) if autonomy_v2.perform(context).lower() == 'true' else {}
         if (LaunchConfiguration('left_crossing_stand_on', default='false').perform(context).lower() == 'true'
                 and autonomy_v2.perform(context).lower() != 'true'):
             raise ValueError('left_crossing_stand_on requires autonomy_v2')
@@ -197,8 +204,7 @@ def generate_launch_description():
                     'namespace': resolved_ns, 'nav2_params': tmp_file.name,
                     'use_sim_time': resolved_use_sim_time, 'simulation_thrusters': 'true',
                     'thruster_params': resolved_control_params_file,
-                    'authority_adapter': 'false',
-                    'simulation_test_controls': LaunchConfiguration('enable_autonomy_test_controls').perform(context),
+                    **authority,
                     'left_crossing_stand_on': LaunchConfiguration('left_crossing_stand_on', default='false').perform(context),
                     'safety_points': f'/{resolved_ns}/sensors/radar/nav/points',
                     'safety_sector': f'/{resolved_ns}/sensors/radar/nav/sector',
@@ -255,6 +261,9 @@ def generate_launch_description():
         ]
 
     return LaunchDescription([
+        DeclareLaunchArgument('authority_source', default_value='cc_state'),
+        DeclareLaunchArgument('fcu_state_topic', default_value='/usv1/cc/state'),
+        DeclareLaunchArgument('fcu_state_clock', default_value='system'),
         DeclareLaunchArgument('enable_autonomy_test_controls', default_value='false'),
         DeclareLaunchArgument('left_crossing_stand_on', default_value='false'),
         DeclareLaunchArgument('autonomy_database', default_value=''),
