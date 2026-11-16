@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include <vector>
 
 #include <QComboBox>
 #include <QLabel>
@@ -16,7 +15,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <usv_interfaces/msg/tracked_ship_list.hpp>
 #include <usv_interfaces/srv/delete_dynamic_ship.hpp>
 #include <usv_interfaces/srv/clear_dynamic_ships.hpp>
 #include <usv_interfaces/srv/set_dynamic_ship_config.hpp>
@@ -45,8 +43,6 @@ private Q_SLOTS:
 
 private:
   void setupUi();
-  void setupRos();
-  void onNamesReceived(const std_msgs::msg::String::SharedPtr msg);
 
   rclcpp::Node::SharedPtr client_node_;
   rclcpp::executors::SingleThreadedExecutor::SharedPtr executor_;
@@ -60,24 +56,19 @@ private:
       config_client_;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr names_sub_;
+  usv_interfaces::srv::SetDynamicShipConfig::Request::SharedPtr last_config_;
 
   double heading_deg_;
   double speed_;
   double half_distance_;
   std::string shape_;
 
-  QSlider * heading_slider_;
-  QSlider * speed_slider_;
-  QSlider * leg_dist_slider_;
-  QComboBox * shape_combo_;
+  QPushButton * virtual_ship_button_;
   QLabel * heading_label_;
   QLabel * speed_label_;
   QLabel * leg_dist_label_;
   QListWidget * ship_list_;
-  QPushButton * clear_all_button_;
   QTimer * config_timer_;
-
-  std::vector<std::string> ship_names_;
 };
 
 }  // namespace env_panel

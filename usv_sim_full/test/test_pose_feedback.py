@@ -1,74 +1,44 @@
-"""pose_feedback 纯函数与轨迹滤波测试。"""
+"""Regress the nanosecond feedback path used by current dynamic ships."""
 
 import math
 
 import pytest
 
-from usv_sim_full.pose_feedback import (
-    PoseTracker,
-    fresh_sample,
-    is_feedback_fresh,
-    yaw_from_quaternion,
-)
+from usv_sim_full.pose_feedback import PoseTracker, is_feedback_fresh_ns, yaw_from_quaternion
 
 
-def _yaw_quaternion(yaw):
-    return (0.0, 0.0, math.sin(yaw / 2.0), math.cos(yaw / 2.0))
+@pytest.mark.parametrize('yaw', [0.0, math.pi / 2, -math.pi / 2, math.pi])
+def test_yaw_matches_arrow(yaw):
+    assert yaw_from_quaternion(0.0, 0.0, math.sin(yaw / 2), math.cos(yaw / 2)) == pytest.approx(yaw)
 
 
-def test_yaw_from_quaternion_identity_is_zero():
-    assert yaw_from_quaternion(0.0, 0.0, 0.0, 1.0) == pytest.approx(0.0)
+@pytest.mark.parametrize('stamp, now, fresh', [
+    (None, 10, False), (10, 9, False), (10, 1_000_000_010, True),
+    (10, 1_000_000_011, False),
+])
+def test_feedback_freshness_bounds(stamp, now, fresh):
+    assert is_feedback_fresh_ns(stamp, now, 1.0) is fresh
 
 
-def test_yaw_from_quaternion_recovers_heading():
-    x, y, z, w = _yaw_quaternion(math.pi / 2.0)
-    assert yaw_from_quaternion(x, y, z, w) == pytest.approx(math.pi / 2.0)
+def test_velocity_uses_exact_observation_time_and_ignores_reordered_samples():
+    tracker = PoseTracker(tau_sec=0.0)
+    stamp = 1_700_000_000_000_000_000
+    tracker.update_ns(0.0, 0.0, stamp)
+    assert not tracker.ready
+    assert tracker.update_ns(0.3, -0.2, stamp + 100_000_000) == pytest.approx((3.0, -2.0))
+    assert tracker.ready
+    for old_stamp in [stamp, stamp + 100_000_000]:
+        assert tracker.update_ns(99.0, 99.0, old_stamp) == pytest.approx((3.0, -2.0))
+    assert tracker.stamp_ns == stamp + 100_000_000
 
 
-def test_pose_tracker_starts_at_zero_velocity():
-    tracker = PoseTracker()
-    assert tracker.update(0.0, 0.0, 0.0) == (0.0, 0.0)
-
-
-def test_pose_tracker_converges_to_constant_velocity():
-    tracker = PoseTracker(tau_sec=0.3)
-    stamp = 0.0
-    vx, vy = 0.0, 0.0
-    for i in range(60):
-        vx, vy = tracker.update(0.3 * i, 0.0, stamp)
-        stamp += 0.1
-    assert vx == pytest.approx(3.0, abs=0.05)
-    assert vy == pytest.approx(0.0, abs=1e-9)
-
-
-def test_pose_tracker_ignores_non_advancing_stamp():
-    tracker = PoseTracker()
-    tracker.update(0.0, 0.0, 1.0)
-    tracker.update(5.0, 5.0, 1.0)
-    assert tracker.velocity == (0.0, 0.0)
-
-
-def test_feedback_is_fresh_within_timeout():
-    assert is_feedback_fresh(10.0, 10.5, timeout_sec=1.0)
-
-
-def test_feedback_is_stale_after_timeout():
-    assert not is_feedback_fresh(10.0, 12.0, timeout_sec=1.0)
-
-
-def test_missing_feedback_is_not_fresh():
-    assert not is_feedback_fresh(None, 10.0, timeout_sec=1.0)
-
-
-def test_fresh_sample_returns_sample_when_fresh():
-    sample = (1.0, 2.0, 0.5, 10.0)
-    assert fresh_sample(sample, 10.5, timeout_sec=1.0) == sample
-
-
-def test_fresh_sample_returns_none_when_stale():
-    sample = (1.0, 2.0, 0.5, 10.0)
-    assert fresh_sample(sample, 12.0, timeout_sec=1.0) is None
-
-
-def test_fresh_sample_returns_none_when_missing():
-    assert fresh_sample(None, 10.0, timeout_sec=1.0) is None
+def test_timeout_and_clock_reset_require_new_velocity_history():
+    tracker = PoseTracker(tau_sec=0.0)
+    tracker.update_ns(0.0, 0.0, 0)
+    tracker.update_ns(1.0, 0.0, 100_000_000)
+    tracker.update_ns(99.0, 0.0, 2_000_000_000, timeout_sec=1.0)
+    assert not tracker.ready and tracker.velocity == (0.0, 0.0)
+    tracker.reset()
+    assert tracker.stamp_ns is None and not tracker.ready
+    tracker.update_ns(0.0, 0.0, 1)
+    assert not tracker.ready

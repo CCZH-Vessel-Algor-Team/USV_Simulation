@@ -13,7 +13,16 @@
       type="env_panel::DynamicShipPanel"
       base_class_type="rviz_common::Panel">
     <description>
-      动态目标船生成配置面板（航向、速度、形状和单程距离）。
+      动态目标船生成配置面板（默认航向、速度、形状和单程距离）。
+    </description>
+  </class>
+
+  <class
+      name="env_panel/DynamicShipTool"
+      type="env_panel::DynamicShipTool"
+      base_class_type="rviz_common::Tool">
+    <description>
+      添加动态船：单击使用面板默认航向，拖拽指定船艏方向。
     </description>
   </class>
 
@@ -22,7 +31,7 @@
       type="env_panel::StormFieldPanel"
       base_class_type="rviz_common::Panel">
     <description>
-      圆形风暴场配置面板，发布兼容 TrackedShipList 的危险目标。
+      圆形风暴场配置面板（默认漂移方向、速度、半径和有效时长）。
     </description>
   </class>
 
@@ -31,7 +40,7 @@
       type="env_panel::StormPointTool"
       base_class_type="rviz_common::Tool">
     <description>
-      向 /storm_field/clicked_point 发布风暴场中心点。
+      添加风暴：单击使用面板默认漂移方向，拖拽指定漂移方向。
     </description>
   </class>
 
@@ -50,14 +59,6 @@
       base_class_type="rviz_common::Tool">
     <description>
       向 /dynamic_buoy/clicked_point 发布静态浮标生成点。
-    </description>
-  </class>
-  <class
-      name="env_panel/VirtualShipPoint"
-      type="env_panel::VirtualShipPointTool"
-      base_class_type="rviz_common::Tool">
-    <description>
-      向 /dynamic_ship/virtual_clicked_point 发布虚拟目标船生成点。
     </description>
   </class>
   <class name="env_panel/CpuPanel"

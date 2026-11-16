@@ -6,7 +6,7 @@ import uuid
 
 import rclpy
 from builtin_interfaces.msg import Time
-from geometry_msgs.msg import Point, PointStamped, Pose, Twist
+from geometry_msgs.msg import Point, PointStamped, Pose, PoseWithCovarianceStamped, Twist
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from std_msgs.msg import String
@@ -19,6 +19,8 @@ from usv_interfaces.srv import (
 from usv_interfaces.msg import StormField as StormFieldMsg
 from usv_interfaces.msg import StormFieldArray
 from visualization_msgs.msg import Marker, MarkerArray
+
+from usv_sim_full.pose_feedback import yaw_from_quaternion
 
 
 class StormField:
@@ -35,14 +37,6 @@ class StormField:
         self.weather_validity_duration_s = float(weather_validity_duration_s)
         self.weather_grid_resolution_m = float(weather_grid_resolution_m)
         self.created_time_sec = float(created_time_sec)
-
-    def update_config(self, radius, drift_heading_deg, drift_speed,
-                      weather_validity_duration_s, weather_grid_resolution_m):
-        self.radius = float(radius)
-        self.drift_heading_deg = float(drift_heading_deg)
-        self.drift_speed = float(drift_speed)
-        self.weather_validity_duration_s = float(weather_validity_duration_s)
-        self.weather_grid_resolution_m = float(weather_grid_resolution_m)
 
     def _yaw(self):
         return math.pi / 2.0 - math.radians(self.drift_heading_deg)
@@ -145,6 +139,8 @@ class StormFieldManager(Node):
 
         self.click_sub = self.create_subscription(
             PointStamped, clicked_point_topic, self.on_clicked_point, 10)
+        self.pose_sub = self.create_subscription(
+            PoseWithCovarianceStamped, '/storm_field/spawn_pose', self.on_spawn_pose, 10)
 
         self.config_srv = self.create_service(
             SetStormFieldConfig, '/storm_field/set_config', self.on_set_config)
@@ -198,17 +194,40 @@ class StormFieldManager(Node):
         return response
 
     def on_clicked_point(self, msg):
+        if msg.header.frame_id != self.frame_id or not all(map(
+                math.isfinite, (msg.point.x, msg.point.y, msg.point.z))):
+            self.get_logger().warn('Rejected storm point: require finite coordinates in configured frame')
+            return
+        self._spawn_storm(msg.point.x, msg.point.y)
+
+    def on_spawn_pose(self, msg):
+        pose = msg.pose.pose
+        q = pose.orientation
+        if msg.header.frame_id != self.frame_id or not all(map(math.isfinite, (
+                pose.position.x, pose.position.y, pose.position.z, q.x, q.y, q.z, q.w))):
+            self.get_logger().warn('Rejected storm pose: require finite coordinates in configured frame')
+            return
+        norm = math.hypot(q.x, q.y, q.z, q.w)
+        if not math.isfinite(norm) or norm < 1e-12:
+            self.get_logger().warn('Rejected storm pose: quaternion must be finite and nonzero')
+            return
+        yaw = yaw_from_quaternion(q.x / norm, q.y / norm, q.z / norm, q.w / norm)
+        self._spawn_storm(pose.position.x, pose.position.y, (90.0 - math.degrees(yaw)) % 360.0)
+
+    def _spawn_storm(self, x, y, heading_override=None):
         (drift_heading_deg, drift_speed, radius,
          weather_validity_duration_s, weather_grid_resolution_m) = self._read_config()
+        if heading_override is not None:
+            drift_heading_deg = heading_override
         name = self._next_storm_name()
         now_sec = self.get_clock().now().nanoseconds * 1e-9
         self.storms[name] = StormField(
-            name, msg.point.x, msg.point.y, radius,
+            name, x, y, radius,
             drift_heading_deg, drift_speed,
             weather_validity_duration_s, weather_grid_resolution_m,
             now_sec)
         self.get_logger().info(
-            f'{name} set at ({msg.point.x:.2f}, {msg.point.y:.2f}) '
+            f'{name} set at ({x:.2f}, {y:.2f}) '
             f'radius={radius:.1f}m grid={weather_grid_resolution_m:.1f}m '
             f'validity={weather_validity_duration_s:.0f}s')
 
@@ -296,10 +315,11 @@ class StormFieldManager(Node):
         return markers
 
     def control_loop(self):
+        now = self.get_clock().now()
         msg = TrackedObstacleList()
-        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.stamp = now.to_msg()
         msg.header.frame_id = self.frame_id
-        now_sec = self.get_clock().now().nanoseconds * 1e-9
+        now_sec = now.nanoseconds * 1e-9
         self.remove_expired_storms(now_sec)
 
         storm_msg = StormFieldArray()

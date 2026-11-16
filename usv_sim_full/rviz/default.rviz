@@ -22,6 +22,8 @@ Panels:
     Name: Navigation 2
   - Class: env_panel/StaticBuoyConfig
     Name: StaticBuoyConfig
+  - Class: env_panel/DynamicShipConfig
+    Name: DynamicShipConfig
 Visualization Manager:
   Class: ""
   Displays:
@@ -403,14 +405,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /usv_1/goal_pose
-    - Class: rviz_default_plugins/PublishPoint
-      Single click: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /clicked_point
+    - Class: env_panel/DynamicShipTool
     - Class: env_panel/StaticBuoyPoint
       Single click: true
       Topic:

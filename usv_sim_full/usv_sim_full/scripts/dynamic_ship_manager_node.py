@@ -28,7 +28,7 @@ from usv_interfaces.srv import (
     SetDynamicShipConfig,
 )
 from usv_sim_full.pose_feedback import (
-    PoseTracker, fresh_sample, is_feedback_fresh_ns, yaw_from_quaternion,
+    PoseTracker, is_feedback_fresh_ns, yaw_from_quaternion,
 )
 
 
@@ -252,34 +252,25 @@ class GazeboPoseCache:
 
 class DynamicShip:
     def __init__(self, model_name, target_id, pose, half_distance, shape, speed, color,
-                 mesh_profile, node, config_base_dir, world_name, is_virtual=False):
+                 mesh_profile, node, is_virtual=False):
         self.model_name = model_name
         self.is_virtual = is_virtual
         self.target_id = target_id
         self.shape = shape
         self.speed = speed
-        self.half_distance = half_distance
         self.color = color
         self.mesh_profile = mesh_profile
         self.node = node
-        self.config_base_dir = config_base_dir
-        self.world_name = world_name
 
         x = pose.position.x
         y = pose.position.y
 
-        def quat_to_yaw(q):
-            return math.atan2(
-                2.0 * (q.w * q.z + q.x * q.y),
-                1.0 - 2.0 * (q.y * q.y + q.z * q.z)
-            )
-
-        spawn_yaw = quat_to_yaw(pose.orientation)
+        q = pose.orientation
+        spawn_yaw = yaw_from_quaternion(q.x, q.y, q.z, q.w)
         self.spawn_yaw = spawn_yaw
         self.actual_yaw = spawn_yaw
         self.pose_tracker = PoseTracker()
         self.feedback_fresh = False
-        self.feedback_stamp_sec = None
 
         total_dist = 2.0 * half_distance
         self.waypoint_a = (x, y)
@@ -368,25 +359,10 @@ class DynamicShip:
             self.cmd_vel_pub.publish(twist)
             return True
 
-    def sync_from_feedback(self, sample, now_sec, timeout_sec):
-        """用 Gazebo 实测位姿覆盖内部积分状态，返回反馈是否有效。"""
-        sample = fresh_sample(sample, now_sec, timeout_sec)
-        if sample is None:
-            self.feedback_fresh = False
-            return False
-        self.current_x = sample[0]
-        self.current_y = sample[1]
-        self.actual_yaw = sample[2]
-        self.feedback_stamp_sec = sample[3]
-        self.pose_tracker.update(sample[0], sample[1], sample[3])
-        self.feedback_fresh = True
-        return True
-
     def reset_feedback(self):
         """Reset observation history while preserving physical motion and ownership."""
         self.pose_tracker.reset()
         self.feedback_fresh = False
-        self.feedback_stamp_sec = None
 
     def sync_from_feedback_ns(self, sample, now_ns, timeout_sec):
         """Use exact-time measured feedback for control and tracked publication.
@@ -405,7 +381,6 @@ class DynamicShip:
             return self.feedback_fresh
         self.pose_tracker.update_ns(sample[0], sample[1], sample[3], timeout_sec)
         self.current_x, self.current_y, self.actual_yaw = sample[:3]
-        self.feedback_stamp_sec = sample[3] * 1e-9
         self.feedback_fresh = True
         return True
 
@@ -531,7 +506,7 @@ class DynamicShipManager(Node):
             'spawn_pose_topic', '/dynamic_ship/spawn_pose',
             ParameterDescriptor(
                 read_only=True,
-                description='RViz Pose Estimate input; map XY and drag yaw select TS placement'))
+                description='RViz dynamic ship drag input; map XY and arrow yaw select TS placement'))
         spawn_pose_topic = self.get_parameter('spawn_pose_topic').get_parameter_value().string_value
         if not spawn_pose_topic.strip():
             raise ValueError('spawn_pose_topic must be nonempty')
@@ -605,14 +580,19 @@ class DynamicShipManager(Node):
 
         self._ship_counter = 0
 
-        self.click_sub = self.create_subscription(
-            PointStamped, '/clicked_point', self.on_clicked_point, 10,
+        self.spawn_point_sub = self.create_subscription(
+            PointStamped, '/dynamic_ship/spawn_point', self.on_spawn_point, 10,
             callback_group=self.lifecycle_group)
         self.spawn_pose_sub = self.create_subscription(
             PoseWithCovarianceStamped, spawn_pose_topic, self.on_spawn_pose, 10,
             callback_group=self.lifecycle_group)
         self.virtual_click_sub = self.create_subscription(
-            PointStamped, self.virtual_spawn_topic, self.on_virtual_clicked_point, 10,
+            PointStamped, self.virtual_spawn_topic,
+            lambda msg: self.on_spawn_point(msg, virtual=True), 10,
+            callback_group=self.lifecycle_group)
+        self.virtual_pose_sub = self.create_subscription(
+            PoseWithCovarianceStamped, '/dynamic_ship/virtual_spawn_pose',
+            lambda msg: self.on_spawn_pose(msg, virtual=True), 10,
             callback_group=self.lifecycle_group)
         self.get_logger().info(f'RViz TS pose input: {spawn_pose_topic} (map XY and drag heading)')
         self.get_logger().info(f'Virtual TS input: {self.virtual_spawn_topic}')
@@ -651,7 +631,12 @@ class DynamicShipManager(Node):
             response.message = str(e)
         return response
 
-    def on_clicked_point(self, msg):
+    def on_spawn_point(self, msg, virtual=False):
+        """Validate dedicated single-click requests before using default config."""
+        if msg.header.frame_id != 'map' or not all(map(
+                math.isfinite, (msg.point.x, msg.point.y, msg.point.z))):
+            self.get_logger().warn('Rejected TS point: require finite coordinates in map')
+            return
         heading_deg, speed, shape, half_dist = self._read_config()
         heading = math.pi / 2.0 - math.radians(heading_deg)
 
@@ -659,23 +644,9 @@ class DynamicShipManager(Node):
         name = f'dyn_target_{self._ship_counter}'
 
         self._spawn_ship_at(name, msg.point.x, msg.point.y, heading,
-                            half_dist, shape, speed)
+                            half_dist, shape, speed, virtual=virtual)
 
-    def on_virtual_clicked_point(self, msg):
-        """Create a Gazebo-free target at the RViz virtual placement click.
-
-        :param msg: Clicked map point from the virtual target tool.
-        """
-        heading_deg, speed, shape, half_dist = self._read_config()
-        heading = math.pi / 2.0 - math.radians(heading_deg)
-
-        self._ship_counter += 1
-        name = f'dyn_target_{self._ship_counter}'
-
-        self._spawn_ship_at(name, msg.point.x, msg.point.y, heading,
-                            half_dist, shape, speed, virtual=True)
-
-    def on_spawn_pose(self, msg):
+    def on_spawn_pose(self, msg, virtual=False):
         """Create a target at the RViz drag pose through the existing lifecycle.
 
         :param msg: PoseWithCovarianceStamped in map. XY and quaternion yaw are
@@ -696,7 +667,7 @@ class DynamicShipManager(Node):
         self._ship_counter += 1
         name = f'dyn_target_{self._ship_counter}'
         self._spawn_ship_at(name, pose.position.x, pose.position.y, heading,
-                            half_dist, shape, speed)
+                            half_dist, shape, speed, virtual=virtual)
 
     def _spawn_ship_at(self, name, x, y, yaw, half_dist, shape, speed, virtual=False):
         virtual = virtual or self.backend == 'virtual'
@@ -720,8 +691,7 @@ class DynamicShipManager(Node):
             half_distance=half_dist, shape=shape, speed=speed,
             color=color,
             mesh_profile=self.default_mesh_profile,
-            node=self, config_base_dir=self.config_base_dir,
-            world_name=self.world_name, is_virtual=virtual,
+            node=self, is_virtual=virtual,
         )
 
         if virtual:
@@ -760,11 +730,8 @@ class DynamicShipManager(Node):
             else:
                 name = request.name.strip()
 
-            yaw = math.atan2(
-                2.0 * (request.pose.orientation.w * request.pose.orientation.z
-                       + request.pose.orientation.x * request.pose.orientation.y),
-                1.0 - 2.0 * (request.pose.orientation.y * request.pose.orientation.y
-                             + request.pose.orientation.z * request.pose.orientation.z))
+            q = request.pose.orientation
+            yaw = yaw_from_quaternion(q.x, q.y, q.z, q.w)
 
             half_dist = request.half_distance if request.half_distance > 0 else 100.0
             speed = request.speed if request.speed > 0.0 else 3.0
@@ -1319,10 +1286,8 @@ class DynamicShipManager(Node):
 
         :param virtual_ships: Virtual ships present in the current snapshot.
         :param stamp_ns: Snapshot stamp in nanoseconds.
-        :return: Marker array, or None when marker publication is disabled.
+        :return: Marker array; caller checks whether publication is enabled.
         """
-        if self.marker_pub is None:
-            return None
         stamp_sec, stamp_nsec = divmod(stamp_ns, 1_000_000_000)
         array = MarkerArray()
         active_ids = set()
@@ -1502,9 +1467,7 @@ class DynamicShipManager(Node):
                     self._last_published_stamp_ns = stamp_ns
         self.names_pub.publish(String(data=json.dumps(names)))
         if self.marker_pub is not None:
-            markers = self._build_markers(virtual_ships, now.nanoseconds)
-            if markers is not None:
-                self.marker_pub.publish(markers)
+            self.marker_pub.publish(self._build_markers(virtual_ships, now.nanoseconds))
 
 
 def main(args=None):
