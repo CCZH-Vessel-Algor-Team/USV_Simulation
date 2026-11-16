@@ -2,9 +2,7 @@
 #define ENV_PANEL__STORM_FIELD_PANEL_HPP_
 
 #include <memory>
-#include <string>
 #include <thread>
-#include <vector>
 
 #include <QLabel>
 #include <QListWidget>
@@ -44,7 +42,6 @@ private Q_SLOTS:
 
 private:
   void setupUi();
-  void onNamesReceived(const std_msgs::msg::String::SharedPtr msg);
 
   rclcpp::Node::SharedPtr client_node_;
   rclcpp::executors::SingleThreadedExecutor::SharedPtr executor_;
@@ -54,6 +51,7 @@ private:
   rclcpp::Client<usv_interfaces::srv::DeleteStormField>::SharedPtr delete_client_;
   rclcpp::Client<usv_interfaces::srv::ClearStormFields>::SharedPtr clear_client_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr names_sub_;
+  usv_interfaces::srv::SetStormFieldConfig::Request::SharedPtr last_config_;
 
   double drift_heading_deg_;
   double drift_speed_;
@@ -61,21 +59,13 @@ private:
   double weather_validity_duration_s_;
   double weather_grid_resolution_m_;
 
-  QSlider * drift_heading_slider_;
-  QSlider * drift_speed_slider_;
-  QSlider * radius_slider_;
-  QSlider * weather_validity_slider_;
-  QSlider * weather_grid_slider_;
   QLabel * drift_heading_label_;
   QLabel * drift_speed_label_;
   QLabel * radius_label_;
   QLabel * weather_validity_label_;
   QLabel * weather_grid_label_;
   QListWidget * storm_list_;
-  QPushButton * clear_all_button_;
   QTimer * config_timer_;
-
-  std::vector<std::string> storm_names_;
 };
 
 }  // namespace env_panel

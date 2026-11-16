@@ -1,21 +1,15 @@
 #ifndef ENV_PANEL__STORM_POINT_TOOL_HPP_
 #define ENV_PANEL__STORM_POINT_TOOL_HPP_
 
-#include <QObject>
-
-#include <rviz_default_plugins/tools/point/point_tool.hpp>
+#include "env_panel/dynamic_ship_tool.hpp"
 
 namespace env_panel
 {
 
-class StormPointTool : public rviz_default_plugins::tools::PointTool
+class StormPointTool : public DynamicShipTool
 {
-  Q_OBJECT
-
 public:
   StormPointTool();
-
-  void onInitialize() override;
 };
 
 }  // namespace env_panel

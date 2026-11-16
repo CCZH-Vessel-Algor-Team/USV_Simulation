@@ -47,8 +47,6 @@ def _make_ship(is_virtual, speed=3.0, half_distance=50.0):
         color=(1.0, 0.2, 0.2),
         mesh_profile='',
         node=node,
-        config_base_dir='',
-        world_name='test_world',
         is_virtual=is_virtual,
     )
     return ship, node

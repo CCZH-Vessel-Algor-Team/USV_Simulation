@@ -1,24 +1,11 @@
 #include "env_panel/storm_point_tool.hpp"
 
-#include <rviz_common/load_resource.hpp>
-#include <rviz_common/properties/string_property.hpp>
-
 namespace env_panel
 {
 
 StormPointTool::StormPointTool()
-: rviz_default_plugins::tools::PointTool()
+: DynamicShipTool("添加风暴", "/storm_field/clicked_point", "/storm_field/spawn_pose", 's')
 {
-  shortcut_key_ = 's';
-}
-
-void StormPointTool::onInitialize()
-{
-  PointTool::onInitialize();
-  setName("风暴取点");
-  setIcon(rviz_common::loadPixmap("package://rviz_default_plugins/icons/classes/PublishPoint.png"));
-  topic_property_->setString("/storm_field/clicked_point");
-  updateTopic();
 }
 
 }  // namespace env_panel
