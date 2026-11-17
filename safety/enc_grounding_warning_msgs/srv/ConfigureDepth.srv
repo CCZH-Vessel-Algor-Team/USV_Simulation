@@ -1,0 +1,7 @@
+# apply=false queries the authoritative settings without changing them.
+bool apply
+DepthSettings settings
+---
+bool success
+DepthSettings settings
+string message

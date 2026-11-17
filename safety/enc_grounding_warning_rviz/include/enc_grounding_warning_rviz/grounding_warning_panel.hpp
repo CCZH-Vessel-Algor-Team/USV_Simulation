@@ -41,7 +41,6 @@ private Q_SLOTS:
 private:
   void updateSubscriptions();
   void setRiskStyle(QLabel * label, uint8_t risk);
-
   rclcpp::Node::SharedPtr node_;
   std::string ns_;
   QTimer * timer_;
@@ -51,7 +50,6 @@ private:
   QLabel * ukc_label_;
   QLabel * alert_label_;
   QLabel * grid_label_;
-
   rclcpp::Subscription<enc_grounding_warning_msgs::msg::UKCState>::SharedPtr ukc_sub_;
   rclcpp::Subscription<enc_grounding_warning_msgs::msg::GroundingAlert>::SharedPtr alert_sub_;
   rclcpp::Subscription<enc_grounding_warning_msgs::msg::DepthGrid>::SharedPtr grid_sub_;

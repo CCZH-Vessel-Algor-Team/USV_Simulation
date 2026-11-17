@@ -21,7 +21,8 @@ from enc_grounding_warning_msgs.msg import (
 )
 from enc_grounding_warning_msgs.srv import RouteCheck
 
-from .bathymetry import SimGridProvider, UNKNOWN_DEPTH
+from .bathymetry import UNKNOWN_DEPTH
+from .live_depth import LiveDepthProvider
 from .common import (
     default_config_path,
     load_grid_publish_flags,
@@ -51,7 +52,9 @@ class GroundingWarningNode(Node):
         depth_grid_file = self.get_parameter("depth_grid_file").value
         if not depth_grid_file:
             depth_grid_file = default_config_path("sim_depth_grid.yaml")
-        self.provider = SimGridProvider(depth_grid_file)
+        self.provider = LiveDepthProvider(
+            self, depth_grid_file, on_change=self._depth_changed
+        )
 
         qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
         self.plan_sub = self.create_subscription(Path, "plan", self.plan_cb, qos)
@@ -79,10 +82,14 @@ class GroundingWarningNode(Node):
         self.latest_plan = None
         self.latest_vessel = None
         self._last_alert_key = None
+        self._depth_dirty = False
         self._last_immediate = 0.0
 
         hz = float(self.get_parameter("publish_hz").value)
         self.timer = self.create_timer(1.0 / hz, self.timer_cb)
+
+    def _depth_changed(self):
+        self._depth_dirty = True
 
     def plan_cb(self, msg: Path):
         self.latest_plan = msg
@@ -173,9 +180,17 @@ class GroundingWarningNode(Node):
                 first_danger = sample
 
         if first_danger is None:
-            if self._last_alert_key is not None:
+            if self._last_alert_key is not None or self._depth_dirty:
                 self.get_logger().info("Grounding risk cleared")
+                cleared = GroundingAlert()
+                cleared.header.stamp = self.get_clock().now().to_msg()
+                cleared.header.frame_id = "map"
+                cleared.level = 0
+                cleared.type = 2
+                cleared.description = "当前航线水深校核安全"
+                self.alert_pub.publish(cleared)
             self._last_alert_key = None
+            self._depth_dirty = False
             self.publish_route_markers(samples, None)
             return
 
@@ -189,9 +204,10 @@ class GroundingWarningNode(Node):
             level = 3  # CRITICAL
 
         key = (level, first_danger["route_index"], round(distance, 1))
-        if key == self._last_alert_key:
+        if key == self._last_alert_key and not self._depth_dirty:
             return
         self._last_alert_key = key
+        self._depth_dirty = False
 
         alert = GroundingAlert()
         alert.header.stamp = self.get_clock().now().to_msg()
@@ -260,6 +276,13 @@ class GroundingWarningNode(Node):
                 0.0,
                 0.7,
             )
+            arr.markers.append(danger)
+        else:
+            danger = Marker()
+            danger.header = points.header
+            danger.ns = "grounding_danger"
+            danger.id = 1
+            danger.action = Marker.DELETE
             arr.markers.append(danger)
 
         self.marker_pub.publish(arr)

@@ -114,6 +114,32 @@ class SimGridProvider(BathymetryProvider):
         self.flags[self.depth < 0.0] |= FLAG_DRYING
         self.flags[self.depth <= UNKNOWN_DEPTH / 2.0] |= FLAG_NO_DATA
 
+    def apply_regions(self, regions: list) -> None:
+        """Overlay user regions while retaining the original map everywhere else.
+
+        Rebuild from the original map on every edit: removing a region restores
+        the exact CSV/undulation/preset values underneath it. Overlapping user
+        regions use the shallower user depth, independent of the background.
+        """
+        overlay = np.full(self.depth.shape, np.inf, dtype=np.float32)
+        for region in regions:
+            x, y = region["x"], region["y"]
+            radius = region["radius"]
+            ix0 = max(0, int(math.floor((x - radius - self.origin_x) / self.resolution)))
+            iy0 = max(0, int(math.floor((y - radius - self.origin_y) / self.resolution)))
+            ix1 = min(self.width, int(math.ceil((x + radius - self.origin_x) / self.resolution)))
+            iy1 = min(self.height, int(math.ceil((y + radius - self.origin_y) / self.resolution)))
+            if ix1 <= ix0 or iy1 <= iy0:
+                continue
+            xs = self.origin_x + (np.arange(ix0, ix1) + 0.5) * self.resolution
+            ys = self.origin_y + (np.arange(iy0, iy1) + 0.5) * self.resolution
+            inside = (xs[None, :] - x) ** 2 + (ys[:, None] - y) ** 2 <= radius * radius
+            target = overlay[iy0:iy1, ix0:ix1]
+            target[inside] = np.minimum(target[inside], region["depth_m"])
+        changed = np.isfinite(overlay)
+        self.depth[changed] = overlay[changed]
+        self.flags[changed] &= np.uint8(255 ^ (FLAG_NO_DATA | FLAG_DRYING))
+
     def _load_csv(self, path: str) -> np.ndarray:
         if not os.path.isfile(path):
             raise FileNotFoundError(f"depth grid CSV not found: {path}")
@@ -279,10 +305,17 @@ class SimGridProvider(BathymetryProvider):
         width = max(1, int(round(extent_m / resolution)))
         height = max(1, int(round(extent_m / resolution)))
 
-        gx0 = int(math.floor((start_x - self.origin_x) / self.resolution))
-        gy0 = int(math.floor((start_y - self.origin_y) / self.resolution))
-        gxs = gx0 + np.arange(width, dtype=np.int64)
-        gys = gy0 + np.arange(height, dtype=np.int64)
+        # Sample output-cell centres in map coordinates. Output and source
+        # resolutions can differ; incrementing source indices would shift
+        # custom shoals away from their configured positions in the display.
+        gxs = np.floor(
+            (start_x + (np.arange(width) + 0.5) * resolution - self.origin_x)
+            / self.resolution
+        ).astype(np.int64)
+        gys = np.floor(
+            (start_y + (np.arange(height) + 0.5) * resolution - self.origin_y)
+            / self.resolution
+        ).astype(np.int64)
         valid_x = (gxs >= 0) & (gxs < self.width)
         valid_y = (gys >= 0) & (gys < self.height)
 

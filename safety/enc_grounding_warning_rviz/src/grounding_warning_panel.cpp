@@ -109,6 +109,9 @@ void GroundingWarningPanel::onInitialize()
 
 void GroundingWarningPanel::updateSubscriptions()
 {
+  if (!node_) {
+    return;
+  }
   ukc_sub_.reset();
   alert_sub_.reset();
   grid_sub_.reset();
@@ -152,6 +155,11 @@ void GroundingWarningPanel::updateSubscriptions()
     alert_topic, qos,
     [this](const enc_grounding_warning_msgs::msg::GroundingAlert::SharedPtr msg) {
       QMetaObject::invokeMethod(this, [this, msg]() {
+        if (msg->level == 0) {
+          alert_label_->setText(
+            "无搁浅告警\n" + QString::fromStdString(msg->description));
+          return;
+        }
         alert_label_->setText(
           QString(
             "Level: %1  Type: %2\nMin UKC: %3 m\nDistance: %4 m  Time: %5 s\n"
@@ -192,10 +200,16 @@ void GroundingWarningPanel::updateSubscriptions()
 void GroundingWarningPanel::onApplyNamespace()
 {
   ns_ = ns_edit_->text().trimmed().toStdString();
+  while (!ns_.empty() && ns_.front() == '/') {
+    ns_.erase(0, 1);
+  }
+  while (!ns_.empty() && ns_.back() == '/') {
+    ns_.pop_back();
+  }
   if (ns_.empty()) {
     ns_ = "usv_1";
-    ns_edit_->setText(QString::fromStdString(ns_));
   }
+  ns_edit_->setText(QString::fromStdString(ns_));
   updateSubscriptions();
 }
 

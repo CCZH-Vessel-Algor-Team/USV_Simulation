@@ -18,6 +18,7 @@ def generate_launch_description():
     namespace = LaunchConfiguration("namespace")
     use_sim_time = LaunchConfiguration("use_sim_time")
     depth_grid_file = LaunchConfiguration("depth_grid_file")
+    depth_settings_file = LaunchConfiguration("depth_settings_file")
     params_file = LaunchConfiguration("params_file")
     robot_base_frame = LaunchConfiguration("robot_base_frame")
     enable_depth_provider = LaunchConfiguration("enable_depth_provider")
@@ -31,6 +32,7 @@ def generate_launch_description():
             DeclareLaunchArgument("namespace", default_value="usv_1"),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
             DeclareLaunchArgument("depth_grid_file", default_value=default_depth_grid),
+            DeclareLaunchArgument("depth_settings_file", default_value=""),
             DeclareLaunchArgument("params_file", default_value=default_params),
             DeclareLaunchArgument("robot_base_frame", default_value="usv_1/base_link"),
             DeclareLaunchArgument("enable_depth_provider", default_value="true"),
@@ -65,6 +67,7 @@ def generate_launch_description():
                                 "use_sim_time": use_sim_time,
                                 "params_file": params_file,
                                 "depth_grid_file": depth_grid_file,
+                                "depth_settings_file": depth_settings_file,
                                 "robot_base_frame": robot_base_frame,
                             }
                         ],
@@ -80,6 +83,7 @@ def generate_launch_description():
                                 "use_sim_time": use_sim_time,
                                 "params_file": params_file,
                                 "depth_grid_file": depth_grid_file,
+                                "depth_settings_file": depth_settings_file,
                                 "robot_base_frame": robot_base_frame,
                             }
                         ],
@@ -95,6 +99,7 @@ def generate_launch_description():
                                 "use_sim_time": use_sim_time,
                                 "params_file": params_file,
                                 "depth_grid_file": depth_grid_file,
+                                "depth_settings_file": depth_settings_file,
                                 "robot_base_frame": robot_base_frame,
                             }
                         ],
@@ -110,6 +115,7 @@ def generate_launch_description():
                                 "use_sim_time": use_sim_time,
                                 "params_file": params_file,
                                 "depth_grid_file": depth_grid_file,
+                                "depth_settings_file": depth_settings_file,
                             }
                         ],
                     ),

@@ -92,15 +92,17 @@ ros2 launch enc_grounding_warning enc_grounding_warning.launch.py namespace:=usv
 - RViz 菜单：`Panels -> Add New Panel -> enc_grounding_warning_rviz/GroundingWarningPanel`
 - Panel 显示：UKC、风险等级、告警信息、水深栅格统计
 - Panel 顶部可修改 Namespace（默认 `usv_1`）
+- 独立水深设置面板：`enc_grounding_warning_rviz/DepthSettingsPanel`，设置半径和水深后，通过工具栏打点立即应用，无需同步确认。
+- 列表只显示用户添加的区域，删除即恢复原始水深；支持自动保存和重启恢复，具体见[插件操作说明](enc_grounding_warning_rviz/README.md)。
 
-默认 RViz 配置已包含三个 safety MarkerArray 显示：
+默认 RViz 配置包含以下 safety MarkerArray 显示：
 
+- 自定义水深区域：`/usv_1/safety/depth_region_markers`，仅用户区域的深红色圆环，删除即移除。
 - Safety Current Risk：`/usv_1/safety/current_risk_marker`
 - Safety Grounding Markers：`/usv_1/safety/grounding_markers`
 - Safety Route Depth Markers：`/usv_1/safety/route_depth_markers`
 
-GroundingWarningPanel 当前不建议写进默认配置：与原有全部面板同时预加载会触发
-RViz/Ogre 的窗口 resize 崩溃，启动后手动添加 Panel 即可正常使用。
+默认 `three_vision_one_mmwave.rviz` 分别加载搁浅预警显示、水深设置面板和添加水深点工具。
 
 Marker 话题：
 

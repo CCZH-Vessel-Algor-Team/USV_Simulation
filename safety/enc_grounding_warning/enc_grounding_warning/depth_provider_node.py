@@ -10,7 +10,7 @@ from usv_interfaces.msg import VesselState
 
 from enc_grounding_warning_msgs.msg import DepthGrid
 
-from .bathymetry import SimGridProvider
+from .live_depth import LiveDepthProvider
 from .common import (
     default_config_path,
     load_grid_publish_flags,
@@ -39,7 +39,7 @@ class DepthProviderNode(Node):
         if not depth_grid_file:
             depth_grid_file = default_config_path("sim_depth_grid.yaml")
         self.get_logger().info(f"Loading depth grid from {depth_grid_file}")
-        self.provider = SimGridProvider(depth_grid_file)
+        self.provider = LiveDepthProvider(self, depth_grid_file, authority=True)
 
         qos = QoSProfile(
             depth=1,
