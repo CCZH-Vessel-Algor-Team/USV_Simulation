@@ -1,4 +1,4 @@
-"""Share persistent depth settings between the editor and all safety nodes."""
+"""Share live depth settings between the editor and all safety nodes."""
 
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 
@@ -6,13 +6,7 @@ from enc_grounding_warning_msgs.msg import DepthSettings, DepthShoal
 from enc_grounding_warning_msgs.srv import ConfigureDepth
 from visualization_msgs.msg import MarkerArray
 
-from .depth_settings import (
-    DepthSettingsStore,
-    build_provider,
-    default_settings_path,
-    initial_settings,
-    validate_settings,
-)
+from .depth_settings import build_provider, initial_settings, validate_settings
 from .markers import depth_region_markers
 
 
@@ -35,17 +29,14 @@ def settings_to_msg(settings):
 
 
 class LiveDepthProvider:
-    """Delegate queries to a replaceable grid; one authority persists edits."""
+    """Delegate queries to a replaceable grid; edits last until restart."""
 
     def __init__(self, node, config_path, *, authority=False, on_change=None):
         self.node = node
         self.config_path = config_path
         self.on_change = on_change
-        node.declare_parameter("depth_settings_file", "")
-        path = node.get_parameter("depth_settings_file").value
-        self.store = DepthSettingsStore(path or default_settings_path(node.get_namespace()))
         self.base_settings = initial_settings(config_path)
-        self.settings = self.store.load(self.base_settings, config_path)
+        self.settings = {**self.base_settings, "shoals": []}
         self._provider = build_provider(config_path, self.settings)
         qos = QoSProfile(
             depth=1, reliability=ReliabilityPolicy.RELIABLE,
@@ -60,7 +51,9 @@ class LiveDepthProvider:
                 ConfigureDepth, "safety/configure_depth", self.configure
             )
             self._publish()
-            node.get_logger().info(f"Persistent depth settings: {self.store.path}")
+            node.get_logger().info(
+                f"Depth settings are session-only; restart restores {config_path}"
+            )
         else:
             self.subscription = node.create_subscription(
                 DepthSettings, "safety/depth_settings", self.receive, qos
@@ -102,15 +95,17 @@ class LiveDepthProvider:
                 )
                 settings["base_depth_m"] = self.base_settings["base_depth_m"]
                 provider = build_provider(self.config_path, settings)
-                self.store.save(settings)
                 self._apply(settings, provider)
                 self._publish()
-                response.message = (
-                    "已保存并应用；后续启动自动恢复" if settings["enabled"]
-                    else "已恢复启动配置；后续启动继续使用启动配置"
-                )
+                if settings["enabled"]:
+                    response.message = (
+                        f"已应用 {len(settings['shoals'])} 个区域；"
+                        "仅在本次运行有效，重启后恢复原始水深"
+                    )
+                else:
+                    response.message = "已恢复原始水深；重启后仍使用启动配置"
             except Exception as error:
                 response.success = False
-                response.message = f"水深设置未保存：{error}"
+                response.message = f"水深设置未应用：{error}"
         response.settings = settings_to_msg(self.settings)
         return response

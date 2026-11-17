@@ -151,7 +151,7 @@ void DepthSettingsPanel::updateConnections()
       if (generation == generation_ && !request_pending_) {
         showSettings(*message);
         status_label_->setText(current_settings_.shoals.empty() ? "暂无自定义区域，使用原始水深。" :
-          QString("当前 %1 个区域，已应用并自动保存。").arg(current_settings_.shoals.size()));
+          QString("当前 %1 个区域，本次运行有效，重启后恢复原始水深。").arg(current_settings_.shoals.size()));
         updateControls();
       }
     });
@@ -268,7 +268,7 @@ void DepthSettingsPanel::requestSettings(Operation operation, const Settings & s
   request_pending_ = true;
   pending_operation_ = operation;
   request_deadline_ = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-  status_label_->setText(operation == Operation::Read ? "正在读取已添加区域…" : "正在应用并保存…");
+  status_label_->setText(operation == Operation::Read ? "正在读取已添加区域…" : "正在应用…");
   status_label_->setStyleSheet("");
   updateControls();
   const auto generation = generation_;
@@ -281,8 +281,12 @@ void DepthSettingsPanel::requestSettings(Operation operation, const Settings & s
         const auto response = future.get();
         if (response->success) {
           showSettings(response->settings);
-          status_label_->setText(current_settings_.shoals.empty() ? "暂无自定义区域，使用原始水深。" :
-            QString("当前 %1 个区域，已应用并自动保存。").arg(current_settings_.shoals.size()));
+          if (operation == Operation::Read || response->message.empty()) {
+            status_label_->setText(current_settings_.shoals.empty() ? "暂无自定义区域，使用原始水深。" :
+              QString("当前 %1 个区域，本次运行有效，重启后恢复原始水深。").arg(current_settings_.shoals.size()));
+          } else {
+            status_label_->setText(QString::fromStdString(response->message));
+          }
         } else {
           status_label_->setText(QString::fromStdString(response->message));
           status_label_->setStyleSheet("color: red;");

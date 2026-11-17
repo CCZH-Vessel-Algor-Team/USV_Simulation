@@ -27,24 +27,18 @@ ros2 launch enc_grounding_warning full_sim_with_grounding_warning.launch.py
 
 在独立 `DepthSettingsPanel` 中设置半径和水深，用工具栏“添加水深点”单击地图即可立即应用，
 每次单击后自动退出打点，不需要添加按钮或同步确认。地图以深红色圆环显示已应用的用户区域；
-删除后恢复原始水深并移除对应圆环，重启后自动恢复已保存结果。
+删除后恢复原始水深并移除对应圆环。用户区域只在本次运行内有效，重启后恢复
+`depth_grid.yaml` 的原始水深，与浮标/障碍物面板添加的临时目标行为一致。
 `GroundingWarningPanel` 只显示风险状态。具体操作见
 [插件说明](../enc_grounding_warning_rviz/README.md#使用)。
 
-`depth_provider_node` 提供 `safety/configure_depth` 服务，先校验、构建新栅格并原子保存，
-成功后再切换内存数据并发布保留的 `safety/depth_settings` 消息。UKC、前瞻预警和航线水深节点
-接收同一份设置；后加入的节点也能接收最后保存的配置。磁盘写入失败时保留原有数据。
-各节点启动时还会先从保存文件恢复设置，避免等待消息期间使用旧水深。
+`depth_provider_node` 提供 `safety/configure_depth` 服务，先校验并构建新栅格，成功后
+切换内存数据并发布保留的 `safety/depth_settings` 消息。UKC、前瞻预警和航线水深节点
+接收同一份设置；后加入的节点也能接收当前运行中的配置。用户区域不写入任何文件，
+校验或构建失败时保留原有内存数据。
 
 预设浅滩、地形起伏和 CSV 水深始终作为原始底图保留，不复制到用户区域列表。
 每次编辑从原始矩阵叠加当前用户区域；区域重叠时取较浅的用户设置值，删除最后一个区域后完整恢复原矩阵。
-用户设置保存为 v2，兼容读取 v1 并排除旧界面自动带入的预设区域。
-
-默认保存位置按命名空间划分：
-`$ROS_HOME/enc_grounding_warning/<namespace>/depth_settings.yaml`（`ROS_HOME` 默认 `~/.ros`）。
-单独启动本包时，可用 `depth_settings_file:=/path/to/depth_settings.yaml` 显式指定，
-launch 会将同一路径传给全部四个节点。损坏或不合法的保存文件会导致启动报错，
-避免静默使用与已保存设置不同的水深。
 
 ## 文档
 

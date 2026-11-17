@@ -10,7 +10,6 @@ from geometry_msgs.msg import PoseStamped, TransformStamped
 from nav_msgs.msg import Path
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
-from rclpy.parameter import Parameter
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from tf2_ros import StaticTransformBroadcaster
 from usv_interfaces.msg import VesselState
@@ -25,7 +24,7 @@ from enc_grounding_warning.route_depth_publisher_node import RouteDepthPublisher
 from enc_grounding_warning.ukc_estimator_node import UkcEstimatorNode
 
 
-def test_edit_save_sync_restart_and_restore(tmp_path, monkeypatch):
+def test_edit_sync_and_session_only_restart(tmp_path, monkeypatch):
     monkeypatch.setenv("ROS_LOG_DIR", str(tmp_path / "logs"))
     grid = tmp_path / "grid.yaml"
     grid.write_text(yaml.safe_dump({"depth_grid": {
@@ -39,11 +38,9 @@ def test_edit_save_sync_restart_and_restore(tmp_path, monkeypatch):
                 "trim_allowance_m": 0.03, "route_corridor_half_width_m": 3.0},
         "grid_publish": {"grounding_risk_grid": False},
     }))
-    saved = tmp_path / "saved" / "depth.yaml"
     rclpy.init(args=[
         "--ros-args", "-r", "__ns:=/depth_editor_test",
         "-p", f"depth_grid_file:={grid}", "-p", f"params_file:={params}",
-        "-p", f"depth_settings_file:={saved}",
         "-p", "near_extent_m:=20.0", "-p", "near_resolution_m:=1.0",
     ])
     executor = SingleThreadedExecutor()
@@ -149,13 +146,11 @@ def test_edit_save_sync_restart_and_restore(tmp_path, monkeypatch):
         for node in (authority, ukc, warning, route):
             assert node.provider.settings == custom
 
-        # A consumer without the saved file must receive the retained settings.
-        late = add(Node("late_depth_consumer", parameter_overrides=[
-            Parameter("depth_settings_file", value=str(tmp_path / "other_host.yaml")),
-        ]))
+        # A consumer joining later must receive the retained live settings.
+        late = add(Node("late_depth_consumer"))
         late_provider = LiveDepthProvider(late, str(grid))
         until(lambda: late_provider.query_point(0, 0)["depth"] == pytest.approx(0.6))
-        # Invalid editor input must leave the active and saved settings intact.
+        # Invalid editor input must leave the active settings intact.
         invalid = {**custom, "base_depth_m": -1.0}
         assert not configure(invalid).success
         assert authority.provider.settings == custom
@@ -170,29 +165,20 @@ def test_edit_save_sync_restart_and_restore(tmp_path, monkeypatch):
 
         assert configure(custom).success
         until(lambda: messages["regions"].markers[0].action == Marker.ADD)
-        before = saved.read_bytes()
-        original_save = authority.provider.store.save
 
-        def reject_write(settings):
-            raise PermissionError("read-only settings location")
-
-        authority.provider.store.save = reject_write
-        assert not configure({**safe, "base_depth_m": 8.0}).success
-        assert authority.provider.query_point(0, 0)["depth"] == pytest.approx(0.6)
-        assert saved.read_bytes() == before
-        assert messages["regions"].markers[0].action == Marker.ADD
-        authority.provider.store.save = original_save
-
-        # Recreate the authority: settings are restored before any new request.
+        # Recreate the authority: user regions are session-only, so restarting
+        # the node returns to the original grid settings.
         executor.remove_node(authority)
         nodes.remove(authority)
         authority.destroy_node()
         old_ring_stamp = messages["regions"].markers[0].header.stamp
         authority = add(DepthProviderNode())
-        assert authority.provider.query_point(0, 0)["depth"] == pytest.approx(0.6)
+        assert not authority.provider.settings["enabled"]
+        assert authority.provider.query_point(0, 0)["depth"] == pytest.approx(5.0)
+        assert authority.provider.query_point(25, 25)["depth"] == pytest.approx(1.1)
         assert configure().settings.base_depth_m == 5.0
         until(lambda: messages["regions"].markers[0].header.stamp != old_ring_stamp)
-        assert messages["regions"].markers[0].action == Marker.ADD
+        assert messages["regions"].markers[0].action == Marker.DELETE
 
         restored = configure({**safe, "enabled": False})
         assert restored.success
