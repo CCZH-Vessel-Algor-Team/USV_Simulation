@@ -27,6 +27,9 @@ Panels:
   - Class: enc_grounding_warning_rviz/GroundingWarningPanel
     Name: GroundingWarningPanel
     Namespace: usv_1
+  - Class: enc_grounding_warning_rviz/DepthSettingsPanel
+    Name: 水深设置
+    Namespace: usv_1
   - Class: env_panel/VrxEnvPanel
     Name: VrxEnvPanel
   - Class: env_panel/StaticBuoyConfig
@@ -99,6 +102,18 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /storm_field/markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: 自定义水深区域
+      Namespaces:
+        {}
+      Topic:
+        Depth: 1
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /usv_1/safety/depth_region_markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
@@ -785,6 +800,8 @@ Visualization Manager:
     - Class: env_panel/DynamicShipTool
     - Class: nav2_rviz_plugins/GoalTool
     - Class: env_panel/StormPoint
+    - Class: enc_grounding_warning_rviz/DepthPointTool
+      Topic: /usv_1/safety/depth_point
     - Class: env_panel/StaticBuoyPoint
       Single click: true
       Topic:

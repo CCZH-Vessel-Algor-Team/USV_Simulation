@@ -1,5 +1,5 @@
 std_msgs/Header header
-uint8 level               # 1=INFO 2=WARNING 3=CRITICAL
+uint8 level               # 0=CLEARED 1=INFO 2=WARNING 3=CRITICAL
 uint8 type                # 1=CURRENT 2=LOOKAHEAD 3=ROUTE
 float32 min_ukc_m
 float32 ukc_required_m

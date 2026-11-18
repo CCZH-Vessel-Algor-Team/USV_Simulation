@@ -4,4 +4,14 @@
          base_class_type="rviz_common::Panel">
     <description>Panel showing UKC / grounding alert / depth grid status.</description>
   </class>
+  <class name="enc_grounding_warning_rviz/DepthSettingsPanel"
+         type="enc_grounding_warning_rviz::DepthSettingsPanel"
+         base_class_type="rviz_common::Panel">
+    <description>独立水深设置：地图打点立即应用区域大小和水深，删除区域自动恢复原始水深。</description>
+  </class>
+  <class name="enc_grounding_warning_rviz/DepthPointTool"
+         type="enc_grounding_warning_rviz::DepthPointTool"
+         base_class_type="rviz_common::Tool">
+    <description>单击设置一个水深区域后自动退出打点，成功应用后显示深红色圆环。</description>
+  </class>
 </library>

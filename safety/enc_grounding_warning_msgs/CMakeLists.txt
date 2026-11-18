@@ -16,7 +16,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GroundingAlert.msg"
   "msg/GroundingRiskGrid.msg"
   "msg/RouteDepthProfile.msg"
+  "msg/DepthShoal.msg"
+  "msg/DepthSettings.msg"
   "srv/RouteCheck.srv"
+  "srv/ConfigureDepth.srv"
   DEPENDENCIES std_msgs nav_msgs
 )
 

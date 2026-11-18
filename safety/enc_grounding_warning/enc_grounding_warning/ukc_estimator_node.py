@@ -15,7 +15,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 from enc_grounding_warning_msgs.msg import GroundingRiskGrid, UKCState
 
-from .bathymetry import SimGridProvider
+from .live_depth import LiveDepthProvider
 from .common import (
     default_config_path,
     load_grid_publish_flags,
@@ -50,7 +50,9 @@ class UkcEstimatorNode(Node):
         depth_grid_file = self.get_parameter("depth_grid_file").value
         if not depth_grid_file:
             depth_grid_file = default_config_path("sim_depth_grid.yaml")
-        self.provider = SimGridProvider(depth_grid_file)
+        self.provider = LiveDepthProvider(
+            self, depth_grid_file, on_change=self._depth_changed
+        )
 
         qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
         self.vessel_sub = self.create_subscription(
@@ -91,6 +93,10 @@ class UkcEstimatorNode(Node):
         self.risk_timer = None
         if self.risk_pub is not None:
             self.risk_timer = self.create_timer(1.0, self.publish_risk_grid)
+
+    def _depth_changed(self):
+        self._risk_counter = 0
+        self._active_risk = None
 
     def vessel_cb(self, msg: VesselState):
         self.latest_vessel = msg

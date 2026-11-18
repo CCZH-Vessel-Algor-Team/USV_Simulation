@@ -19,7 +19,8 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 from enc_grounding_warning_msgs.msg import DepthGrid
 
-from .bathymetry import SimGridProvider, UNKNOWN_DEPTH
+from .bathymetry import UNKNOWN_DEPTH
+from .live_depth import LiveDepthProvider
 from .common import (
     default_config_path,
     load_grid_publish_flags,
@@ -72,7 +73,7 @@ class RouteDepthPublisherNode(Node):
         depth_grid_file = self.get_parameter("depth_grid_file").value
         if not depth_grid_file:
             depth_grid_file = default_config_path("sim_depth_grid.yaml")
-        self.provider = SimGridProvider(depth_grid_file)
+        self.provider = LiveDepthProvider(self, depth_grid_file)
 
         qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE)
         self.plan_sub = self.create_subscription(Path, "plan", self.plan_cb, qos)

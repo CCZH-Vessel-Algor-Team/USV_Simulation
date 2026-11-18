@@ -14,16 +14,22 @@ find_package(pluginlib REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets)
 find_package(rclcpp REQUIRED)
 find_package(rviz_common REQUIRED)
+find_package(rviz_rendering REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
 set(panel_headers_to_moc
   include/enc_grounding_warning_rviz/grounding_warning_panel.hpp
+  include/enc_grounding_warning_rviz/depth_settings_panel.hpp
+  include/enc_grounding_warning_rviz/depth_point_tool.hpp
 )
 
 set(library_name ${PROJECT_NAME})
 
 add_library(${library_name} SHARED
   src/grounding_warning_panel.cpp
+  src/depth_settings_panel.cpp
+  src/depth_point_tool.cpp
   ${panel_headers_to_moc}
 )
 
@@ -37,6 +43,8 @@ ament_target_dependencies(${library_name}
   pluginlib
   rclcpp
   rviz_common
+  rviz_rendering
+  geometry_msgs
   std_msgs
 )
 
@@ -67,6 +75,15 @@ ament_export_dependencies(
   pluginlib
   rclcpp
   rviz_common
+  rviz_rendering
+  geometry_msgs
   std_msgs
 )
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_depth_panel test/test_depth_panel.cpp)
+  target_link_libraries(test_depth_panel ${library_name} Qt5::Widgets)
+  ament_target_dependencies(test_depth_panel rclcpp enc_grounding_warning_msgs rviz_common geometry_msgs pluginlib)
+endif()
 ament_package()
