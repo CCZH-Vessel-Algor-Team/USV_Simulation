@@ -25,6 +25,10 @@ public:
     panel.publishConfig();
   }
   static QString status(const DynamicShipPanel & panel) {return panel.config_status_->text();}
+  static QString actionStatus(const DynamicShipPanel & panel) {return panel.action_status_->text();}
+  static void clearAll(DynamicShipPanel & panel) {panel.clear_all_button_->click();}
+  static bool clearReady(const DynamicShipPanel & panel)
+  {return panel.clear_client_->service_is_ready();}
   static void displayAndDelete(DynamicShipPanel & panel)
   {
     panel.instance_models_["instance_a"] = "huge_test_model";
@@ -98,10 +102,11 @@ TEST(DynamicShipPanel, KeepsPlacementModesAndManageButtonsWithoutManualRetry)
   }
 }
 
-TEST(DynamicShipPanel, QueriesBackendRetriesFailuresConfirmsAndDeletesByRawInstanceName)
+TEST(DynamicShipPanel, QueriesBackendRetriesFailuresAndManagesShips)
 {
   auto backend = std::make_shared<rclcpp::Node>("dynamic_ship_panel_test_backend");
   std::atomic<int> huge_requests{0};
+  std::atomic<bool> clear_success{false};
   std::mutex mutex;
   std::string deleted;
   auto models = backend->create_service<usv_interfaces::srv::ListDynamicShipModels>(
@@ -134,6 +139,13 @@ TEST(DynamicShipPanel, QueriesBackendRetriesFailuresConfirmsAndDeletesByRawInsta
       deleted = request->model_name;
       response->success = true;
     });
+  auto clear = backend->create_service<usv_interfaces::srv::ClearDynamicShips>(
+    "/dynamic_ship/clear", [&clear_success](
+      const std::shared_ptr<usv_interfaces::srv::ClearDynamicShips::Request>,
+      const std::shared_ptr<usv_interfaces::srv::ClearDynamicShips::Response> response) {
+      response->success = clear_success.load();
+      response->message = response->success ? "Cleared 1 of 1 ships" : "intentional clear failure";
+    });
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(backend);
   std::thread thread([&executor]() {executor.spin();});
@@ -151,6 +163,7 @@ TEST(DynamicShipPanel, QueriesBackendRetriesFailuresConfirmsAndDeletesByRawInsta
   ASSERT_TRUE(waitFor([&panel]() {return Peer::status(panel).contains("intentional retry test");}));
   EXPECT_FALSE(Peer::applied(panel));
   ASSERT_TRUE(waitFor([&panel]() {return Peer::applied(panel);}));
+  EXPECT_TRUE(Peer::status(panel).isEmpty());
   EXPECT_GE(huge_requests.load(), 2);
   Peer::timeout(panel);
   EXPECT_FALSE(Peer::applied(panel));
@@ -161,6 +174,16 @@ TEST(DynamicShipPanel, QueriesBackendRetriesFailuresConfirmsAndDeletesByRawInsta
     std::lock_guard<std::mutex> lock(mutex);
     return deleted == "instance_a";
   }));
+  ASSERT_TRUE(waitFor([&panel]() {return Peer::clearReady(panel);}));
+  ASSERT_TRUE(waitFor([&panel]() {return Peer::actionStatus(panel).startsWith("删除成功：");}));
+  Peer::clearAll(panel);
+  ASSERT_TRUE(waitFor([&panel]() {
+    return Peer::actionStatus(panel).startsWith("清空未完成：");
+  }));
+  clear_success.store(true);
+  Peer::clearAll(panel);
+  EXPECT_FALSE(Peer::actionStatus(panel).isEmpty());
+  ASSERT_TRUE(waitFor([&panel]() {return Peer::actionStatus(panel).isEmpty();}));
   // A new panel is not incorrectly treated as already configured by static
   // last-values left behind by an older panel instance.
   DynamicShipPanel restored;

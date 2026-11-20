@@ -407,7 +407,7 @@ void DynamicShipPanel::publishConfig()
           config_pending_ = false;
           if (response->success && response->model_id == id) {
             applied_revision_ = revision;
-            if (revision == revision_) config_status_->setText("配置已确认；可点击/拖拽生成新船");
+            if (revision == revision_) config_status_->clear();
             next_config_ms_ = 0;
           } else {
             applied_revision_ = 0;
@@ -457,8 +457,11 @@ void DynamicShipPanel::onClearAllClicked()
       [this](rclcpp::Client<usv_interfaces::srv::ClearDynamicShips>::SharedFuture future) {
         auto response = future.get();
         QMetaObject::invokeMethod(this, [this, response]() {
-          action_status_->setText((response->success ? "清空成功：" : "清空未完成：") +
-                                 QString::fromStdString(response->message));
+          if (response->success) {
+            action_status_->clear();
+          } else {
+            action_status_->setText("清空未完成：" + QString::fromStdString(response->message));
+          }
         }, Qt::QueuedConnection);
       });
 }
