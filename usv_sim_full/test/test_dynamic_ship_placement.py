@@ -14,7 +14,7 @@ from usv_sim_full.scripts.dynamic_ship_manager_node import DynamicShipManager
 def make_manager():
     node = DynamicShipManager.__new__(DynamicShipManager)
     node._ship_counter = 0
-    node._read_config = Mock(return_value=(37.0, 3.0, 'box', 50.0))
+    node._read_config = Mock(return_value=(37.0, 3.0, 'debug_box', 50.0))
     node._spawn_ship_at = Mock(return_value=True)
     node.get_logger = Mock(return_value=Mock())
     return node
@@ -42,10 +42,10 @@ def pose_message(yaw):
 ])
 def test_click_uses_panel_heading(virtual, heading, yaw):
     node = make_manager()
-    node._read_config.return_value = (heading, 3.0, 'box', 50.0)
+    node._read_config.return_value = (heading, 3.0, 'debug_box', 50.0)
     node.on_spawn_point(point_message(), virtual=virtual)
     node._spawn_ship_at.assert_called_once_with(
-        'dyn_target_1', 12.0, -34.0, pytest.approx(yaw), 50.0, 'box', 3.0,
+        'dyn_target_1', 12.0, -34.0, pytest.approx(yaw), 50.0, 'debug_box', 3.0,
         virtual=virtual)
 
 
@@ -57,7 +57,7 @@ def test_drag_uses_arrow_and_does_not_change_next_click(virtual, yaw):
     node.on_spawn_point(point_message(), virtual=virtual)
     drag, click = node._spawn_ship_at.call_args_list
     assert drag.args == (
-        'dyn_target_1', 12.0, -34.0, pytest.approx(yaw), 50.0, 'box', 3.0)
+        'dyn_target_1', 12.0, -34.0, pytest.approx(yaw), 50.0, 'debug_box', 3.0)
     assert click.args[0] == 'dyn_target_2'
     assert click.args[3] == pytest.approx(math.pi / 2 - math.radians(37.0))
     assert drag.kwargs == click.kwargs == {'virtual': virtual}
@@ -98,6 +98,9 @@ def test_virtual_target_can_be_added_and_removed_without_gazebo(clear_all):
     node._spawn_ship_at = DynamicShipManager._spawn_ship_at.__get__(node)
     node.backend = 'gazebo'
     node.default_mesh_profile = ''
+    node.config_base_dir = ''
+    node.world_name = 'test'
+    node.catalog = None
     node._ships_lock = threading.Lock()
     node.ships, node._pending_spawns, node._missing_model_counts = {}, {}, {}
     node._retired_ships = set()

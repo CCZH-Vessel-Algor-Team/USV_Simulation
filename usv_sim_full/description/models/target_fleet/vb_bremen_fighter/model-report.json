@@ -1,0 +1,77 @@
+{
+  "id": "vb_bremen_fighter",
+  "name": "VB BREMEN FIGHTER",
+  "kind": "offshore_tug",
+  "length": 48.81,
+  "beam": 13.8,
+  "draft": 6.0,
+  "deck": 2.8,
+  "source": "https://www.boluda.eu/fleetlist",
+  "photo": "https://static.vesselfinder.net/images/media/20200715/58305-13ae0a5c70ae3541c94813cd63436bd0.jpg",
+  "colors": [
+    [
+      28,
+      48,
+      76
+    ],
+    [
+      134,
+      46,
+      33
+    ],
+    [
+      144,
+      118,
+      84
+    ],
+    [
+      238,
+      235,
+      220
+    ],
+    [
+      23,
+      31,
+      36
+    ],
+    [
+      33,
+      77,
+      98
+    ],
+    [
+      180,
+      182,
+      161
+    ],
+    [
+      190,
+      45,
+      38
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": true,
+  "hull_dimensions_m": [
+    48.810001373291016,
+    13.800000190734863,
+    8.799999952316284
+  ],
+  "bounds_min_m": [
+    -24.406999588012695,
+    -6.900000095367432,
+    -6.0
+  ],
+  "bounds_max_m": [
+    24.405000686645508,
+    6.900000095367432,
+    11.741999626159668
+  ],
+  "triangles": 1224,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Published length and beam; superstructure and underwater shape are photo-based approximations. Draft verification is recorded separately.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

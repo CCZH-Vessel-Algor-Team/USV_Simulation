@@ -1,0 +1,72 @@
+{
+  "id": "mark",
+  "name": "MARK",
+  "kind": "trawler",
+  "length": 86.1,
+  "beam": 16.0,
+  "draft": 5.4,
+  "deck": 3.5,
+  "source": "https://tersanshipyard.com/en/projects/mark",
+  "photo": "https://www.naust.is/asset/7851/imo.9690688-mark.jpg",
+  "colors": [
+    [
+      25,
+      34,
+      36
+    ],
+    [
+      138,
+      45,
+      34
+    ],
+    [
+      31,
+      117,
+      74
+    ],
+    [
+      238,
+      238,
+      223
+    ],
+    [
+      22,
+      40,
+      44
+    ],
+    [
+      28,
+      67,
+      86
+    ],
+    [
+      222,
+      166,
+      52
+    ],
+    [
+      183,
+      46,
+      37
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": false,
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet_expansion",
+  "lane_y_m": 58.855,
+  "start_x_m": -43.05,
+  "start_z_m": 0.2,
+  "mass_kg": 5837655.681899999,
+  "inertia_kg_m2": [
+    128511125.12396021,
+    2959647696.9528155,
+    3011092037.6495595
+  ],
+  "center_of_mass_z_m": -3.24,
+  "buoyancy_collision_box_m": [
+    77.49,
+    13.6,
+    8.9
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

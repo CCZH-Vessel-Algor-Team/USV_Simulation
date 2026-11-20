@@ -117,6 +117,11 @@ if(BUILD_TESTING)
     target_link_libraries(${test_name} ${PROJECT_NAME} Qt5::Widgets)
     set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
   endforeach()
+  ament_add_gtest(dynamic_ship_panel_test test/dynamic_ship_panel_test.cpp)
+  ament_target_dependencies(dynamic_ship_panel_test rclcpp rviz_common std_msgs usv_interfaces)
+  target_link_libraries(dynamic_ship_panel_test ${PROJECT_NAME} Qt5::Widgets)
+  set_tests_properties(dynamic_ship_panel_test PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;ROS_DOMAIN_ID=175")
 endif()
 
 ament_package()

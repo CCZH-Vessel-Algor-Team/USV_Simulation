@@ -35,6 +35,10 @@ namespace vrx
   ///   <vertex>   Path to wave vertex program
   ///   <fragment> Path to wave fragment program
   /// <wavefield>  Wavefield parameters - see Wavefield.hh
+  /// <current>    Optional visual-only advection (matching shader required):
+  ///   <topic>   Gazebo Vector3d world-frame current velocity, metres/second
+  ///   <size>    Water X/Y extent in metres for a complete base UV span
+  ///   <uv_sign> Optional U/V axis signs (+1 or -1), default (1, 1)
   ///
   class WaveVisual
       : public gz::sim::System,

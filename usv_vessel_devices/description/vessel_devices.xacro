@@ -1,0 +1,210 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Keep a named controlled lens separate from the permanently dark housing. -->
+  <xacro:macro name="vessel_lamp" params="ns name parent xyz radius mesh:='' mesh_scale:='1 1 1' housing:=''">
+    <link name="${ns}/light_${name}_link">
+      <inertial>
+        <mass value="0.05"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+      </inertial>
+      <visual name="lamp">
+        <geometry>
+          <xacro:if value="${mesh != ''}"><mesh filename="${mesh}" scale="${mesh_scale}"/></xacro:if>
+          <xacro:unless value="${mesh != ''}"><sphere radius="${radius}"/></xacro:unless>
+        </geometry>
+        <material name="${ns}_${name}_off"><color rgba="0.025 0.025 0.025 1"/></material>
+      </visual>
+      <xacro:if value="${housing != ''}">
+        <visual name="housing">
+          <geometry><mesh filename="${housing}" scale="${mesh_scale}"/></geometry>
+          <material name="lamp_housing"><color rgba="0.08 0.09 0.10 1"/></material>
+        </visual>
+      </xacro:if>
+    </link>
+    <joint name="${ns}/light_${name}_joint" type="fixed">
+      <parent link="${parent}"/><child link="${ns}/light_${name}_link"/>
+      <origin xyz="${xyz}"/>
+    </joint>
+    <gazebo reference="${ns}/light_${name}_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>
+  </xacro:macro>
+
+  <!-- Emit models and plugin entries from the same ordered CAD list. -->
+  <xacro:macro name="extra_vessel_lamps" params="ns names mounts cfg ms meshes plugin">
+    <xacro:if value="${len(names) > 0}">
+      <xacro:property name="extra_name" value="${names[0]}"/>
+      <xacro:if value="${plugin}">
+        <xacro:property name="default_color" value="${'green' if extra_name in ['right_lower', 'aft_middle', 'forward_middle'] else 'red'}"/>
+        <xacro:property name="color" value="${cfg['extra_light_colors'].get(extra_name, default_color) if 'extra_light_colors' in cfg else default_color}"/>
+        <lamp><name>${extra_name}</name><link>${ns}/light_${extra_name}_link</link>
+          <color>${'1 0 0 1' if color == 'red' else '0 1 0 1'}</color></lamp>
+      </xacro:if>
+      <xacro:unless value="${plugin}">
+        <xacro:property name="mount" value="${mounts[extra_name]}"/>
+        <xacro:property name="scale" value="${ms*cfg.get('lamp_scale', 1.0)*cfg.get('mast_lamp_scale', 0.15)*mount['size_factor']}"/>
+        <xacro:property name="use_mesh" value="${cfg.get('lamp_use_cad', True)}"/>
+        <xacro:property name="radius" value="${cfg['lamp_radius']*scale}"/>
+        <xacro:vessel_lamp ns="${ns}" name="${extra_name}" parent="${ns}/mast_link"
+          xyz="${mount['xyz'][0]*ms} ${mount['xyz'][1]*ms} ${mount['xyz'][2]*ms+(0 if use_mesh else radius)}"
+          radius="${radius}" mesh="${meshes+'navigation_lamp_lens.stl' if use_mesh else ''}"
+          housing="${meshes+'navigation_lamp_housing.stl' if use_mesh else ''}" mesh_scale="${scale} ${scale} ${scale}"/>
+      </xacro:unless>
+      <xacro:extra_vessel_lamps ns="${ns}" names="${names[1:]}" mounts="${mounts}"
+        cfg="${cfg}" ms="${ms}" meshes="${meshes}" plugin="${plugin}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <!-- Additional roof fixtures stay fixed to the boat, independently of the mast. -->
+  <xacro:macro name="roof_vessel_lamps" params="ns names cfg meshes plugin">
+    <xacro:if value="${len(names) > 0}">
+      <xacro:property name="roof_name" value="${names[0]}"/>
+      <xacro:if value="${plugin}">
+        <lamp><name>${roof_name}</name><link>${ns}/light_${roof_name}_link</link>
+          <color>${'1 0 0 1' if 'left' in roof_name else '0 1 0 1'}</color></lamp>
+      </xacro:if>
+      <xacro:unless value="${plugin}">
+        <xacro:property name="roof_scale" value="${cfg.get('lamp_scale', 1.0)}"/>
+        <xacro:property name="roof_mesh" value="${cfg.get('lamp_use_cad', True)}"/>
+        <xacro:vessel_lamp ns="${ns}" name="${roof_name}" parent="${ns}/base_link"
+          xyz="${cfg['front_x'] if 'front' in roof_name else cfg['rear_x']} ${cfg['left_y'] if 'left' in roof_name else cfg['right_y']} ${cfg['roof_z']}"
+          radius="${cfg['lamp_radius']}" mesh="${meshes+'navigation_lamp_lens.stl' if roof_mesh else ''}"
+          housing="${meshes+'navigation_lamp_housing.stl' if roof_mesh else ''}" mesh_scale="${roof_scale} ${roof_scale} ${roof_scale}"/>
+      </xacro:unless>
+      <xacro:roof_vessel_lamps ns="${ns}" names="${names[1:]}" cfg="${cfg}" meshes="${meshes}" plugin="${plugin}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <xacro:macro name="vessel_devices" params="ns config_file">
+    <xacro:property name="cfg" value="${xacro.load_yaml(config_file)}"/>
+    <xacro:property name="meshes" value="file://$(find usv_vessel_devices)/description/meshes/"/>
+    <xacro:property name="cad" value="${xacro.load_yaml('$(find usv_vessel_devices)/description/meshes/cad_assets.json')}"/>
+    <xacro:property name="r" value="${cfg['lamp_radius']}"/>
+    <xacro:property name="lamp_cad" value="${cfg.get('lamp_use_cad', True)}"/>
+    <xacro:property name="ls" value="${cfg.get('lamp_scale', 1.0)}"/>
+    <xacro:property name="lamp_mesh" value="${meshes+'navigation_lamp_lens.stl' if lamp_cad else ''}"/>
+    <xacro:property name="housing_mesh" value="${meshes+'navigation_lamp_housing.stl' if lamp_cad else ''}"/>
+    <xacro:property name="mast_cad" value="${cfg.get('mast_use_cad', True)}"/>
+    <xacro:property name="ms" value="${cfg['mast_length']/cad['mast']['native_height_m']}"/>
+    <xacro:property name="hinge_z" value="${cad['mast']['hinge_height_m']*ms if mast_cad else 0.0}"/>
+    <xacro:property name="moving_length" value="${cfg['mast_length']-hinge_z}"/>
+    <xacro:property name="moving_radius" value="${cfg['mast_radius']*(ms if mast_cad else 1.0)}"/>
+    <xacro:property name="on_mast" value="${cfg.get('lights_on_mast', True) and mast_cad}"/>
+    <xacro:property name="slots" value="${cad['mast']['navigation_light_mounts_from_hinge_m']}"/>
+    <xacro:property name="light_parent" value="${ns+'/mast_link' if on_mast else ns+'/base_link'}"/>
+    <xacro:property name="fit" value="${ms*cfg.get('mast_lamp_scale', 0.15) if on_mast else 1.0}"/>
+    <xacro:property name="light_scale" value="${ls*fit}"/>
+    <xacro:property name="light_radius" value="${r*fit*ls if on_mast else r}"/>
+    <xacro:property name="sphere_z" value="${light_radius if on_mast and not lamp_cad else 0.0}"/>
+    <xacro:property name="extra_names" value="${cad['mast']['extra_light_order'] if mast_cad and cfg.get('extra_lights_enabled', True) else []}"/>
+    <!-- In legacy roof/primitive mode the original four already occupy these
+         positions; do not create a second overlapping set there. -->
+    <xacro:property name="roof_names" value="${['roof_left_front', 'roof_left_rear', 'roof_right_front', 'roof_right_rear'] if on_mast and cfg.get('roof_lights_enabled', True) else []}"/>
+    <xacro:roof_vessel_lamps ns="${ns}" names="${roof_names}" cfg="${cfg}" meshes="${meshes}" plugin="${False}"/>
+    <xacro:extra_vessel_lamps ns="${ns}" names="${extra_names}" mounts="${cad['mast']['extra_light_mounts_from_hinge_m']}"
+      cfg="${cfg}" ms="${ms}" meshes="${meshes}" plugin="${False}"/>
+    <!-- The original front/rear ROS IDs map to upper/lower crossbars. Coordinates
+         are relative to the moving hinge and uniformly follow the CAD scale. -->
+    <xacro:vessel_lamp ns="${ns}" name="left_front" parent="${light_parent}"
+      xyz="${slots['left_front'][0]*ms if on_mast else cfg['front_x']} ${slots['left_front'][1]*ms if on_mast else cfg['left_y']} ${slots['left_front'][2]*ms+sphere_z if on_mast else cfg['roof_z']}"
+      radius="${light_radius}" mesh="${lamp_mesh}" housing="${housing_mesh}" mesh_scale="${light_scale} ${light_scale} ${light_scale}"/>
+    <xacro:vessel_lamp ns="${ns}" name="left_rear" parent="${light_parent}"
+      xyz="${slots['left_rear'][0]*ms if on_mast else cfg['rear_x']} ${slots['left_rear'][1]*ms if on_mast else cfg['left_y']} ${slots['left_rear'][2]*ms+sphere_z if on_mast else cfg['roof_z']}"
+      radius="${light_radius}" mesh="${lamp_mesh}" housing="${housing_mesh}" mesh_scale="${light_scale} ${light_scale} ${light_scale}"/>
+    <xacro:vessel_lamp ns="${ns}" name="right_front" parent="${light_parent}"
+      xyz="${slots['right_front'][0]*ms if on_mast else cfg['front_x']} ${slots['right_front'][1]*ms if on_mast else cfg['right_y']} ${slots['right_front'][2]*ms+sphere_z if on_mast else cfg['roof_z']}"
+      radius="${light_radius}" mesh="${lamp_mesh}" housing="${housing_mesh}" mesh_scale="${light_scale} ${light_scale} ${light_scale}"/>
+    <xacro:vessel_lamp ns="${ns}" name="right_rear" parent="${light_parent}"
+      xyz="${slots['right_rear'][0]*ms if on_mast else cfg['rear_x']} ${slots['right_rear'][1]*ms if on_mast else cfg['right_y']} ${slots['right_rear'][2]*ms+sphere_z if on_mast else cfg['roof_z']}"
+      radius="${light_radius}" mesh="${lamp_mesh}" housing="${housing_mesh}" mesh_scale="${light_scale} ${light_scale} ${light_scale}"/>
+    <xacro:if value="${mast_cad}">
+      <xacro:property name="bb" value="${cad['mast']['meshes']['mast_base.stl']['bounds_m']}"/>
+      <xacro:property name="sx" value="${(bb[3]-bb[0])*ms}"/>
+      <xacro:property name="sy" value="${(bb[4]-bb[1])*ms}"/>
+      <xacro:property name="sz" value="${(bb[5]-bb[2])*ms}"/>
+      <xacro:property name="base_mass" value="${cfg.get('mast_base_mass', 0.2)}"/>
+      <link name="${ns}/mast_base_link">
+        <inertial>
+          <origin xyz="${(bb[0]+bb[3])*ms/2} ${(bb[1]+bb[4])*ms/2} ${(bb[2]+bb[5])*ms/2}"/>
+          <mass value="${base_mass}"/>
+          <inertia ixx="${base_mass*(sy*sy+sz*sz)/12}" iyy="${base_mass*(sx*sx+sz*sz)/12}"
+            izz="${base_mass*(sx*sx+sy*sy)/12}" ixy="0" ixz="0" iyz="0"/>
+        </inertial>
+        <visual name="mast_base">
+          <geometry><mesh filename="${meshes}mast_base.stl" scale="${ms} ${ms} ${ms}"/></geometry>
+          <material name="mast_base_metal"><color rgba="0.45 0.48 0.52 1"/></material>
+        </visual>
+        <collision name="mast_base">
+          <origin xyz="${(bb[0]+bb[3])*ms/2} ${(bb[1]+bb[4])*ms/2} ${(bb[2]+bb[5])*ms/2}"/>
+          <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+        </collision>
+      </link>
+      <joint name="${ns}/mast_base_joint" type="fixed">
+        <parent link="${ns}/base_link"/><child link="${ns}/mast_base_link"/>
+        <origin xyz="${cfg['mast_xyz'][0]} ${cfg['mast_xyz'][1]} ${cfg['mast_xyz'][2]}"/>
+      </joint>
+      <gazebo reference="${ns}/mast_base_joint"><preserveFixedJoint>true</preserveFixedJoint></gazebo>
+    </xacro:if>
+
+    <link name="${ns}/mast_link">
+      <inertial>
+        <origin xyz="0 0 ${moving_length/2}"/>
+        <mass value="${cfg['mast_mass']}"/>
+        <inertia ixx="${cfg['mast_mass']*(3*moving_radius**2+moving_length**2)/12}"
+          iyy="${cfg['mast_mass']*(3*moving_radius**2+moving_length**2)/12}"
+          izz="${cfg['mast_mass']*moving_radius**2/2}" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+      <visual name="mast">
+        <xacro:if value="${mast_cad}">
+          <geometry><mesh filename="${meshes}mast_body.stl" scale="${ms} ${ms} ${ms}"/></geometry>
+        </xacro:if>
+        <xacro:unless value="${mast_cad}">
+          <origin xyz="0 0 ${moving_length/2}"/>
+          <geometry><cylinder radius="${moving_radius}" length="${moving_length}"/></geometry>
+        </xacro:unless>
+        <material name="mast_metal"><color rgba="0.55 0.58 0.62 1"/></material>
+      </visual>
+      <collision name="mast">
+        <origin xyz="0 0 ${moving_length/2}"/>
+        <geometry><cylinder radius="${moving_radius}" length="${moving_length}"/></geometry>
+      </collision>
+    </link>
+    <joint name="${ns}/mast_joint" type="revolute">
+      <parent link="${ns+'/mast_base_link' if mast_cad else ns+'/base_link'}"/>
+      <child link="${ns}/mast_link"/>
+      <xacro:if value="${mast_cad}"><origin xyz="0 0 ${hinge_z}"/></xacro:if>
+      <xacro:unless value="${mast_cad}">
+        <origin xyz="${cfg['mast_xyz'][0]} ${cfg['mast_xyz'][1]} ${cfg['mast_xyz'][2]}"/>
+      </xacro:unless>
+      <axis xyz="0 -1 0"/>
+      <limit lower="0" upper="${cfg['mast_max_angle']}" effort="100" velocity="${cfg['mast_speed']}"/>
+      <dynamics damping="0.5" friction="0.0"/>
+    </joint>
+    <xacro:if value="${mast_cad}">
+      <xacro:property name="lamp_xyz" value="${cad['mast']['lens_origin_from_hinge_m']}"/>
+      <xacro:vessel_lamp ns="${ns}" name="mast" parent="${ns}/mast_link"
+        xyz="${lamp_xyz[0]*ms} ${lamp_xyz[1]*ms} ${lamp_xyz[2]*ms}" radius="${r}"
+        mesh="${meshes}mast_lens.stl" mesh_scale="${ms} ${ms} ${ms}"/>
+    </xacro:if>
+    <xacro:unless value="${mast_cad}">
+      <xacro:vessel_lamp ns="${ns}" name="mast" parent="${ns}/mast_link"
+        xyz="0 0 ${moving_length+r}" radius="${r}"/>
+    </xacro:unless>
+
+    <gazebo>
+      <plugin filename="libVesselDevices.so" name="usv_vessel_devices::VesselDevices">
+        <namespace>${ns}</namespace>
+        <mast_joint>${ns}/mast_joint</mast_joint>
+        <mast_max_angle>${cfg['mast_max_angle']}</mast_max_angle>
+        <mast_speed>${cfg['mast_speed']}</mast_speed>
+        <mast_tolerance>${cfg['mast_tolerance']}</mast_tolerance>
+        <lamp><name>left_front</name><link>${ns}/light_left_front_link</link><color>1 0 0 1</color></lamp>
+        <lamp><name>left_rear</name><link>${ns}/light_left_rear_link</link><color>1 0 0 1</color></lamp>
+        <lamp><name>right_front</name><link>${ns}/light_right_front_link</link><color>0 1 0 1</color></lamp>
+        <lamp><name>right_rear</name><link>${ns}/light_right_rear_link</link><color>0 1 0 1</color></lamp>
+        <lamp><name>mast</name><link>${ns}/light_mast_link</link><color>1 1 1 1</color></lamp>
+        <xacro:extra_vessel_lamps ns="${ns}" names="${extra_names}" mounts="${cad['mast']['extra_light_mounts_from_hinge_m']}"
+          cfg="${cfg}" ms="${ms}" meshes="${meshes}" plugin="${True}"/>
+        <xacro:roof_vessel_lamps ns="${ns}" names="${roof_names}" cfg="${cfg}" meshes="${meshes}" plugin="${True}"/>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="vessel_devices_demo">
+  <xacro:arg name="namespace" default="usv_1"/>
+  <xacro:arg name="config_file" default="$(find usv_vessel_devices)/config/devices.yaml"/>
+  <xacro:property name="ns" value="$(arg namespace)"/>
+  <!-- A fixed test deck, not a replacement for the full boat hydrodynamics. -->
+  <link name="world"/>
+  <link name="${ns}/base_link">
+    <inertial><mass value="500"/><inertia ixx="100" iyy="100" izz="200" ixy="0" ixz="0" iyz="0"/></inertial>
+    <visual name="deck">
+      <origin xyz="0 0 1.4"/>
+      <geometry><box size="1.6 1.2 0.2"/></geometry>
+      <material name="deck"><color rgba="0.15 0.18 0.22 1"/></material>
+    </visual>
+  </link>
+  <joint name="anchor" type="fixed"><parent link="world"/><child link="${ns}/base_link"/></joint>
+  <xacro:include filename="$(find usv_vessel_devices)/description/vessel_devices.xacro"/>
+  <xacro:vessel_devices ns="${ns}" config_file="$(arg config_file)"/>
+  <gazebo>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher"/>
+  </gazebo>
+</robot>

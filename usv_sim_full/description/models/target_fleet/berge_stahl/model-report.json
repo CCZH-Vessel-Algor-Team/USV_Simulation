@@ -1,0 +1,78 @@
+{
+  "id": "berge_stahl",
+  "name": "BERGE STAHL",
+  "kind": "ore",
+  "length": 342.0,
+  "beam": 63.5,
+  "draft": 23.0,
+  "deck": 7.2,
+  "source": "https://www.thyssenkrupp-steel.com/media/content_1/publikationen/compact_2008_3_en.pdf",
+  "secondary_source": "https://www.martin1250shipmodels.nl/berge-stahl-2/",
+  "photo": "https://transportgeography.org/wp-content/uploads/bergestahl.jpg",
+  "colors": [
+    [
+      137,
+      55,
+      36
+    ],
+    [
+      114,
+      42,
+      29
+    ],
+    [
+      139,
+      78,
+      51
+    ],
+    [
+      231,
+      226,
+      208
+    ],
+    [
+      29,
+      36,
+      38
+    ],
+    [
+      36,
+      70,
+      81
+    ],
+    [
+      166,
+      124,
+      80
+    ],
+    [
+      205,
+      146,
+      42
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": true,
+  "hull_dimensions_m": [
+    342.0,
+    63.5,
+    30.199999809265137
+  ],
+  "bounds_min_m": [
+    -171.0019989013672,
+    -31.75,
+    -23.0
+  ],
+  "bounds_max_m": [
+    171.0,
+    31.75,
+    47.352500915527344
+  ],
+  "triangles": 1232,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Published length and beam; superstructure and underwater shape are photo-based approximations. Draft verification is recorded separately.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

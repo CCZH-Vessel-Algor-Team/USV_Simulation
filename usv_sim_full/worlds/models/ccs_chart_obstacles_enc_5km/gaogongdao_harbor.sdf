@@ -1,0 +1,549 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <model name="gaogongdao_local_harbor_v1">
+    <static>true</static>
+    <link name="harbor_structure">
+      <collision name="chart_matched_deck">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_deck_collision.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_0">
+        <pose>-75.29289299999999 -115.0 3.75 0 0 0.0</pose>
+        <geometry>
+          <box>
+            <size>3.414213999999987 0.75 1.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_1">
+        <pose>-29.292892999999992 -94.0 3.75 0 0 0.4427273913809915</pose>
+        <geometry>
+          <box>
+            <size>98.03795938940078 0.75 1.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_2">
+        <pose>39.0 -6.707107000000008 3.75 0 0 1.2234450278046172</pose>
+        <geometry>
+          <box>
+            <size>141.00705886315689 0.75 1.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_3">
+        <pose>63.0 65.58578599999998 3.75 0 0 1.5707963267948966</pose>
+        <geometry>
+          <box>
+            <size>12.0 0.75 1.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_4">
+        <pose>70.0 105.0 3.75 0 0 1.3642910272678388</pose>
+        <geometry>
+          <box>
+            <size>68.2791241079672 0.75 1.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_5">
+        <pose>78.0 150.41421400000002 3.75 0 0 1.4876550949064553</pose>
+        <geometry>
+          <box>
+            <size>24.08318915758459 0.75 1.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_6">
+        <pose>-36 -89 4.7 0 0 0.4426652872937413</pose>
+        <geometry>
+          <box>
+            <size>42 5.0 3.0</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_7">
+        <pose>-70 -109 4.550000000000001 0 0 0.4426652872937413</pose>
+        <geometry>
+          <box>
+            <size>5.0 3.0 2.7</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_8">
+        <pose>9 -34 4.65 0 0 1.2234793389075063</pose>
+        <geometry>
+          <box>
+            <size>15 5 2.9</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_9">
+        <pose>17 -8 4.9 0 0 1.2234793389075063</pose>
+        <geometry>
+          <box>
+            <size>19 5 3.4</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="building_or_wall_10">
+        <pose>38 52 4.6 0 0 1.2234793389075063</pose>
+        <geometry>
+          <box>
+            <size>6 4 2.8</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="harbor_blue">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_styled_blue.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.82</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_blue_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_blue_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_blue_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="harbor_concrete">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_styled_concrete.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.9</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_concrete_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_concrete_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_concrete_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="harbor_dark">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_styled_dark.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.85</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_dark_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_dark_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_dark_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="harbor_green">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_styled_green.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.88</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_green_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_green_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_green_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="harbor_red">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_styled_red.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.87</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_red_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_red_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_red_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="harbor_roof">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_styled_roof.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.8</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_roof_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_roof_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_roof_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="harbor_sand">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_styled_sand.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.95</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_sand_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_sand_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_sand_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="harbor_stone">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_styled_stone.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.95</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_stone_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_stone_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_stone_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+        <cast_shadows>false</cast_shadows>
+      </visual>
+      <visual name="causeway_fill_visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_causeway_fill.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.95</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_stone_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_stone_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_stone_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+        <cast_shadows>false</cast_shadows>
+      </visual>
+      <visual name="causeway_road_visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_causeway_road.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <pbr>
+            <metal>
+              <metalness>0</metalness>
+              <roughness>0.9</roughness>
+              <albedo_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_concrete_albedo.png</albedo_map>
+              <normal_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_concrete_normal.png</normal_map>
+              <roughness_map>model://ccs_chart_obstacles_enc_5km/textures/harbor_concrete_roughness.png</roughness_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="landing_visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_landing.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+      </visual>
+      <collision name="causeway_fill_collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_causeway_fill.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="causeway_road_collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_causeway_road.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="landing_collision">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_landing.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="riprap_band_contact">
+        <geometry>
+          <mesh>
+            <uri>meshes/gaogongdao_riprap_collision.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_00">
+        <pose>-26.999970902 -36.000014409 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>11.000021911 2.799977946 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_01">
+        <pose>-20.999970902 -54.000014409 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>11.000021911 2.799977946 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_02">
+        <pose>-35.999984220 -33.000019256 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>9.000021822 2.799943743 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_03">
+        <pose>-32.999984220 -42.000019256 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>9.000021822 2.799943743 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_04">
+        <pose>-29.999984220 -51.000019256 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>9.000021822 2.799943743 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_05">
+        <pose>3.000036261 31.000037288 0.200000000 0.000000000 0.000000000 -1.221714592</pose>
+        <geometry>
+          <box>
+            <size>10.000023576 3.000014603 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_06">
+        <pose>-2.999963108 33.000037882 0.200000000 0.000000000 0.000000000 -1.221714085</pose>
+        <geometry>
+          <box>
+            <size>10.000022892 3.000015543 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_07">
+        <pose>-8.999968596 35.000035521 0.200000000 0.000000000 0.000000000 -1.221714592</pose>
+        <geometry>
+          <box>
+            <size>10.000023576 3.000024940 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_08">
+        <pose>-14.999973401 37.000034682 0.200000000 0.000000000 0.000000000 -1.221718392</pose>
+        <geometry>
+          <box>
+            <size>10.000021866 3.000034336 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_blue_09">
+        <pose>-20.999973401 39.000034682 0.200000000 0.000000000 0.000000000 -1.221718392</pose>
+        <geometry>
+          <box>
+            <size>10.000021866 3.000034336 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_red_00">
+        <pose>-17.999984220 -39.000019256 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>9.000021822 2.799943743 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_red_01">
+        <pose>-14.999984220 -48.000019256 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>9.000021822 2.799943743 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_red_02">
+        <pose>-11.999984220 -57.000019256 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>9.000021822 2.799943743 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="moored_boat_red_03">
+        <pose>-23.999970902 -45.000014409 0.200000000 0.000000000 0.000000000 -1.221723583</pose>
+        <geometry>
+          <box>
+            <size>11.000021911 2.799977946 1.500000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_main_00">
+        <pose>-28.550000000 -39.300000000 1.100000000 0.000000000 0.000000000 -0.365747301</pose>
+        <geometry>
+          <box>
+            <size>35.230361906 2.000046966 0.600000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_main_01">
+        <pose>0.900000000 26.450000000 1.100000000 0.000000000 0.000000000 -0.365201450</pose>
+        <geometry>
+          <box>
+            <size>25.480489007 2.000063216 0.600000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_main_02">
+        <pose>26.800000000 110.400000000 1.100000000 0.000000000 0.000000000 -0.321750287</pose>
+        <geometry>
+          <box>
+            <size>35.417762240 2.000592826 0.600000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_00">
+        <pose>-20.650000000 -46.400000000 1.100000000 0.000000000 0.000000000 1.165904541</pose>
+        <geometry>
+          <box>
+            <size>7.615851890 0.900000552 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_01">
+        <pose>-30.050000000 -42.800000000 1.100000000 0.000000000 0.000000000 1.165904541</pose>
+        <geometry>
+          <box>
+            <size>7.615851890 0.900000552 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_02">
+        <pose>-39.450000000 -39.200000000 1.100000000 0.000000000 0.000000000 1.165904541</pose>
+        <geometry>
+          <box>
+            <size>7.615851890 0.900000552 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_03">
+        <pose>4.160291500 21.465837000 1.100000000 0.000000000 0.000000000 1.165904503</pose>
+        <geometry>
+          <box>
+            <size>6.987754756 0.900037187 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_04">
+        <pose>-0.476290500 23.238648500 1.100000000 0.000000000 0.000000000 1.165903977</pose>
+        <geometry>
+          <box>
+            <size>6.987756777 0.900037581 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_05">
+        <pose>-5.112878000 25.011460500 1.100000000 0.000000000 0.000000000 1.165904559</pose>
+        <geometry>
+          <box>
+            <size>6.987755332 0.900038106 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_06">
+        <pose>34.900000000 103.700000000 1.100000000 0.000000000 0.000000000 1.165904541</pose>
+        <geometry>
+          <box>
+            <size>7.616245809 0.899764201 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_07">
+        <pose>25.300000000 106.900000000 1.100000000 0.000000000 0.000000000 1.165904541</pose>
+        <geometry>
+          <box>
+            <size>7.616245809 0.899764201 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pontoon_finger_08">
+        <pose>15.700000000 110.100000000 1.100000000 0.000000000 0.000000000 1.165904541</pose>
+        <geometry>
+          <box>
+            <size>7.616245809 0.899764201 0.450000000</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

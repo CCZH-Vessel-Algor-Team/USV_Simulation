@@ -1,0 +1,348 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "model_id": "munich_maersk",
+      "display_name": "慕尼黑马士基号（集装箱船）",
+      "source_display_name": "MUNICH MAERSK",
+      "category": "container",
+      "backend": "fleet_sdf",
+      "sdf": "munich_maersk/model.sdf",
+      "length": 399.004,
+      "beam": 58.0,
+      "height": 44.5,
+      "draft": 16.5,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 399.0,
+      "reference_beam": 58.0,
+      "mesh_bounds_m": [
+        [
+          -199.502,
+          -29.0,
+          -16.5
+        ],
+        [
+          199.5,
+          29.0,
+          44.5
+        ]
+      ]
+    },
+    {
+      "model_id": "berge_stahl",
+      "display_name": "伯格施塔尔号（矿砂船）",
+      "source_display_name": "BERGE STAHL",
+      "category": "ore",
+      "backend": "fleet_sdf",
+      "sdf": "berge_stahl/model.sdf",
+      "length": 342.004,
+      "beam": 63.5,
+      "height": 47.3525,
+      "draft": 23.0,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 342.0,
+      "reference_beam": 63.5,
+      "mesh_bounds_m": [
+        [
+          -171.002,
+          -31.75,
+          -23.0
+        ],
+        [
+          171.0,
+          31.75,
+          47.3525
+        ]
+      ]
+    },
+    {
+      "model_id": "vassos",
+      "display_name": "瓦索斯号（散货船）",
+      "source_display_name": "VASSOS",
+      "category": "bulk",
+      "backend": "fleet_sdf",
+      "sdf": "vassos/model.sdf",
+      "length": 229.004,
+      "beam": 32.24,
+      "height": 28.08,
+      "draft": 14.57,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 229.0,
+      "reference_beam": 32.24,
+      "mesh_bounds_m": [
+        [
+          -114.502,
+          -16.12,
+          -14.57
+        ],
+        [
+          114.5,
+          16.12,
+          28.08
+        ]
+      ]
+    },
+    {
+      "model_id": "21_sunny",
+      "display_name": "阳光二十一号（带吊散货船）",
+      "source_display_name": "21 SUNNY",
+      "category": "geared_bulk",
+      "backend": "fleet_sdf",
+      "sdf": "21_sunny/model.sdf",
+      "length": 180.004,
+      "beam": 29.8,
+      "height": 25.572,
+      "draft": 10.54,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 180.0,
+      "reference_beam": 29.8,
+      "mesh_bounds_m": [
+        [
+          -90.002,
+          -14.9,
+          -10.54
+        ],
+        [
+          90.0,
+          14.9,
+          25.572
+        ]
+      ]
+    },
+    {
+      "model_id": "mark",
+      "display_name": "马克号（拖网渔船）",
+      "source_display_name": "MARK",
+      "category": "trawler",
+      "backend": "fleet_sdf",
+      "sdf": "mark/model.sdf",
+      "length": 86.104,
+      "beam": 16.0014,
+      "height": 14.5,
+      "draft": 5.4,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 86.1,
+      "reference_beam": 16.0,
+      "mesh_bounds_m": [
+        [
+          -43.052,
+          -8.0007,
+          -5.4
+        ],
+        [
+          43.05,
+          8.0007,
+          14.5
+        ]
+      ]
+    },
+    {
+      "model_id": "pohnpei_no_1",
+      "display_name": "波纳佩一号（围网渔船）",
+      "source_display_name": "POHNPEI NO.1",
+      "category": "seiner",
+      "backend": "fleet_sdf",
+      "sdf": "pohnpei_no_1/model.sdf",
+      "length": 61.754,
+      "beam": 11.9,
+      "height": 8.26,
+      "draft": 2.8,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 61.75,
+      "reference_beam": 11.9,
+      "mesh_bounds_m": [
+        [
+          -30.877,
+          -5.95,
+          -2.8
+        ],
+        [
+          30.875,
+          5.95,
+          8.26
+        ]
+      ]
+    },
+    {
+      "model_id": "katoa_no_11",
+      "display_name": "卡托阿十一号（延绳钓渔船）",
+      "source_display_name": "KATOA NO.11",
+      "category": "longliner",
+      "backend": "fleet_sdf",
+      "sdf": "katoa_no_11/model.sdf",
+      "length": 50.524,
+      "beam": 9.0,
+      "height": 7.69,
+      "draft": 2.4,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 50.52,
+      "reference_beam": 9.0,
+      "mesh_bounds_m": [
+        [
+          -25.262,
+          -4.5,
+          -2.4
+        ],
+        [
+          25.26,
+          4.5,
+          7.69
+        ]
+      ]
+    },
+    {
+      "model_id": "vb_bremen_fighter",
+      "display_name": "不来梅斗士号（海工拖轮）",
+      "source_display_name": "VB BREMEN FIGHTER",
+      "category": "offshore_tug",
+      "backend": "fleet_sdf",
+      "sdf": "vb_bremen_fighter/model.sdf",
+      "length": 48.814,
+      "beam": 13.8,
+      "height": 11.742,
+      "draft": 6.0,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 48.81,
+      "reference_beam": 13.8,
+      "mesh_bounds_m": [
+        [
+          -24.407,
+          -6.9,
+          -6.0
+        ],
+        [
+          24.405,
+          6.9,
+          11.742
+        ]
+      ]
+    },
+    {
+      "model_id": "vb_rumba",
+      "display_name": "伦巴号（港作拖轮）",
+      "source_display_name": "VB RUMBA",
+      "category": "harbour_tug",
+      "backend": "fleet_sdf",
+      "sdf": "vb_rumba/model.sdf",
+      "length": 27.594,
+      "beam": 12.93,
+      "height": 9.9852,
+      "draft": 5.95,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 27.59,
+      "reference_beam": 12.93,
+      "mesh_bounds_m": [
+        [
+          -13.797,
+          -6.465,
+          -5.95
+        ],
+        [
+          13.795,
+          6.465,
+          9.9852
+        ]
+      ]
+    },
+    {
+      "model_id": "ocean_myst_ii",
+      "display_name": "海洋迷雾二号（渔船）",
+      "source_display_name": "OCEAN MYST II",
+      "category": "fishing",
+      "backend": "fleet_sdf",
+      "sdf": "ocean_myst_ii/model.sdf",
+      "length": 22.004,
+      "beam": 6.2,
+      "height": 4.96,
+      "draft": 1.25,
+      "spawn_z": 0.2,
+      "recommended_speed": 1.0,
+      "reference_length": 22.0,
+      "reference_beam": 6.2,
+      "mesh_bounds_m": [
+        [
+          -11.002,
+          -3.1,
+          -1.25
+        ],
+        [
+          11.0,
+          3.1,
+          4.96
+        ]
+      ]
+    }
+  ],
+  "source_sha256": {
+    "munich_maersk/dynamic-parameters.json": "c73a14c7cf39670e28470717ba256e6962fd44f16a4af878a4e24ec95f5f3d49",
+    "munich_maersk/materials/textures/albedo.png": "daa23a4a66ef9022ae5a3619228350439f7da12011c8999d9c1134df75fb63c9",
+    "munich_maersk/meshes/ship.dae": "102f470b51a3ccab8a4924a4dbf6ccf8efd9f474901a3447f91c7f2154bc1b03",
+    "munich_maersk/model-report.json": "4a0c8c0c66620331ee5fd4f3dcf5a90814c7058477caaab4fda7032e5f046ef5",
+    "munich_maersk/model.config": "9801c1f98157119f8e147569f1aff3b50b6080eb4b2dc4862b411253b9e37d2e",
+    "munich_maersk/model.sdf": "540b17055894ff4c2369dfcc0b23a27e0491d4f9c89a8f154ccd0297017b2cfb",
+    "berge_stahl/dynamic-parameters.json": "9630137938248cd4944f52b60755810ebe36155985e304130b868f35122df127",
+    "berge_stahl/materials/textures/albedo.png": "3940431ae061f3012913ab8bf350e7e8e5630de12502685bcfe4f7fffb79cb30",
+    "berge_stahl/meshes/ship.dae": "cb2dc882bebaa9c5149238da22b360b9b7219ec24f4db28694fa21422fc68e67",
+    "berge_stahl/model-report.json": "2d83f916c86d238ced0136042b7bff5c07598bb20f52cb873678417f7b538188",
+    "berge_stahl/model.config": "5c1da65b9a1a20ed3e75ff9e0ffb7d8b136e9d302b95cbaf27d6fb414437a632",
+    "berge_stahl/model.sdf": "c45831ade440180de2883c7f740ee50da08398af1f5db1102a13b342dd72517f",
+    "vassos/dynamic-parameters.json": "02b130b442ebeb3911f00e608e228ffc54089ad5ba287824b303abb50dcc6868",
+    "vassos/materials/textures/albedo.png": "f9ff5c0a948eaa5221f15e130fd6c2a7dce47fb1ce318d1e6c84ed8a1d716247",
+    "vassos/meshes/ship.dae": "5559c59b9390f23247eca46b7944cc16c9f6275b0699a7687770c5fbeb32f146",
+    "vassos/model-report.json": "4f7c0506dc29c092549018b2896728f3c1f5b22f2679dd9294584df5cb386c8c",
+    "vassos/model.config": "27d4ad0ae48beeb617f1bac96367422f4d9d3a82955df35739b9912bf3e1693b",
+    "vassos/model.sdf": "25dc48011b42cae0bb00992bba9b4990a7513fbfeddf5a2ff30fcba1740ca21f",
+    "21_sunny/dynamic-parameters.json": "e55cae37d61554190f15a8f69e09a558d84e3d3188fc81629c489286ce27d2ca",
+    "21_sunny/materials/textures/albedo.png": "b377bae0be09b0d0fffd4a874d7b04f6a9f46abce3b587ee59f7c083899243fa",
+    "21_sunny/meshes/ship.dae": "e28834aeb9bb624d4e43bfe10e6fe4a73eb25f43bd30f61c96ecde0cc679addf",
+    "21_sunny/model-report.json": "633957ffc09a4334ce68917c9cac37ca8965a28e4f980a79e8477172649935d6",
+    "21_sunny/model.config": "406c031198a09ce5f2f4fc14e0b461932b851d3b582269b3c60714fbee0b2302",
+    "21_sunny/model.sdf": "0383e0576e8904c86a19dc27e305ef7094a87c9d8a49dc12487c5036f111da22",
+    "mark/dynamic-parameters.json": "e8a99c6250be32c321bbdf0415951ce33b51de4dd2af4792d08c17daf1463f03",
+    "mark/materials/textures/albedo.png": "77b9ffa7bb5394015c740dea3f4d151c5ce618700f057cd45e553539ec90efa6",
+    "mark/meshes/ship.dae": "2a895b7840c527efc553575fbd49359b16525cd606ad667a576baac6d8b3ed28",
+    "mark/model-report.json": "f926138cca08d572e04e221d508832b94e2b63e57d5de8d95abdea738f01b6e5",
+    "mark/model.config": "9917e70cf8ded5eaefd91e707b83b7fccc9324000a9da8d86c9799c0a6d34cd8",
+    "mark/model.sdf": "b0523b1ba3caf7d59642231becd1d371adb491f4d8405bde07bacef30c2eb75e",
+    "pohnpei_no_1/dynamic-parameters.json": "5cead73471ead90b0a4a057e5ac3c1895a57d210fcf4520d1ced2cb45331ea09",
+    "pohnpei_no_1/materials/textures/albedo.png": "12c261aef9da460179e904bc864e48634e25a91039ea04c3e71c2587772a113b",
+    "pohnpei_no_1/meshes/ship.dae": "b838515bcede9e2ce4bc0491d779d02e4441775ee487241da063fca2faa157fb",
+    "pohnpei_no_1/model-report.json": "816abd371f629d771aef86a64b3d668488e41e7087df48756e053731b373df21",
+    "pohnpei_no_1/model.config": "d8467e373f3450d8db72f64790a37bac44e8b99517ad41691b96dcd3d032431e",
+    "pohnpei_no_1/model.sdf": "81dd741c66b088b3b08a94fcccb200a98597142847e10668ee004acc5c63eb95",
+    "katoa_no_11/dynamic-parameters.json": "3c7d6e77c02c12101e674852295c55385548421ffde51cc8330604c1882229bd",
+    "katoa_no_11/materials/textures/albedo.png": "64d77fe619039d2551291e012187609c4bd790a410a227e83e3ca9d287281b59",
+    "katoa_no_11/meshes/ship.dae": "49a7534543270a04556de489261b2ec45a09e10f8f9c04e27ad6f607677ec906",
+    "katoa_no_11/model-report.json": "f82db7e26a8842679f45eb31c0d9586a99ba95b8131da0f4feee4403634d2c63",
+    "katoa_no_11/model.config": "9629e565b5fea2719deb50fcf89231c402cbf6c9c32cda3789c0e26cfba9d0c4",
+    "katoa_no_11/model.sdf": "0fc8a1e9ad20d0fc6c8bf6a2e2b84d8464fe904ba4e27bf88cc131a501a93079",
+    "vb_bremen_fighter/dynamic-parameters.json": "49fa7905afe9597fd7b60b1620886553ea1a2d0fface83dac6ca5712f4583239",
+    "vb_bremen_fighter/materials/textures/albedo.png": "d10e7842d9def4985216098dac57a1b9dd726a392db8278a86feb312971a345d",
+    "vb_bremen_fighter/meshes/ship.dae": "1873a79cef93c4c83ba82ffd1901a9aa1d0dced45a7a78eb2437f6f9a9c4bee6",
+    "vb_bremen_fighter/model-report.json": "243e4c4284899789a653a3edf1a9d6354481625a014f8db083671305081f6f12",
+    "vb_bremen_fighter/model.config": "6d84a1ed1e8a575c808b418971cc3ac43b5989b41dcd9223a898673757f461ea",
+    "vb_bremen_fighter/model.sdf": "747cc398ede776332c04cc332990de1bec5ab0abf0c59fb20cc8d363af53c0e3",
+    "vb_rumba/dynamic-parameters.json": "868bf91dd116381e518c95b071e01d3f84906f2284d944254dfc29d002f9149e",
+    "vb_rumba/materials/textures/albedo.png": "0ed019fabcbd5cfdfb7c27db16ad0e7ed0d2a96477b187136776c906bd94784b",
+    "vb_rumba/meshes/ship.dae": "ff9807a59d8fd14f3986c70f674bdcc70bef797cee01761073ba826cfc5c27e1",
+    "vb_rumba/model-report.json": "2f5c4e103242e85b390f55068131aa1e80f4444f00b8843fec464d73efed8e95",
+    "vb_rumba/model.config": "4dcb4fa028a8fc9698bbec13c5e0e595a2f81e679c1734ecea3e794f4b67115b",
+    "vb_rumba/model.sdf": "a1d440b3f1d44b497aa8bbb3e30a0cab1fb599686de3011850c4d0c1022eb61b",
+    "ocean_myst_ii/dynamic-parameters.json": "6f566c34160d1c687ae9d898849323366418b64784c93b607be62c6bf48c503f",
+    "ocean_myst_ii/materials/textures/albedo.png": "c04e99eb920f15f2e03035fa32e12a4c14e4efa50520326daf13bf2cfbb83e92",
+    "ocean_myst_ii/meshes/ship.dae": "1969dc4fdabac9899d50558fbf1a22402de68c08fa463c12b8e675d932f26092",
+    "ocean_myst_ii/model-report.json": "d9c3b4cc50ee3efdda81bcc873b735f42f315f3a1d660b30e8b47c1bb2ed20b3",
+    "ocean_myst_ii/model.config": "8856febe6cc81698980ae9589aed7a83a1f3e09b19858ab9b7b54ea180d6e761",
+    "ocean_myst_ii/model.sdf": "ef9abca7af8220d7fdb175a6b10dffd39da0e645864736103e715483ebe4910e"
+  },
+  "policy": "User-supplied approved fleet, unchanged source files. Native model parameters are calm-water test approximations, not calibrated vessel hydrodynamics. Instances use local scoped graded buoyancy; no whole-world buoyancy is added."
+}

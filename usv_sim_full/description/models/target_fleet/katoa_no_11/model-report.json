@@ -1,0 +1,77 @@
+{
+  "id": "katoa_no_11",
+  "name": "KATOA NO.11",
+  "kind": "longliner",
+  "length": 50.52,
+  "beam": 9.0,
+  "draft": 2.4,
+  "deck": 1.5,
+  "source": "https://vessels.wcpfc.int/vessel/412",
+  "photo": "https://vessels.wcpfc.int/sites/default/files/K11%281%29.jpg",
+  "colors": [
+    [
+      230,
+      229,
+      217
+    ],
+    [
+      170,
+      52,
+      40
+    ],
+    [
+      153,
+      164,
+      156
+    ],
+    [
+      242,
+      239,
+      220
+    ],
+    [
+      24,
+      41,
+      48
+    ],
+    [
+      35,
+      77,
+      96
+    ],
+    [
+      182,
+      189,
+      181
+    ],
+    [
+      221,
+      122,
+      40
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": false,
+  "hull_dimensions_m": [
+    50.52000045776367,
+    9.0,
+    3.9000000953674316
+  ],
+  "bounds_min_m": [
+    -25.261999130249023,
+    -4.5,
+    -2.4000000953674316
+  ],
+  "bounds_max_m": [
+    25.260000228881836,
+    4.5,
+    7.690000057220459
+  ],
+  "triangles": 700,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Published length and beam; superstructure and underwater shape are photo-based approximations. Draft verification is recorded separately.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

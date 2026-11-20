@@ -1,0 +1,77 @@
+{
+  "id": "vb_rumba",
+  "name": "VB RUMBA",
+  "kind": "harbour_tug",
+  "length": 27.59,
+  "beam": 12.93,
+  "draft": 5.95,
+  "deck": 1.6,
+  "source": "https://www.boluda.eu/fleetlist?ccm_order_by_b1092=p.cDisplayOrder&ccm_order_by_direction_b1092=asc&ccm_paging_p_b1092=2",
+  "photo": "https://imagesedit.marinelink.com/images/storage/w800h450/boludaarrivalvbbolerovbrumba1.jpg",
+  "colors": [
+    [
+      28,
+      55,
+      96
+    ],
+    [
+      62,
+      65,
+      62
+    ],
+    [
+      118,
+      109,
+      94
+    ],
+    [
+      237,
+      236,
+      218
+    ],
+    [
+      24,
+      29,
+      31
+    ],
+    [
+      30,
+      67,
+      88
+    ],
+    [
+      178,
+      185,
+      178
+    ],
+    [
+      222,
+      168,
+      38
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": true,
+  "hull_dimensions_m": [
+    27.59000015258789,
+    12.930000305175781,
+    7.549999833106995
+  ],
+  "bounds_min_m": [
+    -13.79699993133545,
+    -6.465000152587891,
+    -5.949999809265137
+  ],
+  "bounds_max_m": [
+    13.795000076293945,
+    6.465000152587891,
+    9.985199928283691
+  ],
+  "triangles": 1064,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Published length and beam; superstructure and underwater shape are photo-based approximations. Draft verification is recorded separately.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

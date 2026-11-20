@@ -47,13 +47,12 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
     enable = LaunchConfiguration('enable_dynamic_ship_gt_bridge').perform(context).strip().lower()
     enable_buoy = LaunchConfiguration('enable_dynamic_buoy_manager').perform(context).strip().lower()
     buoy_enabled = enable_buoy in ('true', '1', 'yes')
-    tracked_topic = ('/dynamic_ship/tracked_ships/_internal' if buoy_enabled
-                     else '/dynamic_ship/tracked_ships')
+    snapshot_topic = '/dynamic_ship/snapshot'
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
     actions = []
     if enable in ('true', '1', 'yes'):
         actions.append(LogInfo(
-            msg=f'启动 dynamic_ship_to_ground_truth（{tracked_topic} -> '
+            msg=f'启动 dynamic_ship_to_ground_truth（{snapshot_topic} -> '
                 '/sim/ground_truth/_src/dynamic_ships）。'))
         actions.append(Node(
             package='ground_truth_sensor_sim',
@@ -62,12 +61,10 @@ def _dynamic_ship_ground_truth_bridge(context, *args, **kwargs):
             output='log',
             parameters=[{
                 'use_sim_time': use_sim_time,
-                'input_topic': tracked_topic,
+                'input_mode': 'snapshot',
+                'input_topic': snapshot_topic,
                 'output_topic': '/sim/ground_truth/_src/dynamic_ships',
                 'frame_id': 'map',
-                'size_w': 3.6,
-                'size_l': 10.0,
-                'size_h': 2.0,
                 'is_dark_target': True,
                 'is_ais_matched': False,
                 'matched_mmsi': 0,
@@ -469,7 +466,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'enable_dynamic_ship_gt_bridge',
             default_value='true',
-            description='true：启动 /dynamic_ship/tracked_ships -> /sim/ground_truth 转换节点',
+            description='true：启动 /dynamic_ship/snapshot -> /sim/ground_truth 转换节点',
         ),
         DeclareLaunchArgument(
             'enable_ais_sim',

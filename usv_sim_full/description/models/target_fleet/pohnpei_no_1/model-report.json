@@ -1,0 +1,77 @@
+{
+  "id": "pohnpei_no_1",
+  "name": "POHNPEI NO.1",
+  "kind": "seiner",
+  "length": 61.75,
+  "beam": 11.9,
+  "draft": 2.8,
+  "deck": 1.75,
+  "source": "https://vessels.wcpfc.int/vessel/8660",
+  "photo": "https://vessels.wcpfc.int/sites/default/files/Pohnpei%20No.1.jpg",
+  "colors": [
+    [
+      30,
+      74,
+      122
+    ],
+    [
+      139,
+      48,
+      34
+    ],
+    [
+      121,
+      149,
+      130
+    ],
+    [
+      237,
+      235,
+      218
+    ],
+    [
+      24,
+      38,
+      43
+    ],
+    [
+      29,
+      66,
+      88
+    ],
+    [
+      175,
+      184,
+      167
+    ],
+    [
+      223,
+      169,
+      47
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": false,
+  "hull_dimensions_m": [
+    61.75,
+    11.899999618530273,
+    4.549999952316284
+  ],
+  "bounds_min_m": [
+    -30.87700080871582,
+    -5.949999809265137,
+    -2.799999952316284
+  ],
+  "bounds_max_m": [
+    30.875,
+    5.949999809265137,
+    8.260000228881836
+  ],
+  "triangles": 707,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Published length and beam; superstructure and underwater shape are photo-based approximations. Draft verification is recorded separately.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

@@ -1,0 +1,32 @@
+{
+  "id": "munich_maersk",
+  "name": "MUNICH MAERSK",
+  "kind": "container",
+  "length": 399.0,
+  "beam": 58.0,
+  "draft": 16.5,
+  "deck": 13.5,
+  "source": "https://www.hafen-hamburg.de/en/vessels/munich-maersk-47294/",
+  "hull_dimensions_m": [
+    399.0,
+    58.0,
+    30.0
+  ],
+  "bounds_min_m": [
+    -199.5019989013672,
+    -29.0,
+    -16.5
+  ],
+  "bounds_max_m": [
+    199.5,
+    29.0,
+    44.5
+  ],
+  "triangles": 728,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Deck heights and draft approximated from photos, except published cargo vessel drafts. Full loading condition not asserted.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

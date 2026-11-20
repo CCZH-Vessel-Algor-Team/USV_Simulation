@@ -1,0 +1,16 @@
+newmtl terrain
+Ka 1 1 1
+Kd 1 1 1
+Ks 0.015 0.015 0.015
+Ns 4
+d 1
+map_Kd ../textures/green_island_001_harbor_albedo.jpg
+
+newmtl terrain_cut_fill
+Ka 1 1 1
+Kd 1 1 1
+Ks 0 0 0
+Ns 1
+illum 1
+d 1
+map_Kd ../textures/green_island_001_harbor_albedo.jpg

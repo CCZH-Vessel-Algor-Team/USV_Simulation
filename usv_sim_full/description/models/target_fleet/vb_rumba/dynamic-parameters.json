@@ -1,0 +1,72 @@
+{
+  "id": "vb_rumba",
+  "name": "VB RUMBA",
+  "kind": "harbour_tug",
+  "length": 27.59,
+  "beam": 12.93,
+  "draft": 5.95,
+  "deck": 1.6,
+  "source": "https://www.boluda.eu/fleetlist?ccm_order_by_b1092=p.cDisplayOrder&ccm_order_by_direction_b1092=asc&ccm_paging_p_b1092=2",
+  "photo": "https://imagesedit.marinelink.com/images/storage/w800h450/boludaarrivalvbbolerovbrumba1.jpg",
+  "colors": [
+    [
+      28,
+      55,
+      96
+    ],
+    [
+      62,
+      65,
+      62
+    ],
+    [
+      118,
+      109,
+      94
+    ],
+    [
+      237,
+      236,
+      218
+    ],
+    [
+      24,
+      29,
+      31
+    ],
+    [
+      30,
+      67,
+      88
+    ],
+    [
+      178,
+      185,
+      178
+    ],
+    [
+      222,
+      168,
+      38
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": true,
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet_expansion",
+  "lane_y_m": 156.02,
+  "start_x_m": -13.795,
+  "start_z_m": 0.2,
+  "mass_kg": 1664914.906174905,
+  "inertia_kg_m2": [
+    24667599.885798186,
+    93454595.74800067,
+    102304810.31059301
+  ],
+  "center_of_mass_z_m": -3.57,
+  "buoyancy_collision_box_m": [
+    24.831,
+    10.990499999999999,
+    7.550000000000001
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

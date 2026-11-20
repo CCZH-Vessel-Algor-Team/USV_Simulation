@@ -26,6 +26,8 @@ VISUAL_REPLACEMENTS = {
     for index in (*range(5, 17), *range(42, 122))
 }
 
+ISLAND_NAMES = {f"chart_obstacle_{index:03d}" for index in range(1, 5)}
+
 
 def parse_args():
     package_dir = Path(__file__).resolve().parents[1]
@@ -55,6 +57,10 @@ def parse_args():
     )
     parser.add_argument("--bottom", type=float, default=-5.0)
     parser.add_argument("--top", type=float, default=3.0)
+    parser.add_argument(
+        "--land-style", choices=("natural", "blocks"), default="natural",
+        help="Natural textured islands for 001-004, or legacy extruded blocks",
+    )
     parser.add_argument(
         "--simplify-pixels",
         type=float,
@@ -223,7 +229,7 @@ def write_obj(output, mesh, source_map, object_name):
             )
 
 
-def write_model_sdf(model_dir, model_name, components):
+def write_model_sdf(model_dir, model_name, components, natural_islands=True):
     lines = [
         '<?xml version="1.0"?>',
         '<sdf version="1.9">',
@@ -232,7 +238,29 @@ def write_model_sdf(model_dir, model_name, components):
     ]
     for name, center in components:
         visual_replacement = VISUAL_REPLACEMENTS.get(name)
-        if visual_replacement:
+        is_island = natural_islands and name in ISLAND_NAMES
+        collision_mesh = name
+        if is_island:
+            island_mesh = name.replace('chart_obstacle_', 'green_island_')
+            collision_mesh = island_mesh + '_collision'
+            visual_lines = [
+                '      <visual name="visual">',
+                '        <geometry>',
+                '          <mesh>',
+                f'            <uri>meshes/{island_mesh}.obj</uri>',
+                '          </mesh>',
+                '        </geometry>',
+                '      </visual>',
+                '      <visual name="vegetation">',
+                '        <cast_shadows>false</cast_shadows>',
+                '        <geometry>',
+                '          <mesh>',
+                f'            <uri>meshes/{island_mesh}_vegetation.obj</uri>',
+                '          </mesh>',
+                '        </geometry>',
+                '      </visual>',
+            ]
+        elif visual_replacement:
             visual_lines = [
                 '      <visual name="visual">',
                 f'        <pose>{visual_replacement["pose"]}</pose>',
@@ -271,7 +299,7 @@ def write_model_sdf(model_dir, model_name, components):
                 '      <collision name="collision">',
                 '        <geometry>',
                 '          <mesh>',
-                f'            <uri>meshes/{name}.obj</uri>',
+                f'            <uri>meshes/{collision_mesh}.obj</uri>',
                 '          </mesh>',
                 '        </geometry>',
                 '      </collision>',
@@ -287,6 +315,14 @@ def main():
     args = parse_args()
     if args.bottom >= args.top:
         raise ValueError("--bottom must be lower than --top")
+    generate_islands = None
+    if args.land_style == "natural":
+        # Validate offline generator dependencies before rewriting any meshes.
+        import shapely
+        from generate_green_islands import generate_all
+        if not hasattr(shapely, 'constrained_delaunay_triangles'):
+            raise RuntimeError('Natural islands require Shapely >= 2.1 / GEOS >= 3.10')
+        generate_islands = generate_all
 
     map_yaml = args.map_yaml.resolve()
     config, mask = load_map(map_yaml)
@@ -326,7 +362,11 @@ def main():
         total_vertices += len(mesh.vertices)
         total_faces += len(mesh.faces)
 
-    write_model_sdf(model_dir, args.model_name, components)
+    # Generate from the exact same chart polygons after their original meshes
+    # have been written. Keep those source meshes as a rollback option.
+    if generate_islands is not None:
+        generate_islands(model_dir)
+    write_model_sdf(model_dir, args.model_name, components, natural_islands=generate_islands is not None)
     print(
         f"Generated {model_dir}: {len(components)} connected components, "
         f"{total_vertices} vertices, {total_faces} faces"

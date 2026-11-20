@@ -1,0 +1,77 @@
+{
+  "id": "21_sunny",
+  "name": "21 SUNNY",
+  "kind": "geared_bulk",
+  "length": 180.0,
+  "beam": 29.8,
+  "draft": 10.54,
+  "deck": 4.46,
+  "source": "https://www.hafen-hamburg.de/en/vessels/21-sunny/",
+  "photo": "https://www.hafen-hamburg.de/site/assets/files/719948/9615107-1.png",
+  "colors": [
+    [
+      28,
+      34,
+      39
+    ],
+    [
+      151,
+      45,
+      33
+    ],
+    [
+      128,
+      94,
+      66
+    ],
+    [
+      238,
+      234,
+      218
+    ],
+    [
+      20,
+      35,
+      42
+    ],
+    [
+      37,
+      81,
+      102
+    ],
+    [
+      193,
+      183,
+      157
+    ],
+    [
+      225,
+      157,
+      53
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": true,
+  "hull_dimensions_m": [
+    180.0,
+    29.799999237060547,
+    15.0
+  ],
+  "bounds_min_m": [
+    -90.00199890136719,
+    -14.899999618530273,
+    -10.539999961853027
+  ],
+  "bounds_max_m": [
+    90.0,
+    14.899999618530273,
+    25.57200050354004
+  ],
+  "triangles": 1600,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Published length and beam; superstructure and underwater shape are photo-based approximations. Draft verification is recorded separately.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

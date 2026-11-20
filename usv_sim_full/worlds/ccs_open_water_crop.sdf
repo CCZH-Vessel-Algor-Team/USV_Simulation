@@ -96,13 +96,39 @@
     <include>
       <name>CCS Crop Waves</name>
       <pose>0 0 0 0 0 0</pose>
-      <uri>model://coast_waves/model_36km.sdf</uri>
+      <uri>model://ccs_water</uri>
     </include>
 
     <include>
       <name>CCS ENC Chart Obstacles</name>
       <pose>0 0 0 0 0 0</pose>
-      <uri>model://ccs_chart_obstacles_enc_5km</uri>
+      <!-- Local quay replacement and causeway; original chart model remains available. -->
+      <uri>model://ccs_chart_obstacles_enc_5km/model_gaogongdao.sdf</uri>
+    </include>
+
+    <include>
+      <name>gaogongdao_local_harbor_v1</name>
+      <pose>-170 270 0 0 0 0</pose>
+      <!-- Derived harbor visuals with deck, causeway and landing collisions. -->
+      <uri>model://ccs_chart_obstacles_enc_5km/gaogongdao_harbor.sdf</uri>
+    </include>
+
+    <include>
+      <name>CCS Tianwan Bridge</name>
+      <pose>0 0 0 0 0 0</pose>
+      <uri>model://ccs_tianwan_bridge</uri>
+    </include>
+
+    <include>
+      <name>CCS Hill Wind Farm</name>
+      <pose>0 0 0 0 0 0</pose>
+      <uri>model://ccs_hill_wind_farm</uri>
+    </include>
+
+    <include>
+      <name>CCS Offshore PV Farm</name>
+      <pose>0 0 0 0 0 0</pose>
+      <uri>model://ccs_offshore_pv_farm</uri>
     </include>
 
     <plugin filename="libPublisherPlugin.so" name="vrx::PublisherPlugin">

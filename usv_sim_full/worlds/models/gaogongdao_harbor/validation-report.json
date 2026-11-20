@@ -1,0 +1,14 @@
+{
+  "bridge_removed_objects": 72,
+  "bridge_collisions": 0,
+  "original_chart_file_hashes": "unchanged",
+  "SDF_XML": "passed",
+  "runtime_insertion": "confirmed",
+  "model_origin_enu": [
+    -170,
+    270,
+    0
+  ],
+  "height_status": "estimated",
+  "triangles": 5001
+}

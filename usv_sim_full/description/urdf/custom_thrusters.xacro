@@ -9,17 +9,31 @@
   <xacro:arg name="thruster_pos_z" default="0.318237" />  <!-- 垂直位置，默认0.32米 -->
 
   <xacro:include filename="$(find usv_sim_full)/description/urdf/thrusters/engine.xacro" />
+  <xacro:property name="tilt_cfg" value="${xacro.load_yaml('$(arg vessel_devices_config)') if '$(arg vessel_devices_enabled)' == 'true' else dict()}"/>
+  <xacro:property name="tilt_enabled" value="${tilt_cfg.get('thruster_tilt_enabled', False)}"/>
   
   <!-- 使用参数定义推进器位置 -->
   <xacro:engine 
     prefix="left" 
-    position="$(arg thruster_pos_x) $(arg thruster_pos_y_left) $(arg thruster_pos_z)" />
+    position="$(arg thruster_pos_x) $(arg thruster_pos_y_left) $(arg thruster_pos_z)"
+    tilt_enabled="${tilt_enabled}" tilt_max_angle="${tilt_cfg.get('thruster_tilt_max_angle', 75*pi/180)}"
+    tilt_speed="${tilt_cfg.get('thruster_tilt_speed', 0.25)}" tilt_effort="${tilt_cfg.get('thruster_tilt_effort', 10000.0)}"/>
   <xacro:engine 
     prefix="right" 
-    position="$(arg thruster_pos_x) $(arg thruster_pos_y_right) $(arg thruster_pos_z)" />
+    position="$(arg thruster_pos_x) $(arg thruster_pos_y_right) $(arg thruster_pos_z)"
+    tilt_enabled="${tilt_enabled}" tilt_max_angle="${tilt_cfg.get('thruster_tilt_max_angle', 75*pi/180)}"
+    tilt_speed="${tilt_cfg.get('thruster_tilt_speed', 0.25)}" tilt_effort="${tilt_cfg.get('thruster_tilt_effort', 10000.0)}"/>
 
-  <xacro:include filename="$(find wamv_gazebo)/urdf/thruster_layouts/wamv_gazebo_thruster_config.xacro" />
-  <xacro:wamv_gazebo_thruster_config name="left" />
-  <xacro:wamv_gazebo_thruster_config name="right" />
+  <xacro:unless value="${tilt_enabled}">
+    <xacro:include filename="$(find wamv_gazebo)/urdf/thruster_layouts/wamv_gazebo_thruster_config.xacro" />
+    <xacro:wamv_gazebo_thruster_config name="left" />
+    <xacro:wamv_gazebo_thruster_config name="right" />
+  </xacro:unless>
+  <xacro:if value="${tilt_enabled}">
+    <xacro:include filename="$(find usv_vessel_devices)/description/thruster_tilt.xacro"/>
+    <xacro:tilting_thruster_dynamics ns="${namespace}" side="left"/>
+    <xacro:tilting_thruster_dynamics ns="${namespace}" side="right"/>
+    <xacro:thruster_tilt_control ns="${namespace}" cfg="${tilt_cfg}"/>
+  </xacro:if>
 
 </robot>

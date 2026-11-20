@@ -1,7 +1,12 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="wam-v-two-engines">
   <!-- Macro for inserting an engine with its propeller. -->
-  <xacro:macro name="engine" params="prefix position:='0 0 0' orientation:='0 0 0'">
+  <xacro:macro name="engine" params="prefix position:='0 0 0' orientation:='0 0 0' tilt_enabled:=false tilt_max_angle:=1.3089969389957472 tilt_speed:=0.25 tilt_effort:=10000.0">
+    <xacro:if value="${tilt_enabled}">
+      <xacro:include filename="$(find usv_vessel_devices)/description/thruster_tilt.xacro"/>
+      <xacro:thruster_tilt_mount ns="${namespace}" side="${prefix}" position="${position}"
+        orientation="${orientation}" max_angle="${tilt_max_angle}" speed="${tilt_speed}" effort="${tilt_effort}"/>
+    </xacro:if>
     <link name="${namespace}/${prefix}_engine_link">
       <visual>
         <geometry>
@@ -47,8 +52,8 @@
     <joint name="${namespace}/${prefix}_chassis_engine_joint" type="revolute">
       <axis xyz="0 0 1"/>
       <limit lower="${-pi}" upper="${pi}" effort="10" velocity="10"/>
-      <origin xyz="${position}" rpy="${orientation}"/>
-      <parent link="${namespace}/base_link"/>
+      <origin xyz="${'0 0 0' if tilt_enabled else position}" rpy="${'0 0 0' if tilt_enabled else orientation}"/>
+      <parent link="${namespace+'/'+prefix+'_tilt_link' if tilt_enabled else namespace+'/base_link'}"/>
       <child link="${namespace}/${prefix}_engine_link"/>
     </joint>
 
