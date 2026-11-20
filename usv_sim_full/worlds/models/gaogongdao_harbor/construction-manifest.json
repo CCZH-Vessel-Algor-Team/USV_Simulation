@@ -1,0 +1,202 @@
+{
+  "model": "gaogongdao_local_harbor_v1",
+  "origin_enu": [
+    -170,
+    270,
+    0
+  ],
+  "reference_water_level_m": 0,
+  "estimated_quay_top_m": 3.2,
+  "estimated_parapet_height_m": 1.1,
+  "estimated_building_heights_m": [
+    2.7,
+    2.9,
+    3.0,
+    3.4
+  ],
+  "footprint_source": "Existing CCS ENC chart_obstacle_001 clipped to x[-262,-80],y[145,435] metres",
+  "satellite_reference": "User-provided screenshot; no embedded georeferencing or scale",
+  "facility_locations": "Approximate interpretation snapped to existing quay footprint; not surveyed",
+  "armour_stones": 267,
+  "collision_policy": "Original ENC water/land boundary retained. Added deck top surface and buildings/parapets above it. Armour stones, decorative boats and pontoons visual only.",
+  "scope": "Only quay, hooked breakwater and pontoons within supplied crop; bridge omitted",
+  "bridge_note": "Bridge removed at user request; no bridge visuals, piers, barriers or collisions",
+  "collisions": [
+    {
+      "name": "Breakwater parapet 00",
+      "pose": [
+        -75.29289299999999,
+        -115.0,
+        3.75,
+        0,
+        0,
+        0.0
+      ],
+      "size": [
+        3.414213999999987,
+        0.75,
+        1.1
+      ]
+    },
+    {
+      "name": "Breakwater parapet 01",
+      "pose": [
+        -29.292892999999992,
+        -94.0,
+        3.75,
+        0,
+        0,
+        0.4427273913809915
+      ],
+      "size": [
+        98.03795938940078,
+        0.75,
+        1.1
+      ]
+    },
+    {
+      "name": "Breakwater parapet 02",
+      "pose": [
+        39.0,
+        -6.707107000000008,
+        3.75,
+        0,
+        0,
+        1.2234450278046172
+      ],
+      "size": [
+        141.00705886315689,
+        0.75,
+        1.1
+      ]
+    },
+    {
+      "name": "Breakwater parapet 03",
+      "pose": [
+        63.0,
+        65.58578599999998,
+        3.75,
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "size": [
+        12.0,
+        0.75,
+        1.1
+      ]
+    },
+    {
+      "name": "Breakwater parapet 04",
+      "pose": [
+        70.0,
+        105.0,
+        3.75,
+        0,
+        0,
+        1.3642910272678388
+      ],
+      "size": [
+        68.2791241079672,
+        0.75,
+        1.1
+      ]
+    },
+    {
+      "name": "Breakwater parapet 05",
+      "pose": [
+        78.0,
+        150.41421400000002,
+        3.75,
+        0,
+        0,
+        1.4876550949064553
+      ],
+      "size": [
+        24.08318915758459,
+        0.75,
+        1.1
+      ]
+    },
+    {
+      "name": "Long southern net store walls",
+      "pose": [
+        -36,
+        -89,
+        4.7,
+        0,
+        0,
+        0.4426652872937413
+      ],
+      "size": [
+        42,
+        5.0,
+        3.0
+      ]
+    },
+    {
+      "name": "Pier-end service hut walls",
+      "pose": [
+        -70,
+        -109,
+        4.550000000000001,
+        0,
+        0,
+        0.4426652872937413
+      ],
+      "size": [
+        5.0,
+        3.0,
+        2.7
+      ]
+    },
+    {
+      "name": "Fishing gear shed walls",
+      "pose": [
+        9,
+        -34,
+        4.65,
+        0,
+        0,
+        1.2234793389075063
+      ],
+      "size": [
+        15,
+        5,
+        2.9
+      ]
+    },
+    {
+      "name": "Quay warehouse walls",
+      "pose": [
+        17,
+        -8,
+        4.9,
+        0,
+        0,
+        1.2234793389075063
+      ],
+      "size": [
+        19,
+        5,
+        3.4
+      ]
+    },
+    {
+      "name": "Northern small hut walls",
+      "pose": [
+        38,
+        52,
+        4.6,
+        0,
+        0,
+        1.2234793389075063
+      ],
+      "size": [
+        6,
+        4,
+        2.8
+      ]
+    }
+  ]
+}

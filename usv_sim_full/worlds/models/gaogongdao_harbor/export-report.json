@@ -1,0 +1,14 @@
+{
+  "triangles": 5001,
+  "vertices": 9987,
+  "materials": 12,
+  "mesh_count": 1,
+  "collision_boxes": 11,
+  "deck_collision_triangles": 13,
+  "source_chart": "chart_obstacle_001",
+  "origin_enu": [
+    -170,
+    270,
+    0
+  ]
+}
