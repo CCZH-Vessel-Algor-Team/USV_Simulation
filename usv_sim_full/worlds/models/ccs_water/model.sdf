@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="ccs_water">
+    <static>true</static>
+    <link name="water">
+      <visual name="wave_visual">
+        <geometry>
+          <mesh>
+            <uri>model://coast_waves/meshes/waterlow.dae</uri>
+            <scale>6 6 1</scale>
+          </mesh>
+        </geometry>
+        <plugin filename="libWaveVisual.so" name="vrx::WaveVisual">
+          <shader>
+            <vertex>materials/programs/GerstnerWaves_vs_330.glsl</vertex>
+            <fragment>materials/programs/GerstnerWaves_fs_330.glsl</fragment>
+            <parameters>
+              <!-- Appearance only: micro-normal strength and tiling over 36 km. -->
+              <rescale>0.35</rescale>
+              <bumpScale>900 900</bumpScale>
+              <hdrMultiplier>0.4</hdrMultiplier>
+              <fresnelPower>5.0</fresnelPower>
+              <shallowColor>0.025 0.17 0.20 1.0</shallowColor>
+              <deepColor>0.008 0.055 0.10 1.0</deepColor>
+            </parameters>
+          </shader>
+          <wavefield>
+            <topic>/vrx/wavefield/parameters</topic>
+          </wavefield>
+          <!-- Visual-only drift follows the same world-frame current as physics. -->
+          <current>
+            <topic>/ocean_current</topic>
+            <size>36000 36000</size>
+            <!-- The renderer flips this COLLADA mesh's V axis. -->
+            <uv_sign>1 -1</uv_sign>
+          </current>
+        </plugin>
+        <!-- Keep water excluded from the existing lidar/radar masks. -->
+        <visibility_flags>8</visibility_flags>
+      </visual>
+    </link>
+  </model>
+</sdf>
