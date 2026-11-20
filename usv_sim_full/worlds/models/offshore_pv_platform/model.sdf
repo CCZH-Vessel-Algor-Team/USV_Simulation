@@ -1,0 +1,3756 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <model name="offshore_pv_platform">
+    <static>true</static>
+    <link name="structure">
+      <collision name="pile_1">
+        <pose>-18 -10.5 -9.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>29.04</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="pile_collar_1">
+        <pose>-18 -10.5 4.825 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.58</radius>
+            <length>0.3899999999999997</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="bearing_1">
+        <pose>-18 -10.5 5.015 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.3 1.3 0.16</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pile_2">
+        <pose>-18 10.5 -9.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>29.04</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="pile_collar_2">
+        <pose>-18 10.5 4.825 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.58</radius>
+            <length>0.3899999999999997</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="bearing_2">
+        <pose>-18 10.5 5.015 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.3 1.3 0.16</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pile_3">
+        <pose>18 -10.5 -9.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>29.04</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="pile_collar_3">
+        <pose>18 -10.5 4.825 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.58</radius>
+            <length>0.3899999999999997</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="bearing_3">
+        <pose>18 -10.5 5.015 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.3 1.3 0.16</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="pile_4">
+        <pose>18 10.5 -9.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>29.04</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="pile_collar_4">
+        <pose>18 10.5 4.825 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.58</radius>
+            <length>0.3899999999999997</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="bearing_4">
+        <pose>18 10.5 5.015 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.3 1.3 0.16</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_x_0">
+        <pose>0 -17.4 5.08 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.12</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_x_0">
+        <pose>0 -17.4 6.42 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.115</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_0">
+        <pose>-28.275 -17.4 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_0">
+        <pose>-25.425 -17.4 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_1">
+        <pose>-22.5 -17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_1">
+        <pose>-19.5 -17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_2">
+        <pose>-16.5 -17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_2">
+        <pose>-13.5 -17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_3">
+        <pose>-10.5 -17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_3">
+        <pose>-7.5 -17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_4">
+        <pose>-4.5 -17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_4">
+        <pose>-1.5 -17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_5">
+        <pose>1.5 -17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_5">
+        <pose>4.5 -17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_6">
+        <pose>7.5 -17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_6">
+        <pose>10.5 -17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_7">
+        <pose>13.5 -17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_7">
+        <pose>16.5 -17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_8">
+        <pose>19.5 -17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_8">
+        <pose>22.5 -17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_0_9">
+        <pose>25.425 -17.4 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_0_9">
+        <pose>28.275 -17.4 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_x_1">
+        <pose>0 -10.5 5.08 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.12</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_x_1">
+        <pose>0 -10.5 6.42 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.115</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_0">
+        <pose>-28.275 -10.5 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_0">
+        <pose>-25.425 -10.5 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_1">
+        <pose>-22.5 -10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_1">
+        <pose>-19.5 -10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_2">
+        <pose>-16.5 -10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_2">
+        <pose>-13.5 -10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_3">
+        <pose>-10.5 -10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_3">
+        <pose>-7.5 -10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_4">
+        <pose>-4.5 -10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_4">
+        <pose>-1.5 -10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_5">
+        <pose>1.5 -10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_5">
+        <pose>4.5 -10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_6">
+        <pose>7.5 -10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_6">
+        <pose>10.5 -10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_7">
+        <pose>13.5 -10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_7">
+        <pose>16.5 -10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_8">
+        <pose>19.5 -10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_8">
+        <pose>22.5 -10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_1_9">
+        <pose>25.425 -10.5 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_1_9">
+        <pose>28.275 -10.5 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_x_2">
+        <pose>0 -3.5 5.08 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.12</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_x_2">
+        <pose>0 -3.5 6.42 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.115</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_0">
+        <pose>-28.275 -3.5 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_0">
+        <pose>-25.425 -3.5 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_1">
+        <pose>-22.5 -3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_1">
+        <pose>-19.5 -3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_2">
+        <pose>-16.5 -3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_2">
+        <pose>-13.5 -3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_3">
+        <pose>-10.5 -3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_3">
+        <pose>-7.5 -3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_4">
+        <pose>-4.5 -3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_4">
+        <pose>-1.5 -3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_5">
+        <pose>1.5 -3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_5">
+        <pose>4.5 -3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_6">
+        <pose>7.5 -3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_6">
+        <pose>10.5 -3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_7">
+        <pose>13.5 -3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_7">
+        <pose>16.5 -3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_8">
+        <pose>19.5 -3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_8">
+        <pose>22.5 -3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_2_9">
+        <pose>25.425 -3.5 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_2_9">
+        <pose>28.275 -3.5 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_x_3">
+        <pose>0 3.5 5.08 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.12</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_x_3">
+        <pose>0 3.5 6.42 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.115</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_0">
+        <pose>-28.275 3.5 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_0">
+        <pose>-25.425 3.5 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_1">
+        <pose>-22.5 3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_1">
+        <pose>-19.5 3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_2">
+        <pose>-16.5 3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_2">
+        <pose>-13.5 3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_3">
+        <pose>-10.5 3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_3">
+        <pose>-7.5 3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_4">
+        <pose>-4.5 3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_4">
+        <pose>-1.5 3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_5">
+        <pose>1.5 3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_5">
+        <pose>4.5 3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_6">
+        <pose>7.5 3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_6">
+        <pose>10.5 3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_7">
+        <pose>13.5 3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_7">
+        <pose>16.5 3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_8">
+        <pose>19.5 3.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_8">
+        <pose>22.5 3.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_3_9">
+        <pose>25.425 3.5 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_3_9">
+        <pose>28.275 3.5 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_x_4">
+        <pose>0 10.5 5.08 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.12</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_x_4">
+        <pose>0 10.5 6.42 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.115</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_0">
+        <pose>-28.275 10.5 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_0">
+        <pose>-25.425 10.5 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_1">
+        <pose>-22.5 10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_1">
+        <pose>-19.5 10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_2">
+        <pose>-16.5 10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_2">
+        <pose>-13.5 10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_3">
+        <pose>-10.5 10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_3">
+        <pose>-7.5 10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_4">
+        <pose>-4.5 10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_4">
+        <pose>-1.5 10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_5">
+        <pose>1.5 10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_5">
+        <pose>4.5 10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_6">
+        <pose>7.5 10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_6">
+        <pose>10.5 10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_7">
+        <pose>13.5 10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_7">
+        <pose>16.5 10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_8">
+        <pose>19.5 10.5 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_8">
+        <pose>22.5 10.5 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_4_9">
+        <pose>25.425 10.5 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_4_9">
+        <pose>28.275 10.5 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_x_5">
+        <pose>0 17.4 5.08 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.12</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_x_5">
+        <pose>0 17.4 6.42 0 1.5707963 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.115</radius>
+            <length>59.4</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_0">
+        <pose>-28.275 17.4 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_0">
+        <pose>-25.425 17.4 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_1">
+        <pose>-22.5 17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_1">
+        <pose>-19.5 17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_2">
+        <pose>-16.5 17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_2">
+        <pose>-13.5 17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_3">
+        <pose>-10.5 17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_3">
+        <pose>-7.5 17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_4">
+        <pose>-4.5 17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_4">
+        <pose>-1.5 17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_5">
+        <pose>1.5 17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_5">
+        <pose>4.5 17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_6">
+        <pose>7.5 17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_6">
+        <pose>10.5 17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_7">
+        <pose>13.5 17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_7">
+        <pose>16.5 17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_8">
+        <pose>19.5 17.4 5.75 0 1.1507179 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_8">
+        <pose>22.5 17.4 5.75 0 1.9908748 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.285665838152139</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_x_5_9">
+        <pose>25.425 17.4 5.75 0 1.1312918 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.149301509858973</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_x_5_9">
+        <pose>28.275 17.4 5.75 0 2.0103009 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.14930150985897</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_0">
+        <pose>-29.7 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_0">
+        <pose>-29.7 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_0_0">
+        <pose>-29.7 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_0_0">
+        <pose>-29.7 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_0_1">
+        <pose>-29.7 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_0_1">
+        <pose>-29.7 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_0_2">
+        <pose>-29.7 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_0_2">
+        <pose>-29.7 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_0_3">
+        <pose>-29.7 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_0_3">
+        <pose>-29.7 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_0_4">
+        <pose>-29.7 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_0_4">
+        <pose>-29.7 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_1">
+        <pose>-24 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_1">
+        <pose>-24 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_1_0">
+        <pose>-24 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_1_0">
+        <pose>-24 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_1_1">
+        <pose>-24 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_1_1">
+        <pose>-24 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_1_2">
+        <pose>-24 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_1_2">
+        <pose>-24 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_1_3">
+        <pose>-24 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_1_3">
+        <pose>-24 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_1_4">
+        <pose>-24 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_1_4">
+        <pose>-24 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_2">
+        <pose>-18 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_2">
+        <pose>-18 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_2_0">
+        <pose>-18 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_2_0">
+        <pose>-18 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_2_1">
+        <pose>-18 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_2_1">
+        <pose>-18 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_2_2">
+        <pose>-18 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_2_2">
+        <pose>-18 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_2_3">
+        <pose>-18 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_2_3">
+        <pose>-18 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_2_4">
+        <pose>-18 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_2_4">
+        <pose>-18 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_3">
+        <pose>-12 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_3">
+        <pose>-12 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_3_0">
+        <pose>-12 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_3_0">
+        <pose>-12 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_3_1">
+        <pose>-12 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_3_1">
+        <pose>-12 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_3_2">
+        <pose>-12 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_3_2">
+        <pose>-12 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_3_3">
+        <pose>-12 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_3_3">
+        <pose>-12 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_3_4">
+        <pose>-12 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_3_4">
+        <pose>-12 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_4">
+        <pose>-6 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_4">
+        <pose>-6 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_4_0">
+        <pose>-6 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_4_0">
+        <pose>-6 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_4_1">
+        <pose>-6 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_4_1">
+        <pose>-6 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_4_2">
+        <pose>-6 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_4_2">
+        <pose>-6 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_4_3">
+        <pose>-6 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_4_3">
+        <pose>-6 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_4_4">
+        <pose>-6 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_4_4">
+        <pose>-6 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_5">
+        <pose>0 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_5">
+        <pose>0 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_5_0">
+        <pose>0 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_5_0">
+        <pose>0 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_5_1">
+        <pose>0 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_5_1">
+        <pose>0 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_5_2">
+        <pose>0 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_5_2">
+        <pose>0 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_5_3">
+        <pose>0 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_5_3">
+        <pose>0 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_5_4">
+        <pose>0 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_5_4">
+        <pose>0 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_6">
+        <pose>6 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_6">
+        <pose>6 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_6_0">
+        <pose>6 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_6_0">
+        <pose>6 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_6_1">
+        <pose>6 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_6_1">
+        <pose>6 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_6_2">
+        <pose>6 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_6_2">
+        <pose>6 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_6_3">
+        <pose>6 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_6_3">
+        <pose>6 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_6_4">
+        <pose>6 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_6_4">
+        <pose>6 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_7">
+        <pose>12 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_7">
+        <pose>12 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_7_0">
+        <pose>12 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_7_0">
+        <pose>12 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_7_1">
+        <pose>12 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_7_1">
+        <pose>12 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_7_2">
+        <pose>12 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_7_2">
+        <pose>12 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_7_3">
+        <pose>12 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_7_3">
+        <pose>12 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_7_4">
+        <pose>12 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_7_4">
+        <pose>12 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_8">
+        <pose>18 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_8">
+        <pose>18 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_8_0">
+        <pose>18 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_8_0">
+        <pose>18 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_8_1">
+        <pose>18 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_8_1">
+        <pose>18 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_8_2">
+        <pose>18 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_8_2">
+        <pose>18 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_8_3">
+        <pose>18 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_8_3">
+        <pose>18 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_8_4">
+        <pose>18 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_8_4">
+        <pose>18 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_9">
+        <pose>24 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_9">
+        <pose>24 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_9_0">
+        <pose>24 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_9_0">
+        <pose>24 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_9_1">
+        <pose>24 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_9_1">
+        <pose>24 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_9_2">
+        <pose>24 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_9_2">
+        <pose>24 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_9_3">
+        <pose>24 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_9_3">
+        <pose>24 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_9_4">
+        <pose>24 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_9_4">
+        <pose>24 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lower_chord_y_10">
+        <pose>29.7 0 5.08 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.105</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="upper_chord_y_10">
+        <pose>29.7 0 6.42 0 1.5707963 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.095</radius>
+            <length>34.8</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_10_0">
+        <pose>29.7 -15.675 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_10_0">
+        <pose>29.7 -12.225 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_10_1">
+        <pose>29.7 -8.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_10_1">
+        <pose>29.7 -5.25 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_10_2">
+        <pose>29.7 -1.75 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_10_2">
+        <pose>29.7 1.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_10_3">
+        <pose>29.7 5.25 5.75 0 1.2051551 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_10_3">
+        <pose>29.7 8.75 5.75 0 1.9364376 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7477459892580764</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_a_y_10_4">
+        <pose>29.7 12.225 5.75 0 1.2003247 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="web_b_y_10_4">
+        <pose>29.7 15.675 5.75 0 1.9412679 1.5707963</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.062</radius>
+            <length>3.7010944327320257</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_0_0">
+        <pose>-29.7 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_0_0">
+        <pose>-26.85 -13.95 5.08 0 1.5707963 0.88034987</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>8.949860334105777</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_0_1">
+        <pose>-29.7 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_0_1">
+        <pose>-26.85 -7 6.42 0 1.5707963 -0.88740508</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.027181176868003</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_0_2">
+        <pose>-29.7 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_0_2">
+        <pose>-26.85 0 5.08 0 1.5707963 0.88740508</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.027181176868003</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_0_3">
+        <pose>-29.7 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_0_3">
+        <pose>-26.85 7 6.42 0 1.5707963 -0.88740508</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.027181176868003</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_0_4">
+        <pose>-29.7 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_0_4">
+        <pose>-26.85 13.95 5.08 0 1.5707963 0.88034987</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>8.949860334105777</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_0_5">
+        <pose>-29.7 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_1_0">
+        <pose>-24 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_1_0">
+        <pose>-21 -13.95 6.42 0 1.5707963 -0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_1_1">
+        <pose>-24 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_1_1">
+        <pose>-21 -7 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_1_2">
+        <pose>-24 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_1_2">
+        <pose>-21 0 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_1_3">
+        <pose>-24 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_1_3">
+        <pose>-21 7 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_1_4">
+        <pose>-24 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_1_4">
+        <pose>-21 13.95 6.42 0 1.5707963 -0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_1_5">
+        <pose>-24 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_2_0">
+        <pose>-18 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_2_0">
+        <pose>-15 -13.95 5.08 0 1.5707963 0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_2_1">
+        <pose>-18 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_2_1">
+        <pose>-15 -7 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_2_2">
+        <pose>-18 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_2_2">
+        <pose>-15 0 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_2_3">
+        <pose>-18 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_2_3">
+        <pose>-15 7 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_2_4">
+        <pose>-18 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_2_4">
+        <pose>-15 13.95 5.08 0 1.5707963 0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_2_5">
+        <pose>-18 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_3_0">
+        <pose>-12 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_3_0">
+        <pose>-9 -13.95 6.42 0 1.5707963 -0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_3_1">
+        <pose>-12 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_3_1">
+        <pose>-9 -7 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_3_2">
+        <pose>-12 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_3_2">
+        <pose>-9 0 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_3_3">
+        <pose>-12 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_3_3">
+        <pose>-9 7 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_3_4">
+        <pose>-12 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_3_4">
+        <pose>-9 13.95 6.42 0 1.5707963 -0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_3_5">
+        <pose>-12 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_4_0">
+        <pose>-6 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_4_0">
+        <pose>-3 -13.95 5.08 0 1.5707963 0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_4_1">
+        <pose>-6 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_4_1">
+        <pose>-3 -7 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_4_2">
+        <pose>-6 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_4_2">
+        <pose>-3 0 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_4_3">
+        <pose>-6 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_4_3">
+        <pose>-3 7 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_4_4">
+        <pose>-6 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_4_4">
+        <pose>-3 13.95 5.08 0 1.5707963 0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_4_5">
+        <pose>-6 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_5_0">
+        <pose>0 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_5_0">
+        <pose>3 -13.95 6.42 0 1.5707963 -0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_5_1">
+        <pose>0 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_5_1">
+        <pose>3 -7 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_5_2">
+        <pose>0 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_5_2">
+        <pose>3 0 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_5_3">
+        <pose>0 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_5_3">
+        <pose>3 7 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_5_4">
+        <pose>0 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_5_4">
+        <pose>3 13.95 6.42 0 1.5707963 -0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_5_5">
+        <pose>0 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_6_0">
+        <pose>6 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_6_0">
+        <pose>9 -13.95 5.08 0 1.5707963 0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_6_1">
+        <pose>6 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_6_1">
+        <pose>9 -7 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_6_2">
+        <pose>6 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_6_2">
+        <pose>9 0 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_6_3">
+        <pose>6 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_6_3">
+        <pose>9 7 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_6_4">
+        <pose>6 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_6_4">
+        <pose>9 13.95 5.08 0 1.5707963 0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_6_5">
+        <pose>6 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_7_0">
+        <pose>12 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_7_0">
+        <pose>15 -13.95 6.42 0 1.5707963 -0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_7_1">
+        <pose>12 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_7_1">
+        <pose>15 -7 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_7_2">
+        <pose>12 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_7_2">
+        <pose>15 0 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_7_3">
+        <pose>12 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_7_3">
+        <pose>15 7 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_7_4">
+        <pose>12 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_7_4">
+        <pose>15 13.95 6.42 0 1.5707963 -0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_7_5">
+        <pose>12 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_8_0">
+        <pose>18 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_8_0">
+        <pose>21 -13.95 5.08 0 1.5707963 0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_8_1">
+        <pose>18 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_8_1">
+        <pose>21 -7 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_8_2">
+        <pose>18 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_8_2">
+        <pose>21 0 5.08 0 1.5707963 0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_8_3">
+        <pose>18 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_8_3">
+        <pose>21 7 6.42 0 1.5707963 -0.86217005</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.219544457292887</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_8_4">
+        <pose>18 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_8_4">
+        <pose>21 13.95 5.08 0 1.5707963 0.85505274</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.143850392476901</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_8_5">
+        <pose>18 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_9_0">
+        <pose>24 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_9_0">
+        <pose>26.85 -13.95 6.42 0 1.5707963 -0.88034987</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>8.949860334105777</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_9_1">
+        <pose>24 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_9_1">
+        <pose>26.85 -7 5.08 0 1.5707963 0.88740508</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.027181176868003</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_9_2">
+        <pose>24 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_9_2">
+        <pose>26.85 0 6.42 0 1.5707963 -0.88740508</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.027181176868003</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_9_3">
+        <pose>24 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_9_3">
+        <pose>26.85 7 5.08 0 1.5707963 0.88740508</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>9.027181176868003</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_9_4">
+        <pose>24 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="lateral_9_4">
+        <pose>26.85 13.95 6.42 0 1.5707963 -0.88034987</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.042</radius>
+            <length>8.949860334105777</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_9_5">
+        <pose>24 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_10_0">
+        <pose>29.7 -17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_10_1">
+        <pose>29.7 -10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_10_2">
+        <pose>29.7 -3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_10_3">
+        <pose>29.7 3.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_10_4">
+        <pose>29.7 10.5 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="post_10_5">
+        <pose>29.7 17.4 5.75 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.075</radius>
+            <length>1.3399999999999999</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_0_0">
+        <pose>0 -16.359849 6.9426169 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_0_1">
+        <pose>0 -14.140151 7.5373831 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_1_0">
+        <pose>0 -10.259849 6.9426169 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_1_1">
+        <pose>0 -8.0401512 7.5373831 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_2_0">
+        <pose>0 -4.1598488 6.9426169 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_2_1">
+        <pose>0 -1.9401512 7.5373831 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_3_0">
+        <pose>0 1.9401512 6.9426169 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_3_1">
+        <pose>0 4.1598488 7.5373831 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_4_0">
+        <pose>0 8.0401512 6.9426169 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_4_1">
+        <pose>0 10.259849 7.5373831 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_5_0">
+        <pose>0 14.140151 6.9426169 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="panel_strip_5_1">
+        <pose>0 16.359849 7.5373831 0.26179939 0 0</pose>
+        <geometry>
+          <box>
+            <size>59.988 2.278 0.035</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="piles">
+        <geometry>
+          <mesh>
+            <uri>model://offshore_pv_platform/meshes/piles.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.36 0.42 0.45 1</ambient>
+          <diffuse>0.36 0.42 0.45 1</diffuse>
+          <specular>.24 .28 .32 1</specular>
+          <pbr>
+            <metal>
+              <roughness>0.6</roughness>
+              <metalness>0.18</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="coating">
+        <geometry>
+          <mesh>
+            <uri>model://offshore_pv_platform/meshes/coating.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.11 0.17 0.18 1</ambient>
+          <diffuse>0.11 0.17 0.18 1</diffuse>
+          <specular>.24 .28 .32 1</specular>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.12</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="truss">
+        <geometry>
+          <mesh>
+            <uri>model://offshore_pv_platform/meshes/truss.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.48 0.53 0.57 1</ambient>
+          <diffuse>0.48 0.53 0.57 1</diffuse>
+          <specular>.24 .28 .32 1</specular>
+          <pbr>
+            <metal>
+              <roughness>0.55</roughness>
+              <metalness>0.23</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="frames">
+        <geometry>
+          <mesh>
+            <uri>model://offshore_pv_platform/meshes/frames.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.66 0.71 0.74 1</ambient>
+          <diffuse>0.66 0.71 0.74 1</diffuse>
+          <specular>.24 .28 .32 1</specular>
+          <pbr>
+            <metal>
+              <roughness>0.49</roughness>
+              <metalness>0.34</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="pv_front">
+        <geometry>
+          <mesh>
+            <uri>model://offshore_pv_platform/meshes/pv_front.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.11 0.18 0.27 1</ambient>
+          <diffuse>0.11 0.18 0.27 1</diffuse>
+          <specular>.24 .28 .32 1</specular>
+          <pbr>
+            <metal>
+              <roughness>0.32</roughness>
+              <metalness>0.18</metalness>
+              <albedo_map>model://offshore_pv_platform/materials/textures/module_front.png</albedo_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="pv_back">
+        <geometry>
+          <mesh>
+            <uri>model://offshore_pv_platform/meshes/pv_back.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.1 0.13 0.17 1</ambient>
+          <diffuse>0.1 0.13 0.17 1</diffuse>
+          <specular>.24 .28 .32 1</specular>
+          <pbr>
+            <metal>
+              <roughness>0.47</roughness>
+              <metalness>0.12</metalness>
+              <albedo_map>model://offshore_pv_platform/materials/textures/module_back.png</albedo_map>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="hardware">
+        <geometry>
+          <mesh>
+            <uri>model://offshore_pv_platform/meshes/hardware.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.055 0.063 0.07 1</ambient>
+          <diffuse>0.055 0.063 0.07 1</diffuse>
+          <specular>.24 .28 .32 1</specular>
+          <pbr>
+            <metal>
+              <roughness>0.75</roughness>
+              <metalness>0.05</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

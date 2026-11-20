@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <model name="offshore_pv_platform_array">
+    <static>true</static>
+    <link name="structure">
+      <collision name="pile_1">
+        <pose>-18 -10.5 -9.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>29.04</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="pile_2">
+        <pose>-18 10.5 -9.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>29.04</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="pile_3">
+        <pose>18 -10.5 -9.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>29.04</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="pile_4">
+        <pose>18 10.5 -9.48 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.5</radius>
+            <length>29.04</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name="overhead_structure">
+        <geometry>
+          <mesh>
+            <uri>model://offshore_pv_platform_array/meshes/overhead_collision.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>
