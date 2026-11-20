@@ -91,6 +91,10 @@ def generate_launch_description():
         radar_plugin_lib_path = os.path.join(os.path.dirname(usv_sim_prefix), 'gz_maritime_radar_plugin', 'lib')
         plugin_paths = [radar_plugin_lib_path]
         try:
+            plugin_paths.append(os.path.join(get_package_prefix('usv_vessel_devices'), 'lib'))
+        except Exception:
+            pass
+        try:
             plugin_paths.append(os.path.join(get_package_prefix('usv_mmwave_sim'), 'lib'))
         except Exception:
             pass

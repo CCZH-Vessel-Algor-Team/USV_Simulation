@@ -29,6 +29,7 @@
   <depend>robot_localization</depend>
   <depend>usv_mmwave_sim</depend>
   <depend>wamv_gazebo</depend>
+  <exec_depend>usv_vessel_devices</exec_depend>
   <exec_depend>vrx_ros</exec_depend>
   <exec_depend>vrx_gz</exec_depend>
   <depend>usv_interfaces</depend>

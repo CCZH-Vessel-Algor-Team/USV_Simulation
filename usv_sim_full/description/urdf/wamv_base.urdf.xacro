@@ -146,6 +146,9 @@
   </gazebo>
 
   <gazebo reference="${namespace}/base_link">
+    <!-- Preserve legacy overrides for other meshes; the painted M5 uses its
+         own per-face COLLADA materials instead of one uniform gray material. -->
+    <xacro:unless value="${str('$(arg visual_mesh)').endswith('/M5_body_colored.dae')}">
     <visual>
       <material>
         <!-- 使用您想要的纯色通道，格式为 Red Green Blue Alpha (0~1之间) -->
@@ -163,6 +166,7 @@
         -->
       </material>
     </visual>
+    </xacro:unless>
 
     <sensor type="contact" name="contact_sensor">
       <contact>

@@ -75,6 +75,9 @@ robot_1:
   thruster_config: CUSTOM
   thrusters:
     enabled: true
+  # Five individually controlled lights + folding mast; omit this block to keep the old model.
+  vessel_devices:
+    enabled: true
   spawn_pose:
   - 0.0
   - 0.0

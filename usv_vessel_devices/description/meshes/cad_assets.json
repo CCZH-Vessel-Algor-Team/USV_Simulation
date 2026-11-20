@@ -1,0 +1,285 @@
+{
+  "coordinate_units": "metre",
+  "converter": "cadquery-ocp 7.7.2 / OpenCASCADE; linear deflection 0.2 mm, angular 0.4 rad",
+  "rights": "User-provided CAD; no licence identified in source archives. Not relicensed by this package.",
+  "mast": {
+    "source": {
+      "archive": "ship-mast-light-1.snapshot.1.zip",
+      "archive_sha256": "238d7c1890e7844c6a7b3c4caa1a2b18b2606e277883b7cd5f540f1e34582c93",
+      "step_member": "MastLight/MastLight.stp",
+      "step_sha256": "ea7a3cc5895207901eb6b96581b0235c50133f80619ff1e7652ec33a016964a3",
+      "cad_bounds_mm": [
+        -1e-07,
+        -111.017088405268,
+        -1e-07,
+        94.9539806400746,
+        111.01708840538099,
+        597.869102913196
+      ]
+    },
+    "native_height_m": 0.5978691029131961,
+    "hinge_height_m": 0.12103668121249603,
+    "mount_origin_cad_mm": [
+      63.87674245860974,
+      5.596101360083594e-11,
+      0.0
+    ],
+    "lens_origin_from_hinge_m": [
+      7.105427357601002e-18,
+      0.00025049070549763906,
+      0.46291521617463555
+    ],
+    "hinge_note": "Virtual folding joint at top of fixed clamp; not an authored CAD mechanism.",
+    "navigation_light_mounts_from_hinge_m": {
+      "right_rear": [
+        7.105427357601002e-18,
+        -0.10019592807341146,
+        0.15069467562218689
+      ],
+      "left_rear": [
+        7.105427357601002e-18,
+        0.10019592807341243,
+        0.15069467562218689
+      ],
+      "left_front": [
+        7.105427357601002e-18,
+        0.10019592807341243,
+        0.2408710108881249
+      ],
+      "right_front": [
+        7.105427357601002e-18,
+        -0.10019592807341146,
+        0.2408710108881249
+      ]
+    },
+    "removed_crossbar_lamps": {
+      "solids": 24,
+      "open_shells": 4,
+      "lamps": 4
+    },
+    "extra_light_order": [
+      "right_lower",
+      "aft_lower",
+      "aft_middle",
+      "aft_upper",
+      "forward_lower",
+      "forward_middle",
+      "forward_upper"
+    ],
+    "extra_light_mounts_from_hinge_m": {
+      "right_lower": {
+        "xyz": [
+          7.105427357601002e-18,
+          -0.10019592807322382,
+          0.06051834035625096
+        ],
+        "size_factor": 1.0,
+        "source_selection_bounds_m": [
+          -0.006999999999999993,
+          -0.10719592807322381,
+          0.060517340356250955,
+          0.007000000000000014,
+          -0.09319592807322381,
+          0.07651834035625096
+        ],
+        "removed_solids": 6,
+        "removed_open_shells": 1
+      },
+      "aft_lower": {
+        "xyz": [
+          -0.017382339940024395,
+          -5.596101360083594e-14,
+          0.06051834035613295
+        ],
+        "size_factor": 0.8,
+        "source_selection_bounds_m": [
+          -0.024382339940024395,
+          -0.007000000000055961,
+          0.06051734035613295,
+          -0.010382339940024394,
+          0.00699999999994404,
+          0.07651834035613296
+        ],
+        "removed_solids": 5,
+        "removed_open_shells": 2
+      },
+      "aft_middle": {
+        "xyz": [
+          -0.017382339940024395,
+          -5.596101360083594e-14,
+          0.15069467562187486
+        ],
+        "size_factor": 0.8,
+        "source_selection_bounds_m": [
+          -0.024382339940024395,
+          -0.007000000000055961,
+          0.15069367562187488,
+          -0.010382339940024394,
+          0.00699999999994404,
+          0.16669467562187487
+        ],
+        "removed_solids": 5,
+        "removed_open_shells": 0
+      },
+      "aft_upper": {
+        "xyz": [
+          -0.017382339940397687,
+          -5.596101360083594e-14,
+          0.24087101088781082
+        ],
+        "size_factor": 0.8,
+        "source_selection_bounds_m": [
+          -0.024382339940397686,
+          -0.007000000000055961,
+          0.24087001088781085,
+          -0.010382339940397686,
+          0.00699999999994404,
+          0.25687101088781084
+        ],
+        "removed_solids": 5,
+        "removed_open_shells": 0
+      },
+      "forward_lower": {
+        "xyz": [
+          0.021007547310101658,
+          -5.596101360083594e-14,
+          0.19077304685149188
+        ],
+        "size_factor": 0.8,
+        "source_selection_bounds_m": [
+          0.011007547310101657,
+          -0.01000000000005596,
+          0.1907720468514919,
+          0.031007547310101656,
+          0.00999999999994404,
+          0.21677304685149187
+        ],
+        "removed_solids": 5,
+        "removed_open_shells": 0
+      },
+      "forward_middle": {
+        "xyz": [
+          0.021007547310101658,
+          -5.596101360083594e-14,
+          0.2909689749247549
+        ],
+        "size_factor": 0.8,
+        "source_selection_bounds_m": [
+          0.011007547310101657,
+          -0.01000000000005596,
+          0.2909679749247549,
+          0.031007547310101656,
+          0.00999999999994404,
+          0.3169689749247549
+        ],
+        "removed_solids": 5,
+        "removed_open_shells": 0
+      },
+      "forward_upper": {
+        "xyz": [
+          0.021007547310101658,
+          -5.596101360083594e-14,
+          0.3911649029980189
+        ],
+        "size_factor": 0.8,
+        "source_selection_bounds_m": [
+          0.011007547310101657,
+          -0.01000000000005596,
+          0.39116390299801895,
+          0.031007547310101656,
+          0.00999999999994404,
+          0.41716490299801895
+        ],
+        "removed_solids": 5,
+        "removed_open_shells": 0
+      }
+    },
+    "removed_extra_lamps": {
+      "solids": 36,
+      "open_shells": 3,
+      "lamps": 7
+    },
+    "meshes": {
+      "mast_base.stl": {
+        "triangles": 7268,
+        "bounds_m": [
+          -0.06387674245860975,
+          -0.04000000000005596,
+          0.0,
+          0.02128979640366346,
+          0.03999999999994404,
+          0.12103668121249603
+        ],
+        "sha256": "322d5e21377fd0e9759e714d21a379cf9a5bd310e22c645a9368ad349d2cf1eb"
+      },
+      "mast_body.stl": {
+        "triangles": 18246,
+        "bounds_m": [
+          -0.04006187085056215,
+          -0.11101708830532397,
+          0.0,
+          0.031077238081464856,
+          0.11101708830532503,
+          0.4768324216007
+        ],
+        "sha256": "f0ef4a36a394376853c5e4a3c660f3551972cf88cca46f9d84abfcf179aab69a"
+      },
+      "mast_lens.stl": {
+        "triangles": 4002,
+        "bounds_m": [
+          -0.005331927365101976,
+          -0.0053320904685555505,
+          -0.008015674245861533,
+          0.005331927365101983,
+          0.005332090468555549,
+          0.008015674245861533
+        ],
+        "sha256": "7c66760e7ff1d058d9f5d28e358eca608ebcc2b5cec33024584c3fc4288c11bf"
+      }
+    }
+  },
+  "navigation_lamp": {
+    "source": {
+      "archive": "marine-navigation-light-all-round-1.snapshot.2.zip",
+      "archive_sha256": "afa37338f708240af94e2fd2d091f8f2d48a01b4860220c1784cfb2b0e7935c2",
+      "step_member": "Marine navigation light.stp",
+      "step_sha256": "54db3c3125629b15d32453dae297d6eb38c315c9f909ffed47b826a79db7323e",
+      "cad_bounds_mm": [
+        -76.0000001000001,
+        -78.88150678330459,
+        -1e-07,
+        76.00000010000004,
+        295.43829009847616,
+        320.6391925977404
+      ]
+    },
+    "selected_state": "closed lamp centred at CAD y=0",
+    "selected_solids": 6,
+    "meshes": {
+      "navigation_lamp_housing.stl": {
+        "triangles": 14054,
+        "bounds_m": [
+          -0.076,
+          -0.0788792962295289,
+          0.0,
+          0.076,
+          0.0760000000000001,
+          0.20003401680142707
+        ],
+        "sha256": "0014dc608d5a3f370bea9e4a6b723e1c6c9b7fcde439c0855e522b5eb6156ab8"
+      },
+      "navigation_lamp_lens.stl": {
+        "triangles": 3728,
+        "bounds_m": [
+          -0.06,
+          -0.06,
+          0.04,
+          0.06,
+          0.06,
+          0.15
+        ],
+        "sha256": "f7c916c3df65101aa1af0ea483065f99289356d1461933e76a27a50452e52bdd"
+      }
+    }
+  }
+}

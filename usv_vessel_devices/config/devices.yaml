@@ -1,0 +1,49 @@
+# Coordinates in metres (x forward, y left, z up), not a regulatory light layout.
+# Roof coordinates for the additional roof_* lights and the legacy roof fallback.
+# Tunable roof mounts; independent of the mast and outboard tilt mechanisms.
+front_x: 0.20
+rear_x: -1.15
+left_y: 0.75
+right_y: -0.8
+roof_z: 1.55
+# Optional CUSTOM outboard tilt. The usv_bringup CCS scene explicitly enables it.
+# 0 = lowered; positive raises aft. Angles in rad, speed in rad/s, effort in Nm.
+thruster_tilt_enabled: false
+thruster_tilt_max_angle: 1.3089969389957472
+thruster_tilt_speed: 0.25
+thruster_tilt_tolerance: 0.005
+thruster_tilt_effort: 10000.0
+lamp_radius: 0.065
+# CAD lamps use the closed navigation-light mesh; radius is for primitive fallback.
+lamp_use_cad: true
+lamp_scale: 1.0
+# Add four independent left-red/right-green roof lights, fixed to base_link.
+# Suppressed if the original four already use the legacy roof/primitive layout.
+roof_lights_enabled: true
+# Default: four navigation lamps on two moving CAD mast crossbars.
+# front/rear topic IDs now mean upper/lower tier, retaining existing ROS interfaces.
+lights_on_mast: true
+# Fit new lamp bases to the small CAD mounting pads; effective mesh scale is
+# lamp_scale * mast_lamp_scale * (mast_length / native_CAD_height).
+mast_lamp_scale: 0.15
+# Replace the seven remaining decorative lamps with separately controlled fixtures.
+extra_lights_enabled: true
+extra_light_colors:
+  right_lower: green
+  aft_lower: red
+  aft_middle: green
+  aft_upper: red
+  forward_lower: red
+  forward_middle: green
+  forward_upper: red
+mast_xyz: [-0.35, 0.0, 1.55]
+# CAD: mast_xyz is the bottom mounting datum; the folding axis is above its fixed clamp.
+mast_use_cad: true
+# Twice the original 0.5978691029131961 m CAD height (uniform XYZ scale).
+mast_length: 1.1957382058263922
+mast_radius: 0.007079
+mast_mass: 1.0
+mast_base_mass: 0.2
+mast_max_angle: 1.5707963267948966
+mast_speed: 0.3
+mast_tolerance: 0.005
