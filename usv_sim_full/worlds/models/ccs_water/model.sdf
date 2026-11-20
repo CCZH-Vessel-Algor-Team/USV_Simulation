@@ -6,8 +6,8 @@
       <visual name="wave_visual">
         <geometry>
           <mesh>
-            <uri>model://coast_waves/meshes/waterlow.dae</uri>
-            <scale>6 6 1</scale>
+            <!-- Graded mesh in metres; the shader derives UVs over 36 km. -->
+            <uri>model://ccs_water/meshes/ccs_water.dae</uri>
           </mesh>
         </geometry>
         <plugin filename="libWaveVisual.so" name="vrx::WaveVisual">
@@ -31,7 +31,7 @@
           <current>
             <topic>/ocean_current</topic>
             <size>36000 36000</size>
-            <!-- The renderer flips this COLLADA mesh's V axis. -->
+            <!-- Match the shader's V axis (the legacy COLLADA orientation). -->
             <uv_sign>1 -1</uv_sign>
           </current>
         </plugin>

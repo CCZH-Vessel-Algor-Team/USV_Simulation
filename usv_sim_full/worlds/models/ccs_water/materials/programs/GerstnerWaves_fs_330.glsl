@@ -13,8 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// CCS modification, 2026-11-11: restore the existing VRX normal/cube textures
-// instead of a constant upward normal and a constant blue environment.
+// CCS: use the existing VRX normal/cube textures and softly light wave slopes.
 
 #version 330
 
@@ -51,5 +50,10 @@ void main()
   // These are view-angle colours, not actual bathymetry or depth refraction.
   vec4 waterColor = mix(shallowColor, deepColor, facing);
   vec4 color = mix(waterColor, envColor, waterEnvRatio);
+  // A bounded fill from the CCS sun direction keeps the broad crests visible
+  // from above, where Fresnel reflection is weak. Use the geometric normal,
+  // not the fine-ripple normal, so gain zero adds no contrast.
+  float waveLight = dot(inPs.rotMatrix[2].xy, vec2(0.98, -0.20));
+  color.rgb *= 1.0 + clamp(4.0 * waveLight, -0.28, 0.28);
   fragColor = vec4(color.xyz, 0.9);
 }

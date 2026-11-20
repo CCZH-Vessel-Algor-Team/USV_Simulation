@@ -28,7 +28,10 @@ constexpr double kDtSec = 1.0 / kRampHz;
 
 constexpr double kWindSpeedRatePerSec = 0.5;
 constexpr double kWindDirectionRatePerSec = 30.0;
-constexpr double kWaveAmplitudeRatePerSec = 0.03;
+constexpr double kWaveAmplitudeRatePerSec = 0.05;
+// PMS uses significant height when both fields are published. Slew it too;
+// changing only the gain rate would not speed up the visible wave response.
+constexpr double kWaveHeightRateMetresPerSec = 0.05;
 constexpr double kWavePeriodRatePerSec = 0.1;
 constexpr double kCurrentRatePerSec = 0.1;
 
@@ -653,7 +656,7 @@ void VrxEnvPanel::onRampTimer()
   current_published_values_.wave_height_m = clampStep(
     current_published_values_.wave_height_m,
     target_values_.wave_height_m,
-    0.03 * kDtSec);
+    kWaveHeightRateMetresPerSec * kDtSec);
   current_published_values_.current_x = clampStep(
     current_published_values_.current_x,
     target_values_.current_x,

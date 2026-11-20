@@ -1,7 +1,9 @@
-"""CCS water changes shading, not the geometry, wave interface or ray masks."""
+"""CCS water geometry and shading must not affect physics or sensor ray masks."""
+from collections import Counter
 import hashlib
 from pathlib import Path
 import re
+import runpy
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -10,6 +12,8 @@ import pytest
 PACKAGE = Path(__file__).resolve().parents[1]
 WATER = PACKAGE / 'worlds/models/ccs_water'
 VRX = PACKAGE.parent / 'vrx/vrx_gz/models/coast_waves'
+MESH = WATER / 'meshes/ccs_water.dae'
+COLLADA = {'d': 'http://www.collada.org/2005/11/COLLADASchema'}
 
 
 def test_ccs_world_selects_local_water_without_new_wave_parameters():
@@ -24,7 +28,7 @@ def test_ccs_world_selects_local_water_without_new_wave_parameters():
         assert f'key: "{key}" value {{ type: DOUBLE double_value: {value} }}' in publisher.text
 
 
-def test_water_reuses_legacy_geometry_plugin_topic_and_visibility():
+def test_water_keeps_one_visual_with_legacy_plugin_topic_and_visibility():
     model = ET.parse(WATER / 'model.sdf').getroot().find('model')
     old = ET.parse(VRX / 'model_36km.sdf').getroot().find('model')
     visual = model.find('link/visual')
@@ -32,8 +36,9 @@ def test_water_reuses_legacy_geometry_plugin_topic_and_visibility():
     assert model.findtext('static') == old.findtext('static') == 'true'
     assert model.find('link').get('name') == old.find('link').get('name')
     assert visual.get('name') == original.get('name')
-    assert visual.findtext('geometry/mesh/uri') == 'model://coast_waves/meshes/waterlow.dae'
-    assert visual.findtext('geometry/mesh/scale') == original.findtext('geometry/mesh/scale') == '6 6 1'
+    assert len(model.findall('.//visual')) == 1
+    assert visual.findtext('geometry/mesh/uri') == 'model://ccs_water/meshes/ccs_water.dae'
+    assert visual.find('geometry/mesh/scale') is None  # Mesh coordinates are already metres.
     assert visual.findtext('visibility_flags') == original.findtext('visibility_flags') == '8'
     assert model.findall('.//collision') == []
     plugin = visual.find('plugin')
@@ -42,6 +47,41 @@ def test_water_reuses_legacy_geometry_plugin_topic_and_visibility():
     assert plugin.findtext('wavefield/topic') == '/vrx/wavefield/parameters'
     assert plugin.find('wavefield/wave') is None
     assert ET.parse(WATER / 'model.config').getroot().findtext('sdf') == 'model.sdf'
+
+
+def test_graded_water_mesh_is_reproducible_and_within_previous_triangle_budget(tmp_path):
+    generator = runpy.run_path(str(PACKAGE / 'tools/generate_ccs_water_mesh.py'))
+    vertices, triangles = generator['generate']()
+    regenerated = tmp_path / MESH.name
+    generator['write_collada'](regenerated, vertices, triangles)
+    assert regenerated.read_bytes() == MESH.read_bytes()
+    legacy = ET.parse(VRX / 'meshes/waterlow.dae').find('.//d:triangles', COLLADA)
+    assert len(triangles) < int(legacy.get('count'))
+
+    half_width = 18000
+    area_twice = 0
+    edges = Counter()
+    for a, b, c in triangles:
+        x0, y0 = vertices[a]
+        x1, y1 = vertices[b]
+        x2, y2 = vertices[c]
+        area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)
+        assert area > 0  # Nondegenerate and facing up.
+        area_twice += area
+        edges.update(tuple(sorted(edge)) for edge in ((a, b), (b, c), (c, a)))
+    assert area_twice == pytest.approx(2 * (2 * half_width) ** 2)
+    for (a, b), count in edges.items():
+        x0, y0 = vertices[a]
+        x1, y1 = vertices[b]
+        perimeter = (
+            (x0 == x1 and abs(x0) == half_width) or (y0 == y1 and abs(y0) == half_width)
+        )
+        assert count == (1 if perimeter else 2)  # No interior T-junctions or holes.
+        radius = max(abs(x0), abs(y0), abs(x1), abs(y1))
+        if radius <= 384:
+            # The first stitch between 3 m and 6 m rows can span both steps.
+            spacing = 3 if radius <= 96 else (9 if radius == 102 else 6)
+            assert max(abs(x0 - x1), abs(y0 - y1)) <= spacing
 
 
 @pytest.mark.parametrize('name', ['wave_normals.dds', 'skybox_lowres.dds'])
@@ -57,23 +97,16 @@ def without_comments(source):
     return re.sub(r'//[^\n]*', '', source)
 
 
-def test_vertex_displacement_is_unchanged():
-    name = 'materials/programs/GerstnerWaves_vs_330.glsl'
-    new = without_comments((WATER / name).read_text())
-    old = without_comments((VRX / name).read_text())
-    start = 'WaveParameters waves[3];'
-    end = 'gl_Position = worldviewproj_matrix * P;'
-    extract = lambda text: re.sub(r'\s+', '', text[text.index(start):text.index(end) + len(end)])
-    assert extract(new) == extract(old)
-
-
 def test_restored_texture_shaders_match_the_existing_plugin_interface():
     folder = WATER / 'materials/programs'
     vertex = without_comments((folder / 'GerstnerWaves_vs_330.glsl').read_text())
     fragment = without_comments((folder / 'GerstnerWaves_fs_330.glsl').read_text())
+    for uniform in ('amplitude', 'wavenumber', 'omega', 'phase', 'steepness'):
+        assert f'uniform vec3 {uniform};' in vertex
     assert 'uniform vec2 bumpScale;' in vertex
     assert 'uniform vec2 bumpSpeed;' in vertex
-    assert 'outVs.bumpCoord = uv0.xy*bumpScale + drift;' in vertex
+    assert 'outVs.bumpCoord = uv*bumpScale + drift;' in vertex
+    assert 'vertex.xy * vec2(1.0, -1.0) / 36000.0' in vertex
     assert 'currentAdvectionEnabled != 0 ? -currentUvOffset : t*bumpSpeed' in vertex
     assert 'uniform sampler2D bumpMap;' in fragment
     assert 'uniform samplerCube cubeMap;' in fragment

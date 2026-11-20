@@ -15,14 +15,12 @@
 //
 // Copyright (c) 2019 Rhys Mainwaring.
 // Modified for vector Gerstner parameters (Tessendorf's wave convention).
-// CCS modification, 2026-11-11: restore scrolling bump coordinates only;
-// retain the VRX vertex displacement and wave-parameter interface unchanged.
+// CCS: use a graded mesh and enhance vertical displacement for rendering only.
 // Current advection uses integrated simulation-time phase, not time * velocity.
 
 #version 330
 
 in vec4 vertex;
-in vec4 uv0;
 uniform mat4 worldviewproj_matrix;
 
 uniform int Nwaves;
@@ -64,6 +62,17 @@ out gl_PerVertex
   vec4 gl_Position;
 };
 
+// Fade resolution before each coarser band in generate_ccs_water_mesh.py.
+// This prevents short waves from aliasing into large triangles in the distance.
+float waveGridSpacing(float radius)
+{
+  return 3.0
+      + 3.0 * smoothstep(72.0, 96.0, radius)
+      + 6.0 * smoothstep(336.0, 384.0, radius)
+      + 12.0 * smoothstep(480.0, 576.0, radius)
+      + 24.0 * smoothstep(672.0, 864.0, radius);
+}
+
 void main()
 {
   WaveParameters waves[3];
@@ -73,6 +82,14 @@ void main()
   waves[2] = WaveParameters(wavenumber.z, amplitude.z, omega.z, phase.z, dir2.xy, steepness.z);
 
   vec4 P = vertex;
+  // The mesh is already in metres: phase, wavelength and slopes use the
+  // same coordinates as the wavefield rather than a 6x-scaled visual.
+  float radius = max(abs(vertex.x), abs(vertex.y));
+  float gridSpacing = waveGridSpacing(radius);
+  float waveEnvelope = (1.0 - exp(-t/tau)) * (1.0 - smoothstep(1152.0, 1440.0, radius));
+  // Boost gentle waves most. The extra crest displacement is bounded by
+  // 0.56 m even under very rough inputs, and a zero input stays flat.
+  float verticalBoost = 1.0 + 0.56 / (0.4 + dot(abs(amplitude), vec3(1.0)));
 
   vec3 B = vec3(1.0, 0.0, 0.0);
   vec3 T = vec3(0.0, 1.0, 0.0);
@@ -81,21 +98,25 @@ void main()
   for(int i = 0; i < Nwaves; ++i)
   {
     float k = waves[i].k;
-    float a = waves[i].a * (1.0 - exp(-1.0*t/tau));
+    float resolved = 1.0 - smoothstep(1.2, 2.3, k * gridSpacing);
+    float a = waves[i].a * waveEnvelope * resolved;
+    if (a == 0.0)
+      continue;
+    float az = a * verticalBoost;
     float q = waves[i].q;
     float dx = waves[i].d.x;
     float dy = waves[i].d.y;
-    float theta = dot(waves[i].d, P.xy)*k - t*waves[i].omega + waves[i].phase;
+    float theta = dot(waves[i].d, vertex.xy)*k - t*waves[i].omega + waves[i].phase;
     float c = cos(theta);
     float s = sin(theta);
 
     P.x -= q*a*dx*s;
     P.y -= q*a*dy*s;
-    P.z += a*c;
+    P.z += az*c;
 
     float ka = a*k;
     float qkac = q*ka*c;
-    float kas = ka*s;
+    float kas = az*k*s;
     float dxy = dx*dy;
 
     B += vec3(-qkac*dx*dx, -qkac*dxy, -kas*dx);
@@ -112,6 +133,9 @@ void main()
   // Sampling at (uv - offset) moves visible features WITH positive current.
   // The fallback retains legacy animation when the optional subscription is off.
   vec2 drift = currentAdvectionEnabled != 0 ? -currentUvOffset : t*bumpSpeed;
-  outVs.bumpCoord = uv0.xy*bumpScale + drift;
+  // Preserve the legacy UV span and V direction without importing nearly
+  // identical UVs, which the COLLADA loader can merge on the dense grid.
+  vec2 uv = vec2(0.5) + vertex.xy * vec2(1.0, -1.0) / 36000.0;
+  outVs.bumpCoord = uv*bumpScale + drift;
   outVs.eyeVec = P.xyz - camera_position_object_space;
 }

@@ -29,6 +29,16 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 
 主配置文件为 `config/full_config.yaml`。
 
+### CCS 水面与波浪增益
+
+`ccs_open_water_crop` 在出生点和附近水域加密水面网格，远海仍用粗网格，
+并逐步淡出网格无法表现的短浪。波峰、波谷和反光的增强只作用于画面；
+船体水动力、随流漂移的细波纹和雷达／激光雷达的水面屏蔽不变。
+
+环境面板默认联动风和波浪。要手动比较波浪增益，先取消「风与波增益/流耦合」，
+把周期固定在 5 秒，再用船边低视角对比增益 0、0.30、1.00。增益从 0.30 调到
+1.00 仍会平滑过渡，约 14 秒到位。
+
 ### CCS 高公岛码头
 
 `usv_bringup` 主入口使用的 `ccs_open_water_crop` 已接入高公岛港口、实体接岸堤路和局部坡道，
