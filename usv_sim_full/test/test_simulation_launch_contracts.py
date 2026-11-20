@@ -292,3 +292,34 @@ def test_headless_cli_uses_egl_and_leaves_default_gui_unchanged(monkeypatch, tmp
     assert commands[0] == ['ruby', '$(which gz)', 'sim', *server_args, '--force-version', '8']
     if not offscreen:
         assert commands[1] == ['ruby', '$(which gz)', 'sim', '-g', '--force-version', '8']
+
+
+@pytest.mark.parametrize('enabled', ['true', 'false'])
+def test_history_uses_simulation_owner_and_preserves_external_rviz_source(
+        main_launch, tmp_path, enabled):
+    source = tmp_path / 'external.rviz'
+    original = {'Panels': [{'Class': 'rviz_common/Displays', 'Name': 'existing'}],
+                'Visualization Manager': {'Displays': [{'Class': 'rviz_default_plugins/Grid'}]}}
+    source.write_text(yaml.safe_dump(original))
+    original_bytes = source.read_bytes()
+    main_launch.context.launch_configurations.update(
+        rviz_config_path_override=str(source), launch_rviz='true', enable_history_path=enabled)
+    items = main_launch.module.launch_setup(main_launch.context)
+    history = [item for item in items if getattr(item, 'executable', None) == 'history_path']
+    assert len(history) == int(enabled == 'true')
+    if history:
+        assert history[0].package == 'usv_sim_full'
+        assert history[0].namespace == '/'
+    rviz = next(dict(item.launch_arguments)['rviz_config_path'] for item in items
+                if isinstance(item, IncludeLaunchDescription)
+                and 'rviz_config_path' in dict(item.launch_arguments))
+    assert source.read_bytes() == original_bytes
+    config = yaml.safe_load(Path(rviz).read_text())
+    panels = [p for p in config['Panels'] if p['Class'] == 'env_panel/HistoryPathSettings']
+    displays = [d for d in config['Visualization Manager']['Displays']
+                if d.get('Name') == '本船历史航迹']
+    assert len(panels) == len(displays) == int(enabled == 'true')
+    assert config['Visualization Manager']['Displays'][0] == original['Visualization Manager']['Displays'][0]
+    if enabled == 'true':
+        main_launch.module._append_history_displays(rviz)
+        assert yaml.safe_load(Path(rviz).read_text()) == config

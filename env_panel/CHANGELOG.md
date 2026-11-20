@@ -6,6 +6,8 @@
 
 ### Added
 
+- 新增 `env_panel/HistoryPathSettings`，通过现有航迹节点参数服务调整保留时长，原航迹逻辑保持不变。
+
 - 新增功能包架构和数据流文档。
 - 新增 `env_panel/RadarPanel`，在 RViz 中提供完整雷达参数与服务控制。
 - 新增 `env_panel/UsvViewPanel`，提供一次性远景预设和本船跟随视角快捷切换。

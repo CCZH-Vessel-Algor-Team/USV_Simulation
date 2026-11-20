@@ -35,6 +35,7 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py') + ['launch/notes.md']),
         (os.path.join('share', package_name, 'launch/components'), glob('launch/components/*.py')),
         (os.path.join('share', package_name, 'sh'), glob('sh/*.sh')),
+        (os.path.join('share', package_name, 'docs'), ['docs/HISTORY_PATH.md']),
         (
             os.path.join('share', package_name, 'maps'),
             [f for f in glob('maps/*') if os.path.isfile(f)],
@@ -55,6 +56,7 @@ setup(
     
     entry_points={
         'console_scripts': [
+            'history_path = usv_sim_full.scripts.history_path:main',
             'odom_tf_broadcaster = usv_sim_full.scripts.odom_tf_broadcaster:main',
             'obstacle_spawner = usv_sim_full.scripts.obstacle_spawner:main',
             'dual_thruster_teleop_incre = usv_sim_full.scripts.dual_thruster_teleop_incre:main',

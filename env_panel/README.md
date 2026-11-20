@@ -73,3 +73,7 @@ Panels -> Add New Panel -> env_panel/CpuPanel      # 面板名：CPU 占用
 - [数据流输入输出](docs/DATA_FLOW.md)
 - [RViz 无人船视角控制面板技术说明](docs/USV_VIEW_PANEL.md)
 - [变更记录](CHANGELOG.md)
+
+## 历史航迹设置
+
+`Panels → Add New Panel → env_panel/HistoryPathSettings` 添加保留时长设置面板。输入秒数并点击“应用”立即修改现有 `/history_path` 节点参数；面板不生成航迹或发送导航指令，修改不写回 YAML。节点由仿真主入口默认启动，详细说明见[历史航迹显示说明](../usv_sim_full/docs/HISTORY_PATH.md)。
