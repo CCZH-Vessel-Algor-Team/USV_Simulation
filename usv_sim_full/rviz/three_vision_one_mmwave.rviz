@@ -27,6 +27,9 @@ Panels:
   - Class: enc_grounding_warning_rviz/GroundingWarningPanel
     Name: GroundingWarningPanel
     Namespace: usv_1
+  - Class: enc_grounding_warning_rviz/DepthSettingsPanel
+    Name: 水深设置
+    Namespace: usv_1
   - Class: env_panel/VrxEnvPanel
     Name: VrxEnvPanel
   - Class: env_panel/StaticBuoyConfig
@@ -99,6 +102,18 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /storm_field/markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: 自定义水深区域
+      Namespaces:
+        {}
+      Topic:
+        Depth: 1
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /usv_1/safety/depth_region_markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
@@ -737,6 +752,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /fusion/target_markers
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: virtual_dynamic_ship
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /dynamic_ship/markers
+      Value: true
     - Alpha: 0.699999988079071
       Class: rviz_default_plugins/Map
       Color Scheme: map
@@ -770,33 +797,11 @@ Visualization Manager:
     - Class: rviz_default_plugins/MoveCamera
     - Class: rviz_default_plugins/Select
     - Class: rviz_default_plugins/FocusCamera
-    - Class: rviz_default_plugins/SetInitialPose
-      Covariance x: 0.25
-      Covariance y: 0.25
-      Covariance yaw: 0.06853891909122467
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /dynamic_ship/spawn_pose
+    - Class: env_panel/DynamicShipTool
     - Class: nav2_rviz_plugins/GoalTool
-    - Class: rviz_default_plugins/PublishPoint
-      Single click: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /clicked_point
     - Class: env_panel/StormPoint
-      Single click: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /storm_field/clicked_point
+    - Class: enc_grounding_warning_rviz/DepthPointTool
+      Topic: /usv_1/safety/depth_point
     - Class: env_panel/StaticBuoyPoint
       Single click: true
       Topic:

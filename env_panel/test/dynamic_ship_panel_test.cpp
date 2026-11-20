@@ -80,13 +80,15 @@ TEST(DynamicShipPanel, SavesAndRestoresPerInstanceSelectionBeforeCatalogArrives)
   EXPECT_FALSE(Peer::applied(first));
 }
 
-TEST(DynamicShipPanel, KeepsOnlyDeleteAndClearButtonsAndRemovesLongSpawnNote)
+TEST(DynamicShipPanel, KeepsPlacementModesAndManageButtonsWithoutManualRetry)
 {
   DynamicShipPanel panel;
   const auto buttons = panel.findChildren<QPushButton *>();
-  ASSERT_EQ(buttons.size(), 2);
-  EXPECT_EQ(buttons[0]->text(), "删除所选");
-  EXPECT_EQ(buttons[1]->text(), "全部清除");
+  ASSERT_EQ(buttons.size(), 4);
+  EXPECT_EQ(buttons[0]->objectName(), "sim_ship_mode");
+  EXPECT_EQ(buttons[1]->objectName(), "virtual_ship_mode");
+  EXPECT_EQ(buttons[2]->text(), "删除所选");
+  EXPECT_EQ(buttons[3]->text(), "全部清除");
   for (const auto * label : panel.findChildren<QLabel *>()) {
     EXPECT_FALSE(label->text().contains("只影响以后生成的船"));
   }
@@ -116,10 +118,10 @@ TEST(DynamicShipPanel, QueriesBackendRetriesFailuresConfirmsAndDeletesByRawInsta
         response->models.push_back(model);
       }
     });
-  auto config = backend->create_service<usv_interfaces::srv::SetDynamicShipConfigV2>(
-    "/dynamic_ship/set_config_v2", [&huge_requests](
-      const std::shared_ptr<usv_interfaces::srv::SetDynamicShipConfigV2::Request> request,
-      const std::shared_ptr<usv_interfaces::srv::SetDynamicShipConfigV2::Response> response) {
+  auto config = backend->create_service<usv_interfaces::srv::SetDynamicShipConfig>(
+    "/dynamic_ship/set_config", [&huge_requests](
+      const std::shared_ptr<usv_interfaces::srv::SetDynamicShipConfig::Request> request,
+      const std::shared_ptr<usv_interfaces::srv::SetDynamicShipConfig::Response> response) {
       response->model_id = request->model_id;
       response->success = request->model_id != "huge_test_model" || ++huge_requests > 1;
       response->message = response->success ? "applied" : "intentional retry test";

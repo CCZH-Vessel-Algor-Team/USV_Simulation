@@ -198,11 +198,30 @@ depth_grid:
 ros2 run enc_grounding_warning generate_depth_grid --config config/sim_depth_grid.yaml --output data/depth_grid.csv
 ```
 
+### 3.3 面板自定义水深区域的有效期
+
+在 RViz“水深设置”面板添加或删除区域后，结果只在 `depth_provider_node` 本次运行内生效：
+UKC、前瞻预警和航线水深节点通过保留的 `safety/depth_settings` 消息同步，后加入的节点也能收到当前配置。
+重启整套系统（或重启该节点）后不保留用户区域，直接恢复 `depth_grid.yaml` 的原始水深，
+行为与浮标/障碍物面板添加的临时目标一致。因此不会产生额外的运行时配置文件，也不需要手动清理。
+需要长期保留的区域请直接写入 `depth_grid.yaml` 的 `shoals`。
+
 ---
 
 ## 4. 常用参数说明
 
-`grounding_warning_params.yaml` 中 `ukc:` 下的关键参数：
+`grounding_warning_params.yaml`（bringup 侧为 `usv_bringup/config/safety/safety.yaml`）中 `ukc:` 下的关键参数：
+
+同文件顶层还有统一的网格/可视化开关 `grid_publish:`（默认全 `true`，行为与改前一致）。关掉高资源项可显著降负载，例如：
+
+```yaml
+grid_publish:
+  route_depth_markers: false   # RViz CUBE_LIST，通常最吃资源
+  grounding_risk_grid: false   # 近场风险栅格，逐格算 UKC，很吃 CPU
+  depth_grid: false            # 近场水深栅格
+```
+
+
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|

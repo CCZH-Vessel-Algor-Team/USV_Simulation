@@ -31,3 +31,13 @@ ukc:
   route_depth_publish_hz: 1.0
   plan_immediate_min_interval_s: 0.2
   publish_hz: 2.0
+
+# 网格 / 可视化发布开关（统一在此文件控制；默认 true = 保持历史始终发布行为）
+# 关掉高资源项可显著降低 DDS/RViz/CPU：优先关 route_depth_markers、grounding_risk_grid、depth_grid
+grid_publish:
+  depth_grid: true              # 近场水深栅格 → safety/depth_grid（DepthGrid）
+  grounding_risk_grid: true     # 近场触底风险栅格 → safety/grounding_risk_grid（GroundingRiskGrid，逐格算 UKC，很吃 CPU）
+  route_depth_grid: true        # 航路走廊水深栅格 → safety/route_depth_grid（DepthGrid）
+  route_depth_markers: true     # 航路水深 CUBE_LIST → safety/route_depth_markers（MarkerArray，RViz 最吃资源）
+  current_risk_marker: true     # 当前船位风险球/文字 → safety/current_risk_marker（MarkerArray）
+  grounding_markers: true       # 前瞻航线风险点 → safety/grounding_markers（MarkerArray）

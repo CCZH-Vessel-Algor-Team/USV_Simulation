@@ -10,10 +10,44 @@ from rclpy.duration import Duration
 from rclpy.time import Time
 
 
-def load_ukc_params(path: str) -> dict:
+# 与历史行为一致：未配置时全部默认开启发布
+_DEFAULT_GRID_PUBLISH = {
+    "depth_grid": True,
+    "grounding_risk_grid": True,
+    "route_depth_grid": True,
+    "route_depth_markers": True,
+    "current_risk_marker": True,
+    "grounding_markers": True,
+}
+
+
+def load_full_params(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
+        return yaml.safe_load(f) or {}
+
+
+def load_ukc_params(path: str) -> dict:
+    data = load_full_params(path)
     return data.get("ukc", data)
+
+
+def load_grid_publish_flags(path: str) -> dict:
+    """Load ``grid_publish`` switches from the same params yaml.
+
+    Prefer a top-level ``grid_publish:`` block (recommended). Nested
+    ``ukc.grid_publish`` is also accepted. Missing keys keep historical
+    always-on defaults.
+    """
+    data = load_full_params(path)
+    section = data.get("grid_publish")
+    if section is None and isinstance(data.get("ukc"), dict):
+        section = data["ukc"].get("grid_publish")
+    out = dict(_DEFAULT_GRID_PUBLISH)
+    if isinstance(section, dict):
+        for key in _DEFAULT_GRID_PUBLISH:
+            if key in section:
+                out[key] = bool(section[key])
+    return out
 
 
 def default_config_path(filename: str) -> str:

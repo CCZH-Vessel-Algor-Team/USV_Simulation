@@ -33,7 +33,7 @@ def test_installed_fleet_spawn_physics_dimensions_roundtrip_and_cleanup(tmp_path
     from gz.msgs10.image_pb2 import Image as ImageMessage
     from nav2_colregs_msgs.msg import TrackedShipList
     from usv_interfaces.msg import DynamicShipSnapshot, GlobalTrackArray
-    from usv_interfaces.srv import (ListDynamicShipModels, SpawnDynamicShipV2,
+    from usv_interfaces.srv import (ListDynamicShipModels, SpawnDynamicShip,
                                     DeleteDynamicShip, ClearDynamicShips)
     from usv_sim_full.dynamic_ship_catalog import ShipCatalog
     from PIL import Image
@@ -123,7 +123,7 @@ def test_installed_fleet_spawn_physics_dimensions_roundtrip_and_cleanup(tmp_path
     client_node.create_subscription(GlobalTrackArray, '/fleet_validation/truth', lambda msg: remember(truths, msg), 50)
     clients = {key: client_node.create_client(cls, path) for key, cls, path in (
         ('models', ListDynamicShipModels, '/dynamic_ship/models'),
-        ('spawn', SpawnDynamicShipV2, '/dynamic_ship/spawn_v2'),
+        ('spawn', SpawnDynamicShip, '/dynamic_ship/spawn'),
         ('delete', DeleteDynamicShip, '/dynamic_ship/delete'),
         ('clear', ClearDynamicShips, '/dynamic_ship/clear'))}
 
@@ -175,7 +175,7 @@ def test_installed_fleet_spawn_physics_dimensions_roundtrip_and_cleanup(tmp_path
                  for i, m in enumerate(native) if m.model_id not in ('vb_rumba', 'munich_maersk')]
         jobs.append(('legacy_control', 'legacy_10m', -1000., 0.))
         for name, model_id, x, y in jobs:
-            request = SpawnDynamicShipV2.Request(name=name, model_id=model_id, speed=1., half_distance=10.)
+            request = SpawnDynamicShip.Request(name=name, model_id=model_id, speed=1., half_distance=10.)
             request.pose.position.x, request.pose.position.y, request.pose.orientation.w = x, y, 1.
             call('spawn', request)
             expected[name] = catalog.get(model_id)
@@ -259,6 +259,27 @@ def test_installed_fleet_spawn_physics_dimensions_roundtrip_and_cleanup(tmp_path
             assert (gt.size_l, gt.size_w, gt.size_h) == (spec.length, spec.beam, spec.height)
             assert gt.source_model_name == 'dynamic_ship'
             assert gt.track_id == int.from_bytes(bytes(obs.target_id.uuid)[:4], 'big')
+        # A virtual instance of a native ship can occupy the same coordinates
+        # without creating a Gazebo entity or blocking physical placement.
+        virtual = SpawnDynamicShip.Request(
+            name='virtual_catalog_ship', model_id='munich_maersk', speed=1.,
+            half_distance=100., virtual_ship=True)
+        virtual.pose.orientation.w = 1.
+        call('spawn', virtual)
+
+        def virtual_observation():
+            return next((ship for ship in next(reversed(snapshots.values())).ships
+                         if ship.model_name == virtual.name), None)
+
+        wait(lambda: virtual_observation() is not None, 30)
+        initial_virtual_x = virtual_observation().pose.position.x
+        wait(lambda: (obs := virtual_observation()) is not None and
+             obs.pose.position.x > initial_virtual_x + .2, 30)
+        assert virtual_observation().size_l == catalog.get(virtual.model_id).length
+        with lock:
+            assert virtual.name not in poses
+        call('delete', DeleteDynamicShip.Request(model_name=virtual.name))
+        wait(lambda: virtual_observation() is None, 30)
         # A same-type sibling survives deletion, with its original UUID/metadata.
         sibling_id = bytes(next(s for s in snapshot.ships if s.model_name == 'same_type').target_id.uuid)
         call('delete', DeleteDynamicShip.Request(model_name='small'))
@@ -269,7 +290,7 @@ def test_installed_fleet_spawn_physics_dimensions_roundtrip_and_cleanup(tmp_path
         wait(lambda: snapshots and not next(reversed(snapshots.values())).ships, 30)
         wait(lambda: truths and not next(reversed(truths.values())).tracks, 30)
         # Restore/reuse the name only after authoritative removal confirmation.
-        request = SpawnDynamicShipV2.Request(name='small', model_id='vb_rumba', speed=1., half_distance=10.)
+        request = SpawnDynamicShip.Request(name='small', model_id='vb_rumba', speed=1., half_distance=10.)
         request.pose.orientation.w = 1.
         call('spawn', request)
         call('clear', ClearDynamicShips.Request())
@@ -281,7 +302,7 @@ def test_installed_fleet_spawn_physics_dimensions_roundtrip_and_cleanup(tmp_path
             'checks': ['10 native models afloat', 'same-type instances', 'mixed legacy/native',
                        'small/large measured round trip', 'atomic nav/truth dimensions',
                        'delete/clear/name reuse', 'model-local buoyancy scope', 'roll/pitch perturbation recovery',
-                       'headless mesh/material rendering'],
+                        'headless mesh/material rendering', 'mixed Gazebo and virtual snapshots'],
             'stability': stability}, indent=2)+'\n')
         print('PASS: fleet physical/transport/geometry/lifecycle validation', tmp_path)
     finally:

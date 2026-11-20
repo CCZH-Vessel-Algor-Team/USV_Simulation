@@ -10,8 +10,7 @@ import pytest
 from geometry_msgs.msg import Pose
 from usv_interfaces.msg import Buoy, BuoyArray
 from usv_interfaces.srv import (
-    ListDynamicShipModels, SetDynamicShipConfig, SetDynamicShipConfigV2,
-    SpawnDynamicShip, SpawnDynamicShipV2,
+    ListDynamicShipModels, SetDynamicShipConfig, SpawnDynamicShip,
 )
 
 from usv_sim_full.dynamic_ship_catalog import ShipCatalog
@@ -20,15 +19,15 @@ from usv_sim_full.scripts.dynamic_ship_manager_node import DynamicShip, DynamicS
 
 @pytest.fixture
 def manager():
-    m = NS(catalog=ShipCatalog(Path(__file__).parents[1]/'description/models/target_fleet/catalog.json'),
-           _catalog_error='', _selected_model_id='legacy_10m', _ship_counter=0,
-           ships={}, _pending_spawns={}, _ships_lock=threading.Lock(),
-           _clock_reset=threading.Event(), _registry_revision=0, _last_published_stamp_ns=None,
-           _buoy_snapshot=None, count_publishers=Mock(return_value=0),
-           dt=.1, pose_feedback_timeout=1., tracked_pub=Mock(), snapshot_pub=Mock(), names_pub=Mock())
-    for name in ('_get_model', '_validate_fleet_placement', 'on_set_config_v2'):
-        setattr(m, name, getattr(DynamicShipManager, name).__get__(m))
-    m._validate_motion = DynamicShipManager._validate_motion
+    m = DynamicShipManager.__new__(DynamicShipManager)
+    m.__dict__.update(
+        catalog=ShipCatalog(Path(__file__).parents[1]/'description/models/target_fleet/catalog.json'),
+        _catalog_error='', _selected_model_id='legacy_10m', _ship_counter=0,
+        ships={}, _pending_spawns={}, _ships_lock=threading.Lock(),
+        _clock_reset=threading.Event(), _registry_revision=0, _last_published_stamp_ns=None,
+        _buoy_snapshot=None, count_publishers=Mock(return_value=0),
+        backend='gazebo', marker_pub=None, dt=.1, pose_feedback_timeout=1.,
+        tracked_pub=Mock(), snapshot_pub=Mock(), names_pub=Mock())
     m.get_logger = Mock(return_value=Mock())
     m.set_parameters_atomically = Mock(return_value=NS(successful=True))
     m._spawn_ship_at = Mock(return_value=True)
@@ -44,23 +43,24 @@ def manager():
     return m
 
 
-def make_ship(manager, name, model_id, x=0., y=0.):
+def make_ship(manager, name, model_id, x=0., y=0., virtual=False):
     pose = Pose()
     pose.position.x, pose.position.y, pose.orientation.w = x, y, 1.
     spec = manager.catalog.get(model_id)
     return DynamicShip(name, str(uuid.uuid5(uuid.NAMESPACE_DNS, name)), pose, 100.,
-                       spec.backend, 1., (1., 0., 0.), '', Mock(), '', 'test', spec)
+                       spec.backend, 1., (1., 0., 0.), '', Mock(), '', 'test', spec,
+                       is_virtual=virtual)
 
 
-def test_directory_and_v2_config_do_not_modify_existing_instances(manager):
+def test_directory_and_config_do_not_modify_existing_instances(manager):
     m = manager
     existing = make_ship(m, 'first', 'legacy_10m')
     m.ships['first'] = existing
     response = DynamicShipManager.on_list_models(m, ListDynamicShipModels.Request(), ListDynamicShipModels.Response())
     assert response.success and len(response.models) == 13
     assert response.default_model_id == 'legacy_10m'
-    req = SetDynamicShipConfigV2.Request(model_id='munich_maersk', speed=1., half_distance=500., heading_deg=90.)
-    response = m.on_set_config_v2(req, SetDynamicShipConfigV2.Response())
+    req = SetDynamicShipConfig.Request(model_id='munich_maersk', speed=1., half_distance=500., heading_deg=90.)
+    response = m.on_set_config(req, SetDynamicShipConfig.Response())
     assert response.success and response.model_id == 'munich_maersk'
     assert m._selected_model_id == 'munich_maersk'
     assert existing.model_spec.model_id == 'legacy_10m'
@@ -69,10 +69,10 @@ def test_directory_and_v2_config_do_not_modify_existing_instances(manager):
 
 @pytest.mark.parametrize('field,value', [('model_id', 'missing'), ('speed', float('nan')),
                                         ('speed', -1.), ('half_distance', 0.)])
-def test_failed_v2_config_keeps_previous_selection(manager, field, value):
-    req = SetDynamicShipConfigV2.Request(model_id='vb_rumba', speed=1., half_distance=100.)
+def test_failed_config_keeps_previous_selection(manager, field, value):
+    req = SetDynamicShipConfig.Request(model_id='vb_rumba', speed=1., half_distance=100.)
     setattr(req, field, value)
-    response = manager.on_set_config_v2(req, SetDynamicShipConfigV2.Response())
+    response = manager.on_set_config(req, SetDynamicShipConfig.Response())
     assert not response.success and response.message
     assert manager._selected_model_id == 'legacy_10m'
     manager.set_parameters_atomically.assert_not_called()
@@ -80,31 +80,37 @@ def test_failed_v2_config_keeps_previous_selection(manager, field, value):
 
 def test_rejected_parameters_cannot_acknowledge_new_model(manager):
     manager.set_parameters_atomically.return_value = NS(successful=False, reason='read only')
-    response = manager.on_set_config_v2(
-        SetDynamicShipConfigV2.Request(model_id='vb_rumba', speed=1., half_distance=100.),
-        SetDynamicShipConfigV2.Response())
+    response = manager.on_set_config(
+        SetDynamicShipConfig.Request(model_id='vb_rumba', speed=1., half_distance=100.),
+        SetDynamicShipConfig.Response())
     assert not response.success and manager._selected_model_id == 'legacy_10m'
 
 
-def test_old_config_and_spawn_still_select_legacy_shapes_and_mesh_profile(manager):
-    response = DynamicShipManager.on_set_config(manager,
-        SetDynamicShipConfig.Request(shape='box', speed=3., half_distance=100.),
+def test_config_and_spawn_still_select_legacy_shapes_and_mesh_profile(manager):
+    response = manager.on_set_config(
+        SetDynamicShipConfig.Request(model_id='debug_box', speed=3., half_distance=100.),
         SetDynamicShipConfig.Response())
     assert response.success and manager._selected_model_id == 'debug_box'
-    req = SpawnDynamicShip.Request(name='old_client', shape='mesh_profile',
+    req = SpawnDynamicShip.Request(name='with_profile', model_id='legacy_10m',
                                   speed=3., half_distance=100., mesh_profile='/test/profile.yaml')
     req.pose.orientation.w = 1.
-    response = DynamicShipManager.on_spawn(manager, req, SpawnDynamicShip.Response())
+    response = manager.on_spawn(req, SpawnDynamicShip.Response())
     assert response.success
-    assert manager._spawn_ship_at.call_args.kwargs == {'mesh_profile': '/test/profile.yaml'}
+    assert manager._spawn_ship_at.call_args.args[-2] == 'legacy_10m'
+    assert manager._spawn_ship_at.call_args.kwargs == {
+        'virtual': False, 'mesh_profile': '/test/profile.yaml'}
 
 
-def test_v2_spawn_has_explicit_model_without_changing_future_click_config(manager):
-    req = SpawnDynamicShipV2.Request(name='big_one', model_id='munich_maersk', speed=1., half_distance=500.)
+@pytest.mark.parametrize('virtual', [False, True])
+def test_spawn_has_explicit_model_without_changing_future_click_config(manager, virtual):
+    req = SpawnDynamicShip.Request(
+        name='big_one', model_id='munich_maersk', speed=1., half_distance=500.,
+        virtual_ship=virtual)
     req.pose.orientation.w = 1.
-    response = DynamicShipManager.on_spawn_v2(manager, req, SpawnDynamicShipV2.Response())
+    response = manager.on_spawn(req, SpawnDynamicShip.Response())
     assert response.success and response.model_name == 'big_one'
-    assert manager._spawn_ship_at.call_args.kwargs == {'model_id': 'munich_maersk'}
+    assert manager._spawn_ship_at.call_args.args[-2] == 'munich_maersk'
+    assert manager._spawn_ship_at.call_args.kwargs == {'virtual': virtual, 'mesh_profile': None}
     assert manager._selected_model_id == 'legacy_10m'
 
 
@@ -148,6 +154,49 @@ def test_empty_scene_produces_empty_complete_snapshot(manager):
     assert manager.snapshot_pub.publish.call_args.args[0].ships == []
 
 
+def test_replaced_gazebo_frame_does_not_publish_empty_snapshot(manager):
+    set_frame(manager, 1_000_000_000, {})
+    cache = manager.gz_pose_cache
+    cache._promote_pending = lambda now: setattr(cache, '_frame', (now, {}))
+    manager.control_loop()
+    manager.tracked_pub.publish.assert_not_called()
+    manager.snapshot_pub.publish.assert_not_called()
+
+
+def test_virtual_catalog_ship_moves_without_gazebo_and_reports_dimensions(manager):
+    m = manager
+    m.backend, m.gz_pose_cache = 'virtual', None
+    ship = make_ship(m, 'virtual_large', 'munich_maersk', virtual=True)
+    m.ships[ship.model_name] = ship
+    m.control_loop()
+    snapshot = m.snapshot_pub.publish.call_args.args[0]
+    tracked = m.tracked_pub.publish.call_args.args[0]
+    assert snapshot.header == tracked.header
+    assert snapshot.header.stamp.sec == 1
+    observation, = snapshot.ships
+    assert observation.model_id == 'munich_maersk'
+    assert observation.size_l == ship.model_spec.length
+    assert observation.pose.position.x > 0 and observation.twist.linear.x > 0
+    assert observation.radius == tracked.ships[0].radius == ship.model_spec.radius
+    assert ship.cmd_vel_pub is None
+
+
+def test_mixed_snapshot_waits_for_physics_and_keeps_virtual_catalog_ship(manager):
+    m = manager
+    real = make_ship(m, 'real', 'vb_rumba')
+    virtual = make_ship(m, 'virtual', 'munich_maersk', virtual=True)
+    m.ships = {ship.model_name: ship for ship in (real, virtual)}
+    set_frame(m, 1_000_000_000, {'real': (0., 0., 0.)})
+    m.control_loop()
+    m.snapshot_pub.publish.assert_not_called()
+    set_frame(m, 1_100_000_000, {'real': (.1, 0., 0.)})
+    m.control_loop()
+    snapshot = m.snapshot_pub.publish.call_args.args[0]
+    assert snapshot.header.stamp.nanosec == 100_000_000
+    assert [(s.model_name, s.model_id) for s in snapshot.ships] == [
+        ('real', 'vb_rumba'), ('virtual', 'munich_maersk')]
+
+
 def test_fleet_placement_fails_closed_for_missing_map_ownship_and_other_feedback(manager):
     m, model = manager, manager.catalog.get('munich_maersk')
     m.get_parameter.side_effect = lambda name: NS(value=name == 'fleet_spawn_check_map')
@@ -160,6 +209,7 @@ def test_fleet_placement_fails_closed_for_missing_map_ownship_and_other_feedback
     set_frame(m, 1_000_000_000, {'usv_1': (190., 0., 0.)})
     with pytest.raises(ValueError, match='overlaps ownship'):
         m._validate_fleet_placement(model, 0., 0., 0.)
+    m.ships['virtual'] = make_ship(m, 'virtual', 'munich_maersk', 1000., virtual=True)
     m._validate_fleet_placement(model, 1000., 0., 0.)
     m.ships['other'] = make_ship(m, 'other', 'vb_rumba', 1000.)
     with pytest.raises(ValueError, match='fresh placement feedback'):

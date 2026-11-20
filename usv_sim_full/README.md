@@ -69,16 +69,43 @@ CCS使用 **Nav2 Goal** 工具（快捷键 `g`）向唯一的 **Navigation 2** �
 - 导航中点击 **Cancel** 取消当前任务；**Cancel Accumulation**退出选点模式。
 
 目标通过面板的Nav2 Action客户端发送，使用RViz所在的 `usv_1` 命名空间。
-**2D Pose Estimate**和**Publish Point**用于下述目标船生成，不用于设置本船导航目标。
+**添加动态船**用于下述目标船生成，不用于设置本船导航目标。
 
 ### RViz生成动态目标船
 
-CCS的 **2D Pose Estimate** 工具发送到专用 `/dynamic_ship/spawn_pose`：点击选择位置，拖拽箭头选择
-TS初始艏向。固定坐标系使用 `map`，沿用Gazebo world XY与map对齐的前提；非法坐标系、非有限值和
-零四元数会被拒绝。速度、形状、half-distance仍取自DynamicShipConfig，面板Heading不覆盖拖拽方向。
-原 **Publish Point** 入口继续保留，并继续使用面板Heading；spawn/delete/config服务也保持原样。
-管理器的 `spawn_pose_topic` 是启动只读参数，覆盖时须同时调整RViz工具的Topic。
-Pose Estimate的协方差与请求时间仅属于编辑请求，不作为目标观测；跟踪发布仍等待Gazebo实测完整帧。
+在 **DynamicShipConfig** 面板“船类型”点击 **仿真船** 或 **虚拟船** 按钮，
+然后使用唯一的工具栏 **添加动态船**（快捷键 `d`）。切换仅影响后续新建目标，不修改已有目标：
+
+- **单击**：按下位置作为生成点，使用面板“默认航向”（北向 0°，顺时针增加）。
+- **拖拽**：按下位置作为生成点，箭头指定初始船艏方向，松开后添加；拖拽长度不影响速度或航行距离。
+- **取消**：右键取消本次放置；`Esc` 退出工具。只在有效松开时发送一次创建请求。
+- 默认连续添加；小于 6 像素的移动视为单击，避免鼠标抖动误设航向。
+
+固定坐标系必须使用 `map`，沿用 Gazebo world XY 与 map 对齐的前提。单击向
+`/dynamic_ship/spawn_point` 发布 PointStamped，拖拽向 `/dynamic_ship/spawn_pose` 发布
+PoseWithCovarianceStamped；两条路径均拒绝非法坐标系与非有限值，位姿路径还拒绝零四元数。
+速度、船型和半程距离都取自 DynamicShipConfig，拖拽航向不受默认航向覆盖。
+管理器不再订阅通用 `/clicked_point`，CCS 工具栏不再使用 Publish Point / 2D Pose Estimate 添加动态船。
+`spawn_pose_topic` 是启动只读参数，覆盖时须同时调整工具的 `Topic`。
+请求协方差、Z 和时间戳不作为目标观测。
+
+程序化添加通过 `/dynamic_ship/spawn`（`usv_interfaces/srv/SpawnDynamicShip`），设置后续默认值通过
+`/dynamic_ship/set_config`（`usv_interfaces/srv/SetDynamicShipConfig`）。服务名和类型名不变，
+但字段以 `model_id` 代替 `shape`，旧客户端须更新并重新构建。`/dynamic_ship/models` 列出船型；
+`legacy_10m`、`debug_box`、`debug_cylinder` 对应原有的默认船和调试形状。生成请求的
+`virtual_ship: true` 只创建航迹；`mesh_profile` 可选，用来覆盖采用网格配置的仿真船。
+`ros2 launch usv_sim_full dynamic_targets.launch.py` 可单独运行虚拟后端，不启动 Gazebo。
+
+**添加风暴**（`s`）与面板选中的虚拟动态船也采用同样的单击／拖拽交互，操作备注位于各自面板最下方：
+
+- 风暴单击使用面板“默认漂移方向”，拖拽箭头指定实际漂移方向；漂移速度为 0 时仍静止。
+  半径、漂移速度、有效时长和网格间距继续取自风暴面板。
+- 面板选择“虚拟船”时，同一个“添加动态船”按钮创建无 Gazebo 的目标；单击使用默认航向，拖拽指定船艏方向。
+- 拖拽方向只用于本次新建目标，不修改面板默认值或已存在目标。
+
+风暴单击话题为 `/storm_field/clicked_point`，拖拽为 `/storm_field/spawn_pose`；
+虚拟船单击为 `/dynamic_ship/virtual_clicked_point`，拖拽为 `/dynamic_ship/virtual_spawn_pose`。
+两种拖拽话题均使用 PoseWithCovarianceStamped；所有工具共用现有交互逻辑。
 
 `/storm_field/set_config` 更新后续新建storm的默认配置；已经生成的storm保留各自的半径、漂移和有效期。
 
@@ -102,7 +129,7 @@ Gazebo 删除的 Boolean 成功回复仅表示排队，须由场景清单确认�
 清单查询使用有界 `gz service /world/<world>/scene/info` 子进程，将同步请求与高频位姿回调隔离；
 使用 protobuf 文本解析仅读取根模型名称，进程启动、等待及解析超过剩余期限或回复无效均视为查询失败。
 位姿订阅仍使用原 transport 节点；绑定不可用时拒绝创建并保留未确认注册。
-控制定时器独立于阻塞的创建、删除和资源清理回调；保留原 `/clicked_point` 操作、
+控制定时器独立于阻塞的创建、删除和资源清理回调；保留
 运动控制、实测艏向及低通速度滤波时间常数 0.3 秒。跟踪时间戳采用下述实测快照契约。
 spawn/delete/clear/config 服务、点击订阅和场景查询定时器共用独立的互斥 `lifecycle_group`，
 保留操作串行性。默认组留给 TimeSource 的 `/clock` 等节点回调，控制仍使用 `control_group`；
@@ -166,13 +193,13 @@ barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smooth
 
 - 唯一 Gazebo 位姿订阅读取 `/world/<world>/dynamic_pose/info`。只接受精确根模型名，
   `model::link` 不会覆盖根位姿。累积反馈供原控制使用，最新完整 FRAME 单独用于发布完整性判断。
-- `/dynamic_ship/tracked_ships` 默认只包含本 manager 注册的动态船。Pose 使用实测 XY/艏向，
-  linear twist 使用世界坐标系低通速度；假定 Gazebo world XY 与 `map` 对齐。header 精确保留
-  Gazebo 秒/纳秒，禁止用接收时间补戳。不会发布开环推算的跟踪状态。
-- 所有注册目标必须在同一新鲜帧中，且没有 pending/quarantine，才能发布整批。
-  每个目标需两次递增观测建立速度；缺失、过期、非法位姿或未完成 bootstrap 时整批停止发布。
-  空列表只表示已知零注册且无 pending，并且收到成员变更后的新鲜帧；位姿缺失不等于实体删除。
-  成员变更边界保留所有时间戳准入检查通过的帧的最大时间（含窗口内未来帧和未保留在待处理槽中的帧），新帧必须
+- `/dynamic_ship/tracked_ships` 和 `/dynamic_ship/snapshot` 同批输出仿真船和虚拟船。
+  仿真船使用实测 XY、艏向和世界坐标系低通速度；虚拟船使用自身计算的航迹。混合时保留 Gazebo
+  原始帧时间戳，只有虚拟船时可用 ROS 时钟发布，不等待 Gazebo。
+- 所有仿真船必须在同一新鲜帧中，且没有 pending/quarantine，才能发布整批。
+  每艘仿真船需两次递增观测建立速度；缺失、过期、非法位姿或未完成 bootstrap 时整批停止发布。
+  仿真船清空后以成员变更后的新鲜帧确认；位姿缺失不等于实体删除。独立虚拟后端清空后直接发布空列表。
+  Gazebo 成员变更边界保留所有时间戳准入检查通过的帧的最大时间（含窗口内未来帧和未保留在待处理槽中的帧），新帧必须
   严格越过该边界。已删除根模型还须在边界后的帧中确认缺席，才解除对应的发布阻塞。
   最终发布按 registry → cache 顺序短暂加锁，重查成员版本和当前帧身份，并提升已到时的待处理帧；
   读取最终 ROS 时间后再次检查 reset Event，避免构造期间的新帧或时钟回退绕过发布门控。

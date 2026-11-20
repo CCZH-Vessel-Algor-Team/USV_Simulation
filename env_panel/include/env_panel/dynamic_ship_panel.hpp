@@ -23,7 +23,7 @@
 #include <usv_interfaces/srv/delete_dynamic_ship.hpp>
 #include <usv_interfaces/srv/clear_dynamic_ships.hpp>
 #include <usv_interfaces/srv/list_dynamic_ship_models.hpp>
-#include <usv_interfaces/srv/set_dynamic_ship_config_v2.hpp>
+#include <usv_interfaces/srv/set_dynamic_ship_config.hpp>
 
 namespace env_panel
 {
@@ -66,7 +66,7 @@ private:
       delete_client_;
   rclcpp::Client<usv_interfaces::srv::ClearDynamicShips>::SharedPtr
       clear_client_;
-  rclcpp::Client<usv_interfaces::srv::SetDynamicShipConfigV2>::SharedPtr
+  rclcpp::Client<usv_interfaces::srv::SetDynamicShipConfig>::SharedPtr
       config_client_;
   rclcpp::Client<usv_interfaces::srv::ListDynamicShipModels>::SharedPtr models_client_;
 
@@ -94,13 +94,13 @@ private:
   QLabel * model_summary_;
   QLabel * config_status_;
   QLabel * action_status_;
+  QPushButton * virtual_ship_button_;
+  QPushButton * clear_all_button_;
   QLabel * heading_label_;
   QLabel * speed_label_;
   QLabel * leg_dist_label_;
   QListWidget * ship_list_;
-  QPushButton * clear_all_button_;
   QTimer * config_timer_;
-
   std::vector<std::string> ship_names_;
 };
 

@@ -18,6 +18,7 @@ find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(rviz_default_plugins REQUIRED)
+find_package(rviz_rendering REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -29,12 +30,14 @@ find_package(usv_interfaces REQUIRED)
 add_library(${PROJECT_NAME} SHARED
   include/env_panel/vrx_env_panel.hpp
   include/env_panel/dynamic_ship_panel.hpp
+  include/env_panel/dynamic_ship_tool.hpp
   include/env_panel/storm_field_panel.hpp
   include/env_panel/storm_point_tool.hpp
   include/env_panel/static_buoy_panel.hpp
   include/env_panel/static_buoy_point_tool.hpp
   src/vrx_env_panel.cpp
   src/dynamic_ship_panel.cpp
+  src/dynamic_ship_tool.cpp
   src/storm_field_panel.cpp
   src/storm_point_tool.cpp
   src/static_buoy_panel.cpp
@@ -57,6 +60,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rviz_common
   rviz_default_plugins
+  rviz_rendering
   pluginlib
   std_msgs
   geometry_msgs
@@ -104,12 +108,20 @@ install(FILES plugin_description.xml
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  foreach(test_name IN ITEMS test_target_list test_panel_interaction)
+    ament_add_gtest(${test_name} test/${test_name}.cpp test/test_main.cpp
+      SKIP_LINKING_MAIN_LIBRARIES)
+    target_link_libraries(${test_name} ${PROJECT_NAME} Qt5::Widgets)
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+  endforeach()
   ament_add_gtest(dynamic_ship_panel_test test/dynamic_ship_panel_test.cpp)
   ament_target_dependencies(dynamic_ship_panel_test rclcpp rviz_common std_msgs usv_interfaces)
   target_link_libraries(dynamic_ship_panel_test ${PROJECT_NAME} Qt5::Widgets)
   set_tests_properties(dynamic_ship_panel_test PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;ROS_DOMAIN_ID=175")
 endif()
+
 ament_package()

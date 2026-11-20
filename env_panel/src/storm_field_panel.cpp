@@ -1,4 +1,5 @@
 #include "env_panel/storm_field_panel.hpp"
+#include "env_panel/target_list.hpp"
 
 #include <QFormLayout>
 #include <QGroupBox>
@@ -7,7 +8,6 @@
 #include <QVBoxLayout>
 
 #include <pluginlib/class_list_macros.hpp>
-#include <rviz_common/display_context.hpp>
 
 namespace env_panel
 {
@@ -47,65 +47,66 @@ void StormFieldPanel::setupUi()
   form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
-  drift_heading_slider_ = new QSlider(Qt::Horizontal);
-  drift_heading_slider_->setRange(0, 359);
-  drift_heading_slider_->setValue(static_cast<int>(drift_heading_deg_));
+  auto drift_heading_slider = new QSlider(Qt::Horizontal);
+  drift_heading_slider->setRange(0, 359);
+  drift_heading_slider->setValue(static_cast<int>(drift_heading_deg_));
   drift_heading_label_ = new QLabel("0 deg");
   auto heading_row = new QHBoxLayout;
   configure_slider_row(heading_row);
-  heading_row->addWidget(drift_heading_slider_, 1);
+  heading_row->addWidget(drift_heading_slider, 1);
   heading_row->addWidget(drift_heading_label_);
-  form->addRow("漂移方向：", heading_row);
-  QObject::connect(drift_heading_slider_, &QSlider::valueChanged,
+  drift_heading_slider->setToolTip("北向为 0°，顺时针增加；单击使用此值，拖拽使用箭头方向。");
+  form->addRow("默认漂移方向：", heading_row);
+  QObject::connect(drift_heading_slider, &QSlider::valueChanged,
                    this, &StormFieldPanel::onDriftHeadingChanged);
 
-  drift_speed_slider_ = new QSlider(Qt::Horizontal);
-  drift_speed_slider_->setRange(0, 100);
-  drift_speed_slider_->setValue(static_cast<int>(drift_speed_ * 10.0));
+  auto drift_speed_slider = new QSlider(Qt::Horizontal);
+  drift_speed_slider->setRange(0, 100);
+  drift_speed_slider->setValue(static_cast<int>(drift_speed_ * 10.0));
   drift_speed_label_ = new QLabel("0.0 m/s");
   auto speed_row = new QHBoxLayout;
   configure_slider_row(speed_row);
-  speed_row->addWidget(drift_speed_slider_, 1);
+  speed_row->addWidget(drift_speed_slider, 1);
   speed_row->addWidget(drift_speed_label_);
   form->addRow("漂移速度：", speed_row);
-  QObject::connect(drift_speed_slider_, &QSlider::valueChanged,
+  QObject::connect(drift_speed_slider, &QSlider::valueChanged,
                    this, &StormFieldPanel::onDriftSpeedChanged);
 
-  radius_slider_ = new QSlider(Qt::Horizontal);
-  radius_slider_->setRange(10, 5000);
-  radius_slider_->setValue(static_cast<int>(radius_ * 10.0));
+  auto radius_slider = new QSlider(Qt::Horizontal);
+  radius_slider->setRange(10, 5000);
+  radius_slider->setValue(static_cast<int>(radius_ * 10.0));
   radius_label_ = new QLabel("30.0 m");
   auto radius_row = new QHBoxLayout;
   configure_slider_row(radius_row);
-  radius_row->addWidget(radius_slider_, 1);
+  radius_row->addWidget(radius_slider, 1);
   radius_row->addWidget(radius_label_);
   form->addRow("半径：", radius_row);
-  QObject::connect(radius_slider_, &QSlider::valueChanged,
+  QObject::connect(radius_slider, &QSlider::valueChanged,
                    this, &StormFieldPanel::onRadiusChanged);
 
-  weather_validity_slider_ = new QSlider(Qt::Horizontal);
-  weather_validity_slider_->setRange(1, 1440);
-  weather_validity_slider_->setValue(
+  auto weather_validity_slider = new QSlider(Qt::Horizontal);
+  weather_validity_slider->setRange(1, 1440);
+  weather_validity_slider->setValue(
       static_cast<int>(weather_validity_duration_s_ / 60.0));
   weather_validity_label_ = new QLabel("60 min");
   auto validity_row = new QHBoxLayout;
   configure_slider_row(validity_row);
-  validity_row->addWidget(weather_validity_slider_, 1);
+  validity_row->addWidget(weather_validity_slider, 1);
   validity_row->addWidget(weather_validity_label_);
   form->addRow("有效时长：", validity_row);
-  QObject::connect(weather_validity_slider_, &QSlider::valueChanged,
+  QObject::connect(weather_validity_slider, &QSlider::valueChanged,
                    this, &StormFieldPanel::onWeatherValidityChanged);
 
-  weather_grid_slider_ = new QSlider(Qt::Horizontal);
-  weather_grid_slider_->setRange(1, 10000);
-  weather_grid_slider_->setValue(static_cast<int>(weather_grid_resolution_m_));
+  auto weather_grid_slider = new QSlider(Qt::Horizontal);
+  weather_grid_slider->setRange(1, 10000);
+  weather_grid_slider->setValue(static_cast<int>(weather_grid_resolution_m_));
   weather_grid_label_ = new QLabel("100 m");
   auto grid_row = new QHBoxLayout;
   configure_slider_row(grid_row);
-  grid_row->addWidget(weather_grid_slider_, 1);
+  grid_row->addWidget(weather_grid_slider, 1);
   grid_row->addWidget(weather_grid_label_);
   form->addRow("网格间距：", grid_row);
-  QObject::connect(weather_grid_slider_, &QSlider::valueChanged,
+  QObject::connect(weather_grid_slider, &QSlider::valueChanged,
                    this, &StormFieldPanel::onWeatherGridChanged);
 
   config_group->setLayout(form);
@@ -126,14 +127,21 @@ void StormFieldPanel::setupUi()
                    this, &StormFieldPanel::onDeleteClicked);
   btn_layout->addWidget(delete_btn);
 
-  clear_all_button_ = new QPushButton("全部清除");
-  QObject::connect(clear_all_button_, &QPushButton::clicked,
+  auto clear_all_button = new QPushButton("全部清除");
+  QObject::connect(clear_all_button, &QPushButton::clicked,
                    this, &StormFieldPanel::onClearAllClicked);
-  btn_layout->addWidget(clear_all_button_);
+  btn_layout->addWidget(clear_all_button);
 
   list_layout->addLayout(btn_layout);
   list_group->setLayout(list_layout);
   main_layout->addWidget(list_group);
+
+  auto placement_hint = new QLabel(
+    "备注：使用工具栏“添加风暴”；单击使用默认漂移方向，拖拽指定漂移方向。"
+    "漂移速度为 0 时保持静止。右键取消，Esc 退出。");
+  placement_hint->setObjectName("placement_note");
+  placement_hint->setWordWrap(true);
+  main_layout->addWidget(placement_hint);
 
   for (auto * label : {
       drift_heading_label_, drift_speed_label_, radius_label_,
@@ -152,9 +160,6 @@ void StormFieldPanel::setupUi()
 
 void StormFieldPanel::onInitialize()
 {
-  auto raw_node =
-      getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
-
   auto options = rclcpp::NodeOptions().arguments(
       {"--ros-args", "--remap",
        "__node:=rviz_storm_field_config_panel", "--"});
@@ -173,10 +178,9 @@ void StormFieldPanel::onInitialize()
   names_sub_ = client_node_->create_subscription<std_msgs::msg::String>(
       "/storm_field/names", 10,
       [this](const std_msgs::msg::String::SharedPtr msg) {
-        onNamesReceived(msg);
+        updateTargetNames(storm_list_, msg->data);
       });
 
-  (void)raw_node;
   config_timer_->start();
 
   executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
@@ -229,26 +233,10 @@ void StormFieldPanel::onWeatherGridChanged(int value)
 
 void StormFieldPanel::publishConfig()
 {
-  if (!config_client_->wait_for_service(std::chrono::milliseconds(100))) {
+  if (!config_client_->service_is_ready()) {
+    last_config_.reset();
     return;
   }
-
-  static double last_heading = -1.0, last_speed = -1.0,
-                last_radius = -1.0, last_validity = -1.0,
-                last_grid = -1.0;
-
-  if (last_heading == drift_heading_deg_ && last_speed == drift_speed_ &&
-      last_radius == radius_ &&
-      last_validity == weather_validity_duration_s_ &&
-      last_grid == weather_grid_resolution_m_) {
-    return;
-  }
-
-  last_heading = drift_heading_deg_;
-  last_speed = drift_speed_;
-  last_radius = radius_;
-  last_validity = weather_validity_duration_s_;
-  last_grid = weather_grid_resolution_m_;
 
   auto req =
       std::make_shared<usv_interfaces::srv::SetStormFieldConfig::Request>();
@@ -257,14 +245,25 @@ void StormFieldPanel::publishConfig()
   req->radius = radius_;
   req->weather_validity_duration_s = weather_validity_duration_s_;
   req->weather_grid_resolution_m = weather_grid_resolution_m_;
-  config_client_->async_send_request(req);
+  if (last_config_ && *last_config_ == *req) {
+    return;
+  }
+  last_config_ = req;
+  config_client_->async_send_request(req,
+    [this, req](rclcpp::Client<usv_interfaces::srv::SetStormFieldConfig>::SharedFuture future) {
+      if (!future.get()->success) {
+        QMetaObject::invokeMethod(this, [this, req]() {
+          if (last_config_ == req) {last_config_.reset();}
+        }, Qt::QueuedConnection);
+      }
+    });
 }
 
 void StormFieldPanel::onDeleteClicked()
 {
   auto selected = storm_list_->currentItem();
   if (!selected) return;
-  if (!delete_client_->wait_for_service(std::chrono::seconds(1))) return;
+  if (!delete_client_->service_is_ready()) return;
 
   auto req =
       std::make_shared<usv_interfaces::srv::DeleteStormField::Request>();
@@ -274,44 +273,11 @@ void StormFieldPanel::onDeleteClicked()
 
 void StormFieldPanel::onClearAllClicked()
 {
-  if (!clear_client_->wait_for_service(std::chrono::seconds(1))) return;
+  if (!clear_client_->service_is_ready()) return;
 
   auto req =
       std::make_shared<usv_interfaces::srv::ClearStormFields::Request>();
   clear_client_->async_send_request(req);
-}
-
-void StormFieldPanel::onNamesReceived(
-    const std_msgs::msg::String::SharedPtr msg)
-{
-  std::vector<std::string> new_names;
-  std::string buffer;
-  bool in_string = false;
-  for (char c : msg->data) {
-    if (c == '"') {
-      in_string = !in_string;
-      if (!in_string && !buffer.empty()) {
-        new_names.push_back(buffer);
-        buffer.clear();
-      }
-    } else if (in_string) {
-      buffer += c;
-    }
-  }
-
-  if (new_names != storm_names_) {
-    storm_names_ = new_names;
-    auto names_copy = new_names;
-    QMetaObject::invokeMethod(
-        this,
-        [this, names_copy]() {
-          storm_list_->clear();
-          for (const auto & name : names_copy) {
-            storm_list_->addItem(QString::fromStdString(name));
-          }
-        },
-        Qt::QueuedConnection);
-  }
 }
 
 }  // namespace env_panel

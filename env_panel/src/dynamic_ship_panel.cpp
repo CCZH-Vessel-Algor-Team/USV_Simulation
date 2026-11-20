@@ -1,5 +1,6 @@
 #include "env_panel/dynamic_ship_panel.hpp"
 
+#include <QButtonGroup>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -37,7 +38,8 @@ void DynamicShipPanel::setupUi()
   setStyleSheet(
     "QGroupBox { font-weight: 600; margin-top: 10px; }"
     "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }"
-    "QPushButton { min-height: 28px; padding: 3px 10px; }");
+    "QPushButton { min-height: 28px; padding: 3px 10px; }"
+    "QPushButton:checked { background-color: #d8eaff; border: 1px solid #6f9dcc; }");
 
   const int group_content_top_margin = fontMetrics().height() + 8;
   const auto configure_slider_row = [](QHBoxLayout * layout) {
@@ -53,6 +55,29 @@ void DynamicShipPanel::setupUi()
   form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
+  auto sim_ship_button = new QPushButton("仿真船");
+  sim_ship_button->setObjectName("sim_ship_mode");
+  sim_ship_button->setToolTip("在仿真环境中创建船舶模型，仅影响后续添加。");
+  virtual_ship_button_ = new QPushButton("虚拟船");
+  virtual_ship_button_->setObjectName("virtual_ship_mode");
+  virtual_ship_button_->setToolTip("只生成目标航迹，不创建船舶模型，仅影响后续添加。");
+  auto mode_group = new QButtonGroup(this);
+  auto mode_row = new QHBoxLayout;
+  configure_slider_row(mode_row);
+  for (auto button : {sim_ship_button, virtual_ship_button_}) {
+    button->setCheckable(true);
+    mode_group->addButton(button);
+    mode_row->addWidget(button, 1);
+  }
+  sim_ship_button->setChecked(true);
+  form->addRow("船类型：", mode_row);
+  QObject::connect(virtual_ship_button_, &QPushButton::toggled,
+    this, [this](bool checked) {
+      if (getDisplayContext()) {
+        getDisplayContext()->setProperty("env_panel.virtual_ship", checked);
+      }
+    });
+
   heading_slider_ = new QSlider(Qt::Horizontal);
   heading_slider_->setRange(0, 359);
   heading_slider_->setValue(static_cast<int>(heading_deg_));
@@ -61,7 +86,8 @@ void DynamicShipPanel::setupUi()
   configure_slider_row(heading_row);
   heading_row->addWidget(heading_slider_, 1);
   heading_row->addWidget(heading_label_);
-  form->addRow("航向：", heading_row);
+  heading_slider_->setToolTip("北向为 0°，顺时针增加；单击添加使用此值，拖拽添加使用箭头方向。");
+  form->addRow("默认航向：", heading_row);
   QObject::connect(heading_slider_, &QSlider::valueChanged,
                    this, &DynamicShipPanel::onHeadingChanged);
 
@@ -133,6 +159,13 @@ void DynamicShipPanel::setupUi()
   list_group->setLayout(list_layout);
   main_layout->addWidget(list_group);
 
+  auto placement_hint = new QLabel(
+    "备注：选择船类型后，使用工具栏“添加动态船”；单击使用默认航向，"
+    "拖拽指定船艏方向。右键取消，Esc 退出。");
+  placement_hint->setObjectName("placement_note");
+  placement_hint->setWordWrap(true);
+  main_layout->addWidget(placement_hint);
+
   for (auto * label : {heading_label_, speed_label_, leg_dist_label_}) {
     label->setMinimumWidth(76);
     label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -147,6 +180,10 @@ void DynamicShipPanel::setupUi()
 
 void DynamicShipPanel::onInitialize()
 {
+  if (auto context = getDisplayContext()) {
+    context->setProperty("env_panel.virtual_ship", virtual_ship_button_->isChecked());
+  }
+
   auto options = rclcpp::NodeOptions().arguments(
       {"--ros-args", "--remap",
        "__node:=rviz_dynamic_ship_config_panel_" +
@@ -160,8 +197,8 @@ void DynamicShipPanel::onInitialize()
       client_node_->create_client<usv_interfaces::srv::ClearDynamicShips>(
           "/dynamic_ship/clear");
   config_client_ =
-      client_node_->create_client<usv_interfaces::srv::SetDynamicShipConfigV2>(
-          "/dynamic_ship/set_config_v2");
+      client_node_->create_client<usv_interfaces::srv::SetDynamicShipConfig>(
+          "/dynamic_ship/set_config");
   models_client_ = client_node_->create_client<usv_interfaces::srv::ListDynamicShipModels>(
       "/dynamic_ship/models");
 
@@ -337,7 +374,7 @@ void DynamicShipPanel::publishConfig()
   if (config_pending_ || !catalog_ready_ || now < next_config_ms_) return;
   if (!config_client_->service_is_ready()) {
     applied_revision_ = 0;
-    config_status_->setText("等待 V2 配置服务；将自动重试，请勿生成");
+    config_status_->setText("等待配置服务；将自动重试，请勿生成");
     next_config_ms_ = now + 1000;
     return;
   }
@@ -356,14 +393,14 @@ void DynamicShipPanel::publishConfig()
   const auto revision = revision_;
 
   auto req =
-      std::make_shared<usv_interfaces::srv::SetDynamicShipConfigV2::Request>();
+      std::make_shared<usv_interfaces::srv::SetDynamicShipConfig::Request>();
   req->heading_deg = heading_deg_;
   req->speed = speed_;
   req->model_id = model_id_;
   req->half_distance = half_distance_;
   auto pending = config_client_->async_send_request(req,
       [this, token, revision, id = model_id_](
-          rclcpp::Client<usv_interfaces::srv::SetDynamicShipConfigV2>::SharedFuture future) {
+          rclcpp::Client<usv_interfaces::srv::SetDynamicShipConfig>::SharedFuture future) {
         auto response = future.get();
         QMetaObject::invokeMethod(this, [this, token, revision, id, response]() {
           if (token != config_token_) return;
