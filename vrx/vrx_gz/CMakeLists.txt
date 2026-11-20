@@ -57,7 +57,10 @@ target_link_libraries(Waves PUBLIC
 )
 install(
   TARGETS Waves
+  EXPORT export_vrx_waves
   DESTINATION lib)
+install(FILES src/Wavefield.hh DESTINATION include/vrx_gz)
+ament_export_targets(export_vrx_waves HAS_LIBRARY_TARGET)
 
 # Buoyancy
 add_library(PolyhedraBuoyancyDrag SHARED
@@ -162,6 +165,7 @@ list(APPEND VRX_GZ_PLUGINS
   ScanDockScoringPlugin
   SimpleHydrodynamics
   Surface
+  FleetBuoyancy
   TargetShipController
   USVWind
   WaveVisual
@@ -191,6 +195,20 @@ target_link_libraries(TargetShipController PUBLIC
   gz-msgs10::gz-msgs10
   gz-transport13::gz-transport13
 )
+
+target_link_libraries(WaveVisual PUBLIC
+  gz-msgs10::gz-msgs10
+  gz-transport13::gz-transport13
+)
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(current_advection_test test/CurrentAdvection_TEST.cc)
+  target_include_directories(current_advection_test PRIVATE src)
+  ament_add_gtest(fleet_hydrostatics_test test/FleetHydrostatics_TEST.cc)
+  target_include_directories(fleet_hydrostatics_test PRIVATE src)
+  target_link_libraries(fleet_hydrostatics_test gz-math${GZ_MATH_VER})
+endif()
 
 install(
   TARGETS ${VRX_GZ_PLUGINS}

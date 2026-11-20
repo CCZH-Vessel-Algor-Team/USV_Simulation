@@ -29,6 +29,34 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 
 主配置文件为 `config/full_config.yaml`。
 
+### CCS 高公岛码头
+
+`usv_bringup` 主入口使用的 `ccs_open_water_crop` 已接入高公岛港口、实体接岸堤路和局部坡道，
+统一港口与近岸山体材质，保留绿色岛屿主体、水面及其他场景设置。新增堤路改变局部岸线，
+仿真及 PX4 SITL profile 使用对应的派生导航图；原 ENC 海图和实船配置保留。
+港口外观、碰撞和接岸参数以当前世界与模型配置为准。
+护坡石、12 个浮桥构件和 14 艘装饰船已加入简化静态碰撞；外观与导航地图保持不变。
+
+### CCS 海上光伏场与陆地风机
+
+CCS 世界东南海域的 12 台风机已替换为固定桩式光伏场；4 台陆地风机保留原位置和转动。
+光伏场以 119.49527°E、34.67997°N 为中心，占地范围 1 km × 1 km。Gazebo 保留桩柱碰撞；
+默认全局地图不标光伏，另保留带桩柱标记的备用地图。
+光伏场参数、桩柱碰撞和备用地图以当前场景与地图配置为准。
+
+### CCS 田湾跨海大桥
+
+按 `CN441122.000` 海图位置布置田湾跨海大桥，建至 5 km 地图南边缘。模型保留
+125 m 主跨、70 m 辅通航跨、引桥、栏杆、6 车道标线和 4 个航标；路面和墩形参照照片拟合。
+桥在 Gazebo 中有碰撞，但**默认全局地图不加入大桥**，用于测试局部感知/避障。
+大桥的海图定位、跨径和碰撞以当前模型配置为准。
+
+### 船灯与可放倒桅杆
+
+主配置已为 `usv_1` 设置 `vessel_devices.enabled: true`，默认桅杆整体两倍尺寸（高约 1.196 m），十二个桅杆灯随其竖起/放倒，另增船顶四角左红右绿 `roof_*` 四灯固定在船体，十六灯独立控制。中线等新增桅杆灯颜色可用 `extra_light_colors` 逐灯覆盖；`roof_lights_enabled: false` 仅关闭新增四个角灯。现有传感器和推进器不改。
+
+接口、位置参数、操作示例和独立测试入口见 [usv_vessel_devices](../usv_vessel_devices/README.md)。旧配置缺少 `vessel_devices` 块或设置 `enabled: false` 时保持旧船模；目前支持本地 `wamv_no_battery.urdf.xacro` 模板。
+
 ### RViz导航目标
 
 CCS使用 **Nav2 Goal** 工具（快捷键 `g`）向唯一的 **Navigation 2** 面板输入本船导航目标。
@@ -125,8 +153,8 @@ barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smooth
 - `scenario_manager_node` 默认不发布跟踪列表；认证配置由 `merge_certi_config.py` 显式启用，
   默认发布到 `/certificate_case/tracked_ships`。普通 CCS 的 `/dynamic_ship/tracked_ships`
   由动态船管理器／tracked merger 提供完整场景，不能另接一个只包含认证目标的完整列表发布者。
-- CCS 浮标栈开启时，动态船 GT 桥读取 `/_internal`，最终 `/sim/ground_truth` 由浮标栈的
-  `ground_truth_track_merger` 发布；浮标关闭时，桥读取 `/dynamic_ship/tracked_ships`，
+- 普通 CCS 动态船 GT 桥读取含逐船尺寸的 `/dynamic_ship/snapshot`。浮标栈开启时，最终
+  `/sim/ground_truth` 由浮标栈的 `ground_truth_track_merger` 发布；浮标关闭时，
   由 `ccs_ground_truth_track_merger` 汇总各个 `_src` 输入。关闭动态船 GT 桥不关闭该备用 merger，
   认证 GT 仍可使用它。
 - `ccs_certificate_encounter.launch.py` 沿用认证专用话题到 `_src/scenario` 的桥接。
