@@ -1,0 +1,27 @@
+{
+  "id": "vassos",
+  "name": "VASSOS",
+  "kind": "bulk",
+  "length": 229.0,
+  "beam": 32.24,
+  "draft": 14.57,
+  "deck": 5.63,
+  "source": "https://www.hafen-hamburg.de/en/vessels/vassos/",
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet",
+  "lane_y_m": -19.065,
+  "start_x_m": -114.5,
+  "start_z_m": 0.2,
+  "mass_kg": 84387064.9391757,
+  "inertia_kg_m2": [
+    8150519153.862041,
+    301580031390.23206,
+    303991667547.7972
+  ],
+  "center_of_mass_z_m": -8.741999999999999,
+  "buoyancy_collision_box_m": [
+    206.1,
+    27.404,
+    20.2
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

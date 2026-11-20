@@ -1,0 +1,32 @@
+{
+  "id": "ocean_myst_ii",
+  "name": "OCEAN MYST II",
+  "kind": "fishing",
+  "length": 22.0,
+  "beam": 6.2,
+  "draft": 1.25,
+  "deck": 0.95,
+  "source": "https://vessels.wcpfc.int/vessel/5126",
+  "hull_dimensions_m": [
+    22.0,
+    6.199999809265137,
+    2.199999988079071
+  ],
+  "bounds_min_m": [
+    -11.001999855041504,
+    -3.0999999046325684,
+    -1.25
+  ],
+  "bounds_max_m": [
+    11.0,
+    3.0999999046325684,
+    4.960000038146973
+  ],
+  "triangles": 512,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Deck heights and draft approximated from photos, except published cargo vessel drafts. Full loading condition not asserted.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

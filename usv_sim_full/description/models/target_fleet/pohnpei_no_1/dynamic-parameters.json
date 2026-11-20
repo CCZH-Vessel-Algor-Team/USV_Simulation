@@ -1,0 +1,72 @@
+{
+  "id": "pohnpei_no_1",
+  "name": "POHNPEI NO.1",
+  "kind": "seiner",
+  "length": 61.75,
+  "beam": 11.9,
+  "draft": 2.8,
+  "deck": 1.75,
+  "source": "https://vessels.wcpfc.int/vessel/8660",
+  "photo": "https://vessels.wcpfc.int/sites/default/files/Pohnpei%20No.1.jpg",
+  "colors": [
+    [
+      30,
+      74,
+      122
+    ],
+    [
+      139,
+      48,
+      34
+    ],
+    [
+      121,
+      149,
+      130
+    ],
+    [
+      237,
+      235,
+      218
+    ],
+    [
+      24,
+      38,
+      43
+    ],
+    [
+      29,
+      66,
+      88
+    ],
+    [
+      175,
+      184,
+      167
+    ],
+    [
+      223,
+      169,
+      47
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": false,
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet_expansion",
+  "lane_y_m": 84.80499999999999,
+  "start_x_m": -30.875,
+  "start_z_m": 0.2,
+  "mass_kg": 1614550.118786719,
+  "inertia_kg_m2": [
+    16551254.450948695,
+    418341119.9008576,
+    429321503.71277595
+  ],
+  "center_of_mass_z_m": -1.68,
+  "buoyancy_collision_box_m": [
+    55.575,
+    10.115,
+    4.55
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

@@ -104,4 +104,12 @@ install(FILES plugin_description.xml
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(dynamic_ship_panel_test test/dynamic_ship_panel_test.cpp)
+  ament_target_dependencies(dynamic_ship_panel_test rclcpp rviz_common std_msgs usv_interfaces)
+  target_link_libraries(dynamic_ship_panel_test ${PROJECT_NAME} Qt5::Widgets)
+  set_tests_properties(dynamic_ship_panel_test PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;ROS_DOMAIN_ID=175")
+endif()
 ament_package()

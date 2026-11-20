@@ -1,0 +1,32 @@
+{
+  "id": "vassos",
+  "name": "VASSOS",
+  "kind": "bulk",
+  "length": 229.0,
+  "beam": 32.24,
+  "draft": 14.57,
+  "deck": 5.63,
+  "source": "https://www.hafen-hamburg.de/en/vessels/vassos/",
+  "hull_dimensions_m": [
+    229.0,
+    32.2400016784668,
+    20.199999809265137
+  ],
+  "bounds_min_m": [
+    -114.50199890136719,
+    -16.1200008392334,
+    -14.569999694824219
+  ],
+  "bounds_max_m": [
+    114.5,
+    16.1200008392334,
+    28.079999923706055
+  ],
+  "triangles": 1112,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Deck heights and draft approximated from photos, except published cargo vessel drafts. Full loading condition not asserted.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

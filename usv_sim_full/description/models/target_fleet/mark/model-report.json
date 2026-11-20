@@ -1,0 +1,77 @@
+{
+  "id": "mark",
+  "name": "MARK",
+  "kind": "trawler",
+  "length": 86.1,
+  "beam": 16.0,
+  "draft": 5.4,
+  "deck": 3.5,
+  "source": "https://tersanshipyard.com/en/projects/mark",
+  "photo": "https://www.naust.is/asset/7851/imo.9690688-mark.jpg",
+  "colors": [
+    [
+      25,
+      34,
+      36
+    ],
+    [
+      138,
+      45,
+      34
+    ],
+    [
+      31,
+      117,
+      74
+    ],
+    [
+      238,
+      238,
+      223
+    ],
+    [
+      22,
+      40,
+      44
+    ],
+    [
+      28,
+      67,
+      86
+    ],
+    [
+      222,
+      166,
+      52
+    ],
+    [
+      183,
+      46,
+      37
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": false,
+  "hull_dimensions_m": [
+    86.0999984741211,
+    16.0,
+    8.900000095367432
+  ],
+  "bounds_min_m": [
+    -43.051998138427734,
+    -8.000699996948242,
+    -5.400000095367432
+  ],
+  "bounds_max_m": [
+    43.04999923706055,
+    8.000699996948242,
+    14.5
+  ],
+  "triangles": 1024,
+  "visual_meshes": 1,
+  "texture": "1024x512 RGB PNG",
+  "collision_primitives": 1,
+  "height_and_draft_note": "Published length and beam; superstructure and underwater shape are photo-based approximations. Draft verification is recorded separately.",
+  "name_is_texture": true,
+  "name_locations": "port and starboard hull plus stern transom"
+}

@@ -1,0 +1,73 @@
+{
+  "id": "berge_stahl",
+  "name": "BERGE STAHL",
+  "kind": "ore",
+  "length": 342.0,
+  "beam": 63.5,
+  "draft": 23.0,
+  "deck": 7.2,
+  "source": "https://www.thyssenkrupp-steel.com/media/content_1/publikationen/compact_2008_3_en.pdf",
+  "secondary_source": "https://www.martin1250shipmodels.nl/berge-stahl-2/",
+  "photo": "https://transportgeography.org/wp-content/uploads/bergestahl.jpg",
+  "colors": [
+    [
+      137,
+      55,
+      36
+    ],
+    [
+      114,
+      42,
+      29
+    ],
+    [
+      139,
+      78,
+      51
+    ],
+    [
+      231,
+      226,
+      208
+    ],
+    [
+      29,
+      36,
+      38
+    ],
+    [
+      36,
+      70,
+      81
+    ],
+    [
+      166,
+      124,
+      80
+    ],
+    [
+      205,
+      146,
+      42
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": true,
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet_expansion",
+  "lane_y_m": -78.935,
+  "start_x_m": -171.0,
+  "start_z_m": 0.2,
+  "mass_kg": 391809911.48910004,
+  "inertia_kg_m2": [
+    124900530974.74239,
+    3123145537206.459,
+    3188488349568.7817
+  ],
+  "center_of_mass_z_m": -13.799999999999999,
+  "buoyancy_collision_box_m": [
+    307.8,
+    53.975,
+    30.2
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

@@ -3,28 +3,37 @@
 import json
 import math
 import os
+import re
 import signal
 import subprocess
 import tempfile
 import threading
 import time
 import uuid
+import xml.etree.ElementTree as ET
 import yaml
 
 import rclpy
-from ament_index_python.packages import get_package_prefix
+from ament_index_python.packages import get_package_prefix, get_package_share_directory
 from geometry_msgs.msg import PointStamped, Pose, PoseWithCovarianceStamped, Twist
 from nav2_colregs_msgs.msg import TrackedShip, TrackedShipList
+from nav_msgs.msg import OccupancyGrid
 from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.clock import JumpThreshold
 from rclpy.duration import Duration
 from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import String
 from usv_interfaces.srv import (
     SpawnDynamicShip, DeleteDynamicShip, ClearDynamicShips,
     SetDynamicShipConfig,
+    ListDynamicShipModels, SetDynamicShipConfigV2, SpawnDynamicShipV2,
+)
+from usv_interfaces.msg import BuoyArray, DynamicShipModelInfo, DynamicShipObservation, DynamicShipSnapshot
+from usv_sim_full.dynamic_ship_catalog import (
+    LEGACY_MODELS, ShipCatalog, check_water_footprint, rectangles_overlap,
 )
 from usv_sim_full.pose_feedback import (
     PoseTracker, fresh_sample, is_feedback_fresh_ns, yaw_from_quaternion,
@@ -251,7 +260,7 @@ class GazeboPoseCache:
 
 class DynamicShip:
     def __init__(self, model_name, target_id, pose, half_distance, shape, speed, color,
-                 mesh_profile, node, config_base_dir, world_name):
+                 mesh_profile, node, config_base_dir, world_name, model_spec=None):
         self.model_name = model_name
         self.target_id = target_id
         self.shape = shape
@@ -262,6 +271,8 @@ class DynamicShip:
         self.node = node
         self.config_base_dir = config_base_dir
         self.world_name = world_name
+        self.model_spec = model_spec
+        self._fleet_turning = False
 
         x = pose.position.x
         y = pose.position.y
@@ -415,6 +426,8 @@ class DynamicShip:
         return twist
 
     def compute_cmd_vel(self, dt, predict=True):
+        if self.model_spec is not None and self.model_spec.backend == 'fleet_sdf':
+            return self._compute_fleet_cmd_vel()
         if self._turning_remaining > 0.0:
             self._turning_remaining -= dt
             twist = Twist()
@@ -454,6 +467,34 @@ class DynamicShip:
             self.current_x += vx * dt
             self.current_y += vy * dt
         return self.world_twist_to_body(vx, vy)
+
+    def _compute_fleet_cmd_vel(self):
+        # Large ships must not use a fixed one-second/0.5 m turn assumption.
+        if not self.feedback_fresh:
+            return Twist()
+        target = self.waypoint_b if self.direction > 0 else self.waypoint_a
+        dx, dy = target[0]-self.current_x, target[1]-self.current_y
+        distance = math.hypot(dx, dy)
+        arrival = min(max(.5, self.model_spec.length*.02), 10., self.half_distance*.25)
+        if not self._fleet_turning and distance <= arrival:
+            self.direction *= -1
+            target = self.waypoint_b if self.direction > 0 else self.waypoint_a
+            dx, dy = target[0]-self.current_x, target[1]-self.current_y
+            distance = math.hypot(dx, dy)
+            self._fleet_turning = True
+        self.spawn_yaw = math.atan2(dy, dx)
+        error = math.atan2(math.sin(self.spawn_yaw-self.actual_yaw),
+                           math.cos(self.spawn_yaw-self.actual_yaw))
+        if self._fleet_turning and abs(error) < .10:
+            self._fleet_turning = False
+        command = Twist()
+        command.angular.x = 1.0
+        command.angular.y = self.spawn_yaw
+        if not self._fleet_turning:
+            # A dimension-independent, conservative test braking acceleration;
+            # not a claim of calibrated full-scale vessel manoeuvrability.
+            command.linear.x = min(self.speed, math.sqrt(.2*max(distance-arrival*.5, 0.)))
+        return command
 
     def get_current_pose(self):
         pose = Pose()
@@ -500,6 +541,20 @@ class DynamicShipManager(Node):
         self.world_name = self.get_parameter('world_name').get_parameter_value().string_value
         self.default_mesh_profile = self.get_parameter('default_mesh_profile').get_parameter_value().string_value
         self.config_base_dir = self.get_parameter('config_base_dir').get_parameter_value().string_value
+        self.declare_parameter('model_catalog', os.path.join(
+            get_package_share_directory('usv_sim_full'), 'description/models/target_fleet/catalog.json'))
+        self.declare_parameter('fleet_spawn_check_map', True)
+        self.declare_parameter('ownship_model', 'usv_1')
+        self._selected_model_id = 'legacy_10m'
+        self._catalog_error = ''
+        self._spawn_map = None
+        self._buoy_snapshot = None
+        try:
+            self.catalog = ShipCatalog(self.get_parameter('model_catalog').value)
+        except (OSError, ValueError, KeyError, TypeError, ET.ParseError) as error:
+            self.catalog = None
+            self._catalog_error = str(error)
+            self.get_logger().warning(f'Fleet catalog unavailable; legacy targets remain available: {error}')
 
         if not self.config_base_dir:
             self.config_base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -507,6 +562,9 @@ class DynamicShipManager(Node):
         self.declare_parameter('heading_deg', 0.0)
         self.declare_parameter('speed', 3.0)
         self.declare_parameter('shape', 'mesh_profile')
+        self._selected_model_id = {
+            'mesh_profile': 'legacy_10m', 'box': 'debug_box', 'cylinder': 'debug_cylinder',
+        }.get(self.get_parameter('shape').value, 'legacy_10m')
         self.declare_parameter('half_distance', 100.0)
         self.declare_parameter('pose_feedback_timeout', 1.0)
         self.declare_parameter(
@@ -555,6 +613,8 @@ class DynamicShipManager(Node):
 
         self.tracked_pub = self.create_publisher(
             TrackedShipList, '/dynamic_ship/tracked_ships', 10)
+        self.snapshot_pub = self.create_publisher(
+            DynamicShipSnapshot, '/dynamic_ship/snapshot', 10)
 
         # With two executor threads, control and /clock can share the available
         # worker while the other waits in the lifecycle group.
@@ -577,6 +637,22 @@ class DynamicShipManager(Node):
         self.config_srv = self.create_service(
             SetDynamicShipConfig, '/dynamic_ship/set_config',
             self.on_set_config, callback_group=self.lifecycle_group)
+        self.models_srv = self.create_service(
+            ListDynamicShipModels, '/dynamic_ship/models', self.on_list_models,
+            callback_group=self.lifecycle_group)
+        self.config_v2_srv = self.create_service(
+            SetDynamicShipConfigV2, '/dynamic_ship/set_config_v2', self.on_set_config_v2,
+            callback_group=self.lifecycle_group)
+        self.spawn_v2_srv = self.create_service(
+            SpawnDynamicShipV2, '/dynamic_ship/spawn_v2', self.on_spawn_v2,
+            callback_group=self.lifecycle_group)
+        self.map_sub = self.create_subscription(
+            OccupancyGrid, '/map', self._on_map,
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL),
+            callback_group=self.control_group)
+        self.buoy_sub = self.create_subscription(
+            BuoyArray, '/dynamic_buoy/buoys', self._on_buoys, 10,
+            callback_group=self.control_group)
 
         self.names_pub = self.create_publisher(
             String, '/dynamic_ship/names', 10)
@@ -591,22 +667,155 @@ class DynamicShipManager(Node):
 
     def on_set_config(self, request, response):
         try:
-            self.set_parameters([
+            shape = request.shape.strip()
+            model_id = {'mesh_profile': 'legacy_10m', 'box': 'debug_box', 'cylinder': 'debug_cylinder'}.get(shape)
+            if model_id is None:
+                raise ValueError('Unsupported legacy shape')
+            self._validate_motion(request.heading_deg, request.speed, request.half_distance)
+            result = self.set_parameters_atomically([
                 rclpy.parameter.Parameter(
                     'heading_deg', value=request.heading_deg),
                 rclpy.parameter.Parameter(
                     'speed', value=request.speed),
                 rclpy.parameter.Parameter(
-                    'shape', value=request.shape),
+                    'shape', value=shape),
                 rclpy.parameter.Parameter(
                     'half_distance', value=request.half_distance),
             ])
+            if not result.successful:
+                raise ValueError(result.reason)
+            self._selected_model_id = model_id
             response.success = True
             response.message = 'config updated'
         except Exception as e:
             response.success = False
             response.message = str(e)
         return response
+
+    def _get_model(self, model_id):
+        if self.catalog is not None:
+            return self.catalog.get(model_id)
+        for model in LEGACY_MODELS:
+            if model.model_id == model_id:
+                return model
+        raise ValueError(f'Unknown/unavailable vessel model: {model_id}; {self._catalog_error}')
+
+    @staticmethod
+    def _validate_motion(heading, speed, half_distance):
+        if (not all(math.isfinite(v) for v in (heading, speed, half_distance)) or
+                not 0 <= speed <= 20 or not 0 < half_distance <= 10000):
+            raise ValueError('Need finite heading, 0..20 m/s speed and 0..10000 m half_distance')
+
+    def on_list_models(self, request, response):
+        response.success = True
+        response.message = self._catalog_error or 'Installed model catalog'
+        response.default_model_id = 'legacy_10m'
+        models = self.catalog.models.values() if self.catalog is not None else LEGACY_MODELS
+        for model in models:
+            info = DynamicShipModelInfo()
+            for field in ('model_id', 'display_name', 'category', 'length', 'beam', 'height', 'draft', 'recommended_speed'):
+                setattr(info, field, getattr(model, field))
+            response.models.append(info)
+        return response
+
+    def on_set_config_v2(self, request, response):
+        try:
+            model = self._get_model(request.model_id.strip() or 'legacy_10m')
+            self._validate_motion(request.heading_deg, request.speed, request.half_distance)
+            result = self.set_parameters_atomically([
+                rclpy.parameter.Parameter('heading_deg', value=float(request.heading_deg)),
+                rclpy.parameter.Parameter('speed', value=float(request.speed)),
+                rclpy.parameter.Parameter('half_distance', value=float(request.half_distance)),
+                rclpy.parameter.Parameter('shape', value=model.backend),
+            ])
+            if not result.successful:
+                raise ValueError(result.reason)
+            self._selected_model_id = model.model_id
+            response.success, response.message = True, 'New-spawn configuration applied'
+            response.model_id = model.model_id
+        except (ValueError, TypeError) as error:
+            response.success, response.message = False, str(error)
+        return response
+
+    def on_spawn_v2(self, request, response):
+        try:
+            model = self._get_model(request.model_id.strip() or self._selected_model_id)
+            self._validate_motion(0., request.speed, request.half_distance)
+            p, q = request.pose.position, request.pose.orientation
+            if not all(math.isfinite(v) for v in (p.x, p.y, p.z, q.x, q.y, q.z, q.w)):
+                raise ValueError('Non-finite spawn pose')
+            norm = math.hypot(q.x, q.y, q.z, q.w)
+            if norm < 1e-12:
+                raise ValueError('Need a nonzero pose quaternion')
+            yaw = yaw_from_quaternion(q.x/norm, q.y/norm, q.z/norm, q.w/norm)
+            if request.name.strip():
+                name = request.name.strip()
+            else:
+                self._ship_counter += 1
+                name = f'dyn_target_{self._ship_counter}'
+            if not self._spawn_ship_at(name, p.x, p.y, yaw, request.half_distance,
+                                       model.backend, request.speed, model_id=model.model_id):
+                raise ValueError('Spawn refused or unconfirmed; see manager log')
+            response.success, response.model_name, response.message = True, name, 'Ship created'
+        except (ValueError, RuntimeError) as error:
+            response.success, response.message = False, str(error)
+        return response
+
+    def _on_map(self, message):
+        if message.header.frame_id == 'map':
+            self._spawn_map = message
+
+    def _on_buoys(self, message):
+        if message.header.frame_id == 'map':
+            self._buoy_snapshot = message
+
+    def _validate_fleet_placement(self, model, x, y, yaw):
+        if model.backend != 'fleet_sdf':
+            return
+        if self.get_parameter('fleet_spawn_check_map').value:
+            message = self._spawn_map
+            if message is None:
+                raise ValueError('Map unavailable: cannot verify the full vessel footprint')
+            check_water_footprint(message.info, message.data, x, y, yaw, model.length, model.beam)
+        candidate = (x, y, yaw, model.length, model.beam)
+        now = self.get_clock().now().nanoseconds
+        with self._ships_lock:
+            others = list(self.ships.values())
+            if self._pending_spawns or self._clock_reset.is_set():
+                raise ValueError('Await confirmed scene membership and fresh simulator feedback before spawning')
+            samples, _ = self.gz_pose_cache.snapshot()
+        for other in others:
+            spec = other.model_spec or LEGACY_MODELS[0]
+            sample = samples.get(other.model_name)
+            if (sample is None or not all(map(math.isfinite, sample[:3])) or
+                    not is_feedback_fresh_ns(sample[3], now, self.pose_feedback_timeout)):
+                raise ValueError(f'Need fresh placement feedback for {other.model_name}')
+            if rectangles_overlap(candidate, (*sample[:3], spec.length, spec.beam), margin=2.):
+                raise ValueError(f'Vessel footprint overlaps dynamic target {other.model_name}')
+        ownship = self.get_parameter('ownship_model').value
+        if ownship:
+            sample = samples.get(ownship)
+            if (sample is None or not all(map(math.isfinite, sample[:3])) or
+                    not is_feedback_fresh_ns(sample[3], now, self.pose_feedback_timeout)):
+                raise ValueError('Ownship feedback unavailable: cannot check placement clearance')
+            if rectangles_overlap(candidate, (*sample[:3], 10., 5.), margin=2.):
+                raise ValueError('Vessel footprint overlaps ownship')
+        buoys = self._buoy_snapshot
+        if buoys is None:
+            if self.count_publishers('/dynamic_buoy/buoys'):
+                raise ValueError('Await the active buoy manager snapshot before checking placement')
+        else:
+            stamp = buoys.header.stamp
+            if not is_feedback_fresh_ns(stamp.sec*1_000_000_000+stamp.nanosec, now,
+                                        self.pose_feedback_timeout):
+                raise ValueError('Buoy placement snapshot is stale; cannot verify clearance')
+            for buoy in buoys.buoys:
+                bx, by, radius = buoy.pose.position.x, buoy.pose.position.y, buoy.radius_m
+                if not all(map(math.isfinite, (bx, by, radius))) or radius <= 0:
+                    raise ValueError('Invalid buoy placement envelope')
+                # Circumscribed square is conservative even at rotated hull edges.
+                if rectangles_overlap(candidate, (bx, by, 0., radius*2, radius*2), margin=2.):
+                    raise ValueError(f'Vessel footprint overlaps dynamic buoy {buoy.name}')
 
     def on_clicked_point(self, msg):
         heading_deg, speed, shape, half_dist = self._read_config()
@@ -616,7 +825,7 @@ class DynamicShipManager(Node):
         name = f'dyn_target_{self._ship_counter}'
 
         self._spawn_ship_at(name, msg.point.x, msg.point.y, heading,
-                            half_dist, shape, speed)
+                            half_dist, shape, speed, model_id=self._selected_model_id)
 
     def on_spawn_pose(self, msg):
         """Create a target at the RViz drag pose through the existing lifecycle.
@@ -639,9 +848,23 @@ class DynamicShipManager(Node):
         self._ship_counter += 1
         name = f'dyn_target_{self._ship_counter}'
         self._spawn_ship_at(name, pose.position.x, pose.position.y, heading,
-                            half_dist, shape, speed)
+                            half_dist, shape, speed, model_id=self._selected_model_id)
 
-    def _spawn_ship_at(self, name, x, y, yaw, half_dist, shape, speed):
+    def _spawn_ship_at(self, name, x, y, yaw, half_dist, shape, speed,
+                       model_id=None, mesh_profile=None, color=None):
+        try:
+            if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_.-]{0,95}', name):
+                raise ValueError('Invalid instance name')
+            self._validate_motion(yaw, speed, half_dist)
+            if not all(math.isfinite(v) for v in (x, y)):
+                raise ValueError('Non-finite spawn coordinates')
+            selected = model_id or {'mesh_profile': 'legacy_10m', 'box': 'debug_box',
+                                    'cylinder': 'debug_cylinder'}.get(shape)
+            model = self._get_model(selected)
+            self._validate_fleet_placement(model, x, y, yaw)
+        except (ValueError, TypeError) as error:
+            self.get_logger().error(f'Spawn rejected: {error}')
+            return False
         with self._ships_lock:
             if name in self.ships or any(
                     ship.model_name == name for ship in self._retired_ships):
@@ -655,15 +878,15 @@ class DynamicShipManager(Node):
         pose.orientation.w = math.cos(yaw / 2.0)
         pose.orientation.z = math.sin(yaw / 2.0)
 
-        color = (1.0, 0.2, 0.2)
+        color = color or (1.0, 0.2, 0.2)
 
         ship = DynamicShip(
             model_name=name, target_id=target_id, pose=pose,
             half_distance=half_dist, shape=shape, speed=speed,
             color=color,
-            mesh_profile=self.default_mesh_profile,
+            mesh_profile=mesh_profile or self.default_mesh_profile,
             node=self, config_base_dir=self.config_base_dir,
-            world_name=self.world_name,
+            world_name=self.world_name, model_spec=model,
         )
 
         try:
@@ -703,8 +926,9 @@ class DynamicShipManager(Node):
             shape = request.shape.strip() or 'mesh_profile'
 
             if not self._spawn_ship_at(name, request.pose.position.x,
-                                       request.pose.position.y, yaw,
-                                       half_dist, shape, speed):
+                                        request.pose.position.y, yaw,
+                                        half_dist, shape, speed,
+                                        mesh_profile=request.mesh_profile.strip() or None):
                 raise RuntimeError('Spawn failed or name still owned; see manager log')
             response.success = True
             response.model_name = name
@@ -751,12 +975,15 @@ class DynamicShipManager(Node):
         return response
 
     def _generate_sdf(self, ship):
+        if ship.model_spec is not None and ship.model_spec.backend == 'fleet_sdf':
+            return self.catalog.sdf(ship.model_spec.model_id, ship.model_name)
         if ship.shape == 'mesh_profile':
             return self._generate_mesh_profile_sdf(ship)
         elif ship.shape == 'box':
             return self._generate_box_sdf(ship)
-        else:
+        elif ship.shape == 'cylinder':
             return self._generate_cylinder_sdf(ship)
+        raise ValueError(f'Unknown target geometry: {ship.shape}')
 
     @staticmethod
     def _environment_plugins(ship):
@@ -995,7 +1222,9 @@ class DynamicShipManager(Node):
         :raises RuntimeError: Preflight or creation cannot be confirmed.
         """
         z = 0.5
-        if ship.shape == 'mesh_profile':
+        if ship.model_spec is not None and ship.model_spec.backend == 'fleet_sdf':
+            z = ship.model_spec.spawn_z
+        elif ship.shape == 'mesh_profile':
             profile_path = _resolve_profile_path(ship.mesh_profile, self.config_base_dir)
             if profile_path and os.path.isfile(profile_path):
                 with open(profile_path, 'r') as f:
@@ -1243,6 +1472,8 @@ class DynamicShipManager(Node):
                     is_feedback_fresh_ns(frame[0], now.nanoseconds, self.pose_feedback_timeout))
         msg = TrackedShipList()
         msg.header.frame_id = 'map'
+        snapshot = DynamicShipSnapshot()
+        snapshot.header.frame_id = 'map'
         for ship in ships:
             sample = gz_samples.get(ship.model_name)
             fresh = ship.sync_from_feedback_ns(
@@ -1265,8 +1496,19 @@ class DynamicShipManager(Node):
             ts.target_id.uuid = list(bytes.fromhex(ship.target_id.replace('-', '')))
             ts.pose = ship.get_current_pose()
             ts.twist = ship.get_current_twist()
-            ts.radius = 5.0
+            spec = ship.model_spec
+            ts.radius = spec.radius if spec is not None else 5.0
             msg.ships.append(ts)
+            observation = DynamicShipObservation()
+            observation.target_id = ts.target_id
+            observation.model_name = ship.model_name
+            observation.model_id = spec.model_id if spec is not None else 'legacy_10m'
+            observation.pose, observation.twist = ts.pose, ts.twist
+            observation.size_l = spec.length if spec is not None else 10.
+            observation.size_w = spec.beam if spec is not None else 3.6
+            observation.size_h = spec.height if spec is not None else 2.
+            observation.radius, observation.ais_mmsi = ts.radius, ts.ais_mmsi
+            snapshot.ships.append(observation)
 
         if stale_ships:
             self.get_logger().warn(
@@ -1276,6 +1518,7 @@ class DynamicShipManager(Node):
 
         if complete:
             msg.header.stamp.sec, msg.header.stamp.nanosec = divmod(frame[0], 1_000_000_000)
+            snapshot.header = msg.header
             cache = self.gz_pose_cache
             # Lock order is registry -> cache. Only the final validation/publish
             # runs here, never scene queries or process waits. Frame identity is
@@ -1294,6 +1537,7 @@ class DynamicShipManager(Node):
                     # ROS jump callback only sets the Event, never takes either
                     # lock (Clock.now may hold the ROS clock mutex during it).
                     self.tracked_pub.publish(msg)
+                    self.snapshot_pub.publish(snapshot)
                     self._last_published_stamp_ns = frame[0]
         self.names_pub.publish(String(data=json.dumps(names)))
 

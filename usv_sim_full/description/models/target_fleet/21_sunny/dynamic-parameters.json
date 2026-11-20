@@ -1,0 +1,72 @@
+{
+  "id": "21_sunny",
+  "name": "21 SUNNY",
+  "kind": "geared_bulk",
+  "length": 180.0,
+  "beam": 29.8,
+  "draft": 10.54,
+  "deck": 4.46,
+  "source": "https://www.hafen-hamburg.de/en/vessels/21-sunny/",
+  "photo": "https://www.hafen-hamburg.de/site/assets/files/719948/9615107-1.png",
+  "colors": [
+    [
+      28,
+      34,
+      39
+    ],
+    [
+      151,
+      45,
+      33
+    ],
+    [
+      128,
+      94,
+      66
+    ],
+    [
+      238,
+      234,
+      218
+    ],
+    [
+      20,
+      35,
+      42
+    ],
+    [
+      37,
+      81,
+      102
+    ],
+    [
+      193,
+      183,
+      157
+    ],
+    [
+      225,
+      157,
+      53
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": true,
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet_expansion",
+  "lane_y_m": 23.955,
+  "start_x_m": -90.0,
+  "start_z_m": 0.2,
+  "mass_kg": 44354149.36371,
+  "inertia_kg_m2": [
+    3203141715.876702,
+    97834164959.00334,
+    99374026073.7409
+  ],
+  "center_of_mass_z_m": -6.323999999999999,
+  "buoyancy_collision_box_m": [
+    162.0,
+    25.33,
+    15.0
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

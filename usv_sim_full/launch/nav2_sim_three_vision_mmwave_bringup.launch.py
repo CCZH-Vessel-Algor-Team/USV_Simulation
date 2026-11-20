@@ -80,10 +80,13 @@ def _dynamic_ship_manager_node(context, *args, **kwargs):
     cfg_path = LaunchConfiguration('config_path').perform(context)
     usv_sim_full_pkg = get_package_share_directory('usv_sim_full')
     world_name = 'sydney_regatta'
+    ownship_model = 'usv_1'
     try:
         with open(cfg_path, 'r') as f:
             cfg = yaml.safe_load(f) or {}
         world_name = cfg.get('environment', {}).get('world_name', world_name)
+        from usv_sim_full.launch_config_helpers import primary_robot_name
+        ownship_model = primary_robot_name(cfg) or ownship_model
     except Exception:
         pass
 
@@ -95,6 +98,9 @@ def _dynamic_ship_manager_node(context, *args, **kwargs):
         'parameters': [{
             'use_sim_time': LaunchConfiguration('use_sim_time'),
             'world_name': world_name,
+            'ownship_model': ownship_model,
+            'model_catalog': os.path.join(
+                usv_sim_full_pkg, 'description', 'models', 'target_fleet', 'catalog.json'),
             'config_base_dir': os.path.join(usv_sim_full_pkg, 'config', 'three_vision_one_mmwave'),
             'default_mesh_profile': os.path.join(
                 usv_sim_full_pkg, 'description', 'models',
