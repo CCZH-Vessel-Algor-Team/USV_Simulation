@@ -22,6 +22,14 @@ def _sim_time_sec(msg: Clock) -> float:
     return float(msg.clock.sec) + float(msg.clock.nanosec) * 1e-9
 
 
+def _scene_has_root_model(node, world: str, entity: str, timeout_ms: int = 2000) -> bool:
+    from gz.msgs10.empty_pb2 import Empty
+    from gz.msgs10.scene_pb2 import Scene
+
+    ok, scene = node.request(f'/world/{world}/scene/info', Empty(), Empty, Scene, timeout_ms)
+    return bool(ok and scene is not None and any(model.name == entity for model in scene.model))
+
+
 class GzSpawnRobotWhenReady(Node):
     """Poll /clock + gz create service, then spawn one robot URDF/SDF entity."""
 
@@ -61,6 +69,16 @@ class GzSpawnRobotWhenReady(Node):
 
         if not self._entity or not self._sdf_file:
             raise RuntimeError('entity_name and sdf_file must be non-empty')
+
+        self._gz_transport = None
+        try:
+            from gz.transport13 import Node as GazeboNode
+            from gz.msgs10 import empty_pb2, scene_pb2  # noqa: F401
+        except ImportError:
+            # Keep the CLI fallback on images without Gazebo Harmonic Python bindings.
+            pass
+        else:
+            self._gz_transport = GazeboNode()
 
         self._clock_count = 0
         self._max_sim_t = 0.0
@@ -123,6 +141,11 @@ class GzSpawnRobotWhenReady(Node):
     def _model_exists_in_world(self) -> bool:
         if not self._world:
             return True
+        if self._gz_transport is not None:
+            # `gz model --list` downloads the full component state and rebuilds
+            # it in the CLI before printing any names. On CCS it can time out
+            # even though the vessel is already present and publishing sensors.
+            return _scene_has_root_model(self._gz_transport, self._world, self._entity)
         try:
             out = subprocess.run(
                 ['gz', 'model', '--list'],
@@ -277,8 +300,8 @@ class GzSpawnRobotWhenReady(Node):
             self._schedule_retry(detail)
             return
 
-        detail = (result.stderr or result.stdout or '').strip()
-        if result.returncode != 0 or 'data: true' not in detail.lower():
+        detail = '\n'.join(s.strip() for s in (result.stdout, result.stderr) if s and s.strip())
+        if result.returncode != 0 or 'data: true' not in (result.stdout or '').lower():
             self.get_logger().warn(
                 f'spawn 尝试失败 (code={result.returncode}): {detail or "(无输出)"}'
             )
