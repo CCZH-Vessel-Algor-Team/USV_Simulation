@@ -1,4 +1,9 @@
 <library path="env_panel">
+  <class name="env_panel/HistoryPathSettings"
+         type="env_panel::HistoryPathPanel"
+         base_class_type="rviz_common::Panel">
+    <description>本船历史航迹保留时长设置，读写现有 history_path 节点参数。</description>
+  </class>
   <class
       name="env_panel/VrxEnvPanel"
       type="env_panel::VrxEnvPanel"

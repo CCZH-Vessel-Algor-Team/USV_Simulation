@@ -48,6 +48,7 @@ add_library(${PROJECT_NAME} SHARED
   src/radar_panel.cpp
   include/env_panel/usv_view_panel.hpp
   src/usv_view_panel.cpp
+  src/history_path_panel.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -117,6 +118,11 @@ if(BUILD_TESTING)
     target_link_libraries(${test_name} ${PROJECT_NAME} Qt5::Widgets)
     set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
   endforeach()
+  ament_add_gtest(test_history_path_panel test/test_history_path_panel.cpp
+    SKIP_LINKING_MAIN_LIBRARIES)
+  target_link_libraries(test_history_path_panel ${PROJECT_NAME} Qt5::Widgets)
+  set_tests_properties(test_history_path_panel PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;ROS_DOMAIN_ID=219;ROS_LOCALHOST_ONLY=1")
 endif()
 
 ament_package()
