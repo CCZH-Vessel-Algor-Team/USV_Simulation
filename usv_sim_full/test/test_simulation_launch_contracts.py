@@ -318,7 +318,8 @@ def test_history_uses_simulation_owner_and_preserves_external_rviz_source(
     panels = [p for p in config['Panels'] if p['Class'] == 'env_panel/HistoryPathSettings']
     displays = [d for d in config['Visualization Manager']['Displays']
                 if d.get('Name') == '本船历史航迹']
-    assert len(panels) == len(displays) == int(enabled == 'true')
+    assert not panels
+    assert len(displays) == int(enabled == 'true')
     assert config['Visualization Manager']['Displays'][0] == original['Visualization Manager']['Displays'][0]
     if enabled == 'true':
         main_launch.module._append_history_displays(rviz)

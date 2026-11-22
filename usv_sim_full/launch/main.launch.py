@@ -79,17 +79,13 @@ def _history_path_action(context):
 
 
 def _append_history_displays(rviz_config_path):
-    """给本次会话补入历史航迹和设置面板，兼容上层传入的 RViz 底稿。"""
+    """给本次会话补入历史航迹显示，不自动打开设置面板。"""
     template_path = os.path.join(
         get_package_share_directory('usv_sim_full'), 'rviz', 'three_vision_one_mmwave.rviz')
     with open(template_path, encoding='utf-8') as stream:
         template = yaml.safe_load(stream)
     with open(rviz_config_path, encoding='utf-8') as stream:
         config = yaml.safe_load(stream)
-    panels = config.setdefault('Panels', [])
-    panel = next(p for p in template['Panels'] if p['Class'] == 'env_panel/HistoryPathSettings')
-    if not any(p.get('Class') == panel['Class'] for p in panels):
-        panels.append(panel)
     displays = config.setdefault('Visualization Manager', {}).setdefault('Displays', [])
     display = next(d for d in template['Visualization Manager']['Displays']
                    if d.get('Name') == '本船历史航迹')
@@ -702,7 +698,10 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'enable_history_path', default_value='true',
-            description='启动独立本船历史航迹节点，并在会话 RViz 中添加显示和设置面板。',
+            description=(
+                '启动独立本船历史航迹节点，并在会话 RViz 中添加航迹显示；'
+                '设置面板不自动打开，可在需要时手动添加。'
+            ),
         ),
         DeclareLaunchArgument(
             'history_duration_sec', default_value='',

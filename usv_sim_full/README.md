@@ -193,4 +193,4 @@ barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smooth
 
 ## 本船历史航迹
 
-仿真主入口默认启动独立 `history_path` 节点，在 RViz 显示限时连续航迹；新规划任务自动清空上一段。保留时长可在 `env_panel/HistoryPathSettings` 设置面板中调整，默认值位于 `config/history_path.yaml`。文件位置、原理和修改方法见[历史航迹显示说明](docs/HISTORY_PATH.md)。
+仿真主入口默认启动独立 `history_path` 节点，在 RViz 显示限时连续航迹；新规划任务自动清空上一段。保留时长可在 `env_panel/HistoryPathSettings` 设置面板中调整，面板默认不自动打开，需要时通过 `Panels → Add New Panel` 添加；默认值位于 `config/history_path.yaml`。文件位置、原理和修改方法见[历史航迹显示说明](docs/HISTORY_PATH.md)。

@@ -34,7 +34,7 @@
 | 新规划清空 | 兼容规划请求、航线下发、目标话题及 Nav2 action，新任务清除上一段航迹和待转换定位 |
 | RViz 设置插件 | `env_panel/HistoryPathSettings` 面板可读取保留时长、修改秒数并点击“应用” |
 | 持久默认配置 | `config/history_path.yaml` 保存启动默认值；面板和参数命令仅修改当次运行值 |
-| 仿真启动接入 | 由 `main.launch.py` 默认启动节点，并向会话使用的 RViz 配置补入显示项和设置面板 |
+| 仿真启动接入 | 由 `main.launch.py` 默认启动节点，并向会话使用的 RViz 配置补入显示项；设置面板不自动打开，按需手动添加 |
 | 时间重置与容量限制 | 仿真时间倒退时清空历史；保留点数受 `max_points` 限制 |
 
 ## 1. 新增及修改文件位置
@@ -56,7 +56,7 @@
 
 | 文件 | 本功能的修改内容 |
 |---|---|
-| [`usv_sim_full/launch/main.launch.py`](../launch/main.launch.py) | 增加航迹节点启动、配置加载、启用开关和可选时长覆盖；给生成的会话 RViz 配置补入航迹显示及面板，不修改外部底稿源文件 |
+| [`usv_sim_full/launch/main.launch.py`](../launch/main.launch.py) | 增加航迹节点启动、配置加载、启用开关和可选时长覆盖；给生成的会话 RViz 配置补入航迹显示，不自动添加设置面板，不修改外部底稿源文件 |
 | [`usv_sim_full/setup.py`](../setup.py) | 注册 `history_path` 可执行入口，仅新增本航迹说明文档的安装规则；配置和 RViz 文件沿用原有安装机制 |
 | [`usv_sim_full/package.xml`](../package.xml) | 声明 `action_msgs` 与 `tf2_geometry_msgs` 运行依赖 |
 | [`usv_sim_full/rviz/three_vision_one_mmwave.rviz`](../rviz/three_vision_one_mmwave.rviz) | 加入“本船历史航迹”Path 显示项及 `env_panel/HistoryPathSettings` 面板 |
