@@ -1,0 +1,17 @@
+history_path:
+  ros__parameters:
+    # 默认保留最近多少秒的实际航迹；改此文件后重启航迹节点生效，必须大于 0。
+    history_duration_sec: 90.0
+    fixed_frame: map
+    path_topic: /usv_1/history_path
+    mission_topic: /mission/waypoints  # 收到重新规划请求就立即清空，不等待候选计算或确认下发。
+    route_topic: /route_planner/selected_path  # 新航线确认下发后清空历史。
+    goal_topic: /usv_1/goal_pose  # RViz 新目标也清空；不监听周期更新的 /usv_1/plan。
+    # RViz 导航对话框直接发送 action；按新任务 UUID 清空，重复状态不会清空。
+    navigation_actions:
+      - /usv_1/navigate_to_pose
+      - /usv_1/navigate_through_poses
+      - /usv_1/follow_waypoints
+    max_points: 10000
+    # 每帧有效定位立即发布航迹；此频率仅用于无新定位时清理过期点。
+    cleanup_rate: 5.0

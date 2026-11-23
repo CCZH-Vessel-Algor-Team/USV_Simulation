@@ -56,6 +56,45 @@ from usv_sim_full.launch_config_helpers import (
 )
 
 
+def _history_path_action(context):
+    """默认使用 YAML 中的时长，仅在调用方明确指定时覆盖。"""
+    if LaunchConfiguration('enable_history_path').perform(context).lower() != 'true':
+        return []
+    sim_share = get_package_share_directory('usv_sim_full')
+    overrides = {
+        'use_sim_time': LaunchConfiguration('use_sim_time'),
+        'odom_topic': LaunchConfiguration('odom_topic'),
+    }
+    duration = LaunchConfiguration('history_duration_sec').perform(context).strip()
+    if duration:
+        overrides['history_duration_sec'] = float(duration)
+    return [Node(
+        package='usv_sim_full', executable='history_path', name='history_path',
+        namespace='/', output='screen',
+        parameters=[
+            os.path.join(sim_share, 'config', 'history_path.yaml'),
+            overrides,
+        ],
+    )]
+
+
+def _append_history_displays(rviz_config_path):
+    """给本次会话补入历史航迹显示，不自动打开设置面板。"""
+    template_path = os.path.join(
+        get_package_share_directory('usv_sim_full'), 'rviz', 'three_vision_one_mmwave.rviz')
+    with open(template_path, encoding='utf-8') as stream:
+        template = yaml.safe_load(stream)
+    with open(rviz_config_path, encoding='utf-8') as stream:
+        config = yaml.safe_load(stream)
+    displays = config.setdefault('Visualization Manager', {}).setdefault('Displays', [])
+    display = next(d for d in template['Visualization Manager']['Displays']
+                   if d.get('Name') == '本船历史航迹')
+    if not any(d.get('Name') == display['Name'] for d in displays):
+        displays.append(display)
+    with open(rviz_config_path, 'w', encoding='utf-8') as stream:
+        yaml.safe_dump(config, stream, allow_unicode=True, sort_keys=False)
+
+
 def _ensure_list(x):
     if x is None:
         return []
@@ -295,6 +334,9 @@ def launch_setup(context, *args, **kwargs):
         except Exception as e:
             print(f"Warning: Could not modify rviz config with radar displays: {e}")
 
+    if LaunchConfiguration('enable_history_path').perform(context).lower() == 'true':
+        _append_history_displays(rviz_config_path)
+
     infra_sim_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             get_package_share_directory('usv_sim_full'),
@@ -316,6 +358,7 @@ def launch_setup(context, *args, **kwargs):
             )
         )
     launch_items.append(infra_sim_include)
+    launch_items.extend(_history_path_action(context))
 
     # session.rviz 的 Fixed Frame 为 map；发布 map->{robot}/odom，否则点云/相机等无法变换到 map
     if not external_localization:
@@ -652,6 +695,21 @@ def generate_launch_description():
             'use_sim_time',
             default_value='true',
             description='Use simulation clock'
+        ),
+        DeclareLaunchArgument(
+            'enable_history_path', default_value='true',
+            description=(
+                '启动独立本船历史航迹节点，并在会话 RViz 中添加航迹显示；'
+                '设置面板不自动打开，可在需要时手动添加。'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'history_duration_sec', default_value='',
+            description='历史保留时长覆盖，单位秒；空值使用 config/history_path.yaml。',
+        ),
+        DeclareLaunchArgument(
+            'odom_topic', default_value='/usv_1/odom',
+            description='历史航迹订阅的本船定位话题，不修改定位源或导航配置。',
         ),
 
         DeclareLaunchArgument(
