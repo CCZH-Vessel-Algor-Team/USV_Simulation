@@ -1,0 +1,6 @@
+# Absolute angle in radians: 0 upright, pi/2 folded aft by default.
+float64 position
+---
+# Accepted for asynchronous execution, not a completion notification.
+bool success
+string message

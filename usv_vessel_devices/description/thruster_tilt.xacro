@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Tilt is upstream of steering: its transverse axis stays fixed to the hull.
+       At angle zero the original engine / propeller poses are unchanged. -->
+  <xacro:macro name="thruster_tilt_mount" params="ns side position orientation max_angle speed effort">
+    <link name="${ns}/${side}_tilt_link">
+      <inertial>
+        <mass value="0.2"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+      <visual name="tilt_hinge">
+        <origin rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="0.045" length="0.21"/></geometry>
+        <material name="tilt_hinge_metal"><color rgba="0.35 0.38 0.42 1"/></material>
+      </visual>
+    </link>
+    <joint name="${ns}/${side}_tilt_joint" type="revolute">
+      <parent link="${ns}/base_link"/><child link="${ns}/${side}_tilt_link"/>
+      <origin xyz="${position}" rpy="${orientation}"/>
+      <axis xyz="0 1 0"/>
+       <!-- Retain tiny solver clearance below the configured hard 75-degree cap.
+            Never extend the upper physical stop beyond that cap. -->
+       <limit lower="-0.0001" upper="${min(max_angle+0.0001, 75*pi/180)}" velocity="${speed}" effort="${effort}"/>
+      <dynamics damping="0.5" friction="0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Propeller force and rotation are handled once by ThrusterTilt. -->
+  <xacro:macro name="tilting_thruster_dynamics" params="ns side">
+    <gazebo>
+      <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController">
+        <joint_name>${ns}/${side}_chassis_engine_joint</joint_name>
+        <use_velocity_commands>true</use_velocity_commands>
+        <topic>${ns}/thrusters/${side}/pos</topic>
+        <name>${side}</name>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="thruster_tilt_control" params="ns cfg">
+    <gazebo>
+      <plugin filename="libThrusterTilt.so" name="usv_vessel_devices::ThrusterTilt">
+        <namespace>${ns}</namespace>
+        <max_angle>${cfg['thruster_tilt_max_angle']}</max_angle>
+        <speed>${cfg['thruster_tilt_speed']}</speed>
+      <tolerance>${cfg['thruster_tilt_tolerance']}</tolerance>
+      <effort>${cfg['thruster_tilt_effort']}</effort>
+      <fluid_level>$(arg fluid_level)</fluid_level>
+      <propeller_diameter>0.2</propeller_diameter>
+      <wavefield>
+        <topic>/vrx/wavefield/parameters</topic>
+        <wave><model>PMS</model><period>5.0</period><direction>0.0</direction>
+          <gain>0.3</gain><steepness>0.0</steepness></wave>
+      </wavefield>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>

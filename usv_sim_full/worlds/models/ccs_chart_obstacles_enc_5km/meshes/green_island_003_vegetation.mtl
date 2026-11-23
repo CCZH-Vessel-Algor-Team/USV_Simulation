@@ -1,0 +1,40 @@
+newmtl bark
+Ka 1 1 1
+Kd 1 1 1
+Ks 0.01 0.01 0.01
+Ns 3
+d 1
+map_Kd ../textures/bark.jpg
+
+newmtl leaves_0
+Ka 1 1 1
+Kd 0.82 0.92 0.78
+Ks 0.01 0.01 0.01
+Ns 3
+d 1
+map_Kd ../textures/foliage.jpg
+
+newmtl leaves_1
+Ka 1 1 1
+Kd 0.98 1.0 0.87
+Ks 0.01 0.01 0.01
+Ns 3
+d 1
+map_Kd ../textures/foliage.jpg
+
+newmtl leaves_2
+Ka 1 1 1
+Kd 0.73 0.86 0.7
+Ks 0.01 0.01 0.01
+Ns 3
+d 1
+map_Kd ../textures/foliage.jpg
+
+newmtl boulder
+Ka 1 1 1
+Kd 0.86 0.87 0.83
+Ks 0.01 0.01 0.01
+Ns 3
+d 1
+map_Kd ../textures/rock_face_03_diff_1k.jpg
+

@@ -1,0 +1,72 @@
+{
+  "id": "katoa_no_11",
+  "name": "KATOA NO.11",
+  "kind": "longliner",
+  "length": 50.52,
+  "beam": 9.0,
+  "draft": 2.4,
+  "deck": 1.5,
+  "source": "https://vessels.wcpfc.int/vessel/412",
+  "photo": "https://vessels.wcpfc.int/sites/default/files/K11%281%29.jpg",
+  "colors": [
+    [
+      230,
+      229,
+      217
+    ],
+    [
+      170,
+      52,
+      40
+    ],
+    [
+      153,
+      164,
+      156
+    ],
+    [
+      242,
+      239,
+      220
+    ],
+    [
+      24,
+      41,
+      48
+    ],
+    [
+      35,
+      77,
+      96
+    ],
+    [
+      182,
+      189,
+      181
+    ],
+    [
+      221,
+      122,
+      40
+    ]
+  ],
+  "dimension_basis": "published reference length and beam; photo-based superstructure",
+  "draft_verified": false,
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet_expansion",
+  "lane_y_m": 107.255,
+  "start_x_m": -25.26,
+  "start_z_m": 0.2,
+  "mass_kg": 856301.4299925,
+  "inertia_kg_m2": [
+    5261437.098910166,
+    148607475.6067238,
+    151698188.58060297
+  ],
+  "center_of_mass_z_m": -1.44,
+  "buoyancy_collision_box_m": [
+    45.468,
+    7.6499999999999995,
+    3.9
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

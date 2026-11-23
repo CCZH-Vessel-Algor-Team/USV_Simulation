@@ -1,0 +1,641 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <model name="ccs_tianwan_bridge">
+    <static>true</static>
+    <self_collide>false</self_collide>
+    <link name="bridge">
+      <visual name="concrete_00">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_00_concrete.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>true</cast_shadows>
+        <material>
+          <ambient>0.58 0.60 0.62 1</ambient>
+          <diffuse>0.58 0.60 0.62 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.9</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="asphalt_00">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_00_asphalt.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.10 0.10 0.11 1</ambient>
+          <diffuse>0.10 0.10 0.11 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>1.0</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="railing_00">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_00_railing.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.78 0.80 0.82 1</ambient>
+          <diffuse>0.78 0.80 0.82 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.45</roughness>
+              <metalness>0.3</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="markings_white_00">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_00_markings_white.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.92 0.92 0.92 1</ambient>
+          <diffuse>0.92 0.92 0.92 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="markings_yellow_00">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_00_markings_yellow.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.90 0.72 0.08 1</ambient>
+          <diffuse>0.90 0.72 0.08 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <collision name="solid_00">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_00_solid.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="concrete_01">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_01_concrete.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>true</cast_shadows>
+        <material>
+          <ambient>0.58 0.60 0.62 1</ambient>
+          <diffuse>0.58 0.60 0.62 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.9</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="asphalt_01">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_01_asphalt.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.10 0.10 0.11 1</ambient>
+          <diffuse>0.10 0.10 0.11 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>1.0</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="railing_01">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_01_railing.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.78 0.80 0.82 1</ambient>
+          <diffuse>0.78 0.80 0.82 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.45</roughness>
+              <metalness>0.3</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="markings_white_01">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_01_markings_white.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.92 0.92 0.92 1</ambient>
+          <diffuse>0.92 0.92 0.92 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="markings_yellow_01">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_01_markings_yellow.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.90 0.72 0.08 1</ambient>
+          <diffuse>0.90 0.72 0.08 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <collision name="solid_01">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_01_solid.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="concrete_02">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_02_concrete.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>true</cast_shadows>
+        <material>
+          <ambient>0.58 0.60 0.62 1</ambient>
+          <diffuse>0.58 0.60 0.62 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.9</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="asphalt_02">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_02_asphalt.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.10 0.10 0.11 1</ambient>
+          <diffuse>0.10 0.10 0.11 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>1.0</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="railing_02">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_02_railing.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.78 0.80 0.82 1</ambient>
+          <diffuse>0.78 0.80 0.82 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.45</roughness>
+              <metalness>0.3</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="markings_white_02">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_02_markings_white.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.92 0.92 0.92 1</ambient>
+          <diffuse>0.92 0.92 0.92 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="markings_yellow_02">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_02_markings_yellow.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.90 0.72 0.08 1</ambient>
+          <diffuse>0.90 0.72 0.08 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <collision name="solid_02">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_02_solid.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="concrete_03">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_03_concrete.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>true</cast_shadows>
+        <material>
+          <ambient>0.58 0.60 0.62 1</ambient>
+          <diffuse>0.58 0.60 0.62 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.9</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="asphalt_03">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_03_asphalt.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.10 0.10 0.11 1</ambient>
+          <diffuse>0.10 0.10 0.11 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>1.0</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="railing_03">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_03_railing.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.78 0.80 0.82 1</ambient>
+          <diffuse>0.78 0.80 0.82 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.45</roughness>
+              <metalness>0.3</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="markings_white_03">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_03_markings_white.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.92 0.92 0.92 1</ambient>
+          <diffuse>0.92 0.92 0.92 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <visual name="markings_yellow_03">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_03_markings_yellow.obj</uri>
+          </mesh>
+        </geometry>
+        <cast_shadows>false</cast_shadows>
+        <material>
+          <ambient>0.90 0.72 0.08 1</ambient>
+          <diffuse>0.90 0.72 0.08 1</diffuse>
+          <pbr>
+            <metal>
+              <roughness>0.8</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+      <collision name="solid_03">
+        <geometry>
+          <mesh>
+            <uri>model://ccs_tianwan_bridge/meshes/seg_03_solid.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name="beacon_0_0">
+        <pose>-815.7608 116.1517 2.250 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>4.500</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.8 0.05 0.05 1</ambient>
+          <diffuse>0.8 0.05 0.05 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_0_1">
+        <pose>-815.7608 116.1517 6.250 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>3.500</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.75 0.1 1</ambient>
+          <diffuse>0.95 0.75 0.1 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_0_2">
+        <pose>-815.7608 116.1517 9.000 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>2.000</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.8 0.05 0.05 1</ambient>
+          <diffuse>0.8 0.05 0.05 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_0_light">
+        <pose>-815.7608 116.1517 10.250 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.18</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>1 0.9 0.25 1</ambient>
+          <diffuse>1 0.9 0.25 1</diffuse>
+          <emissive>1 0.75 0.1 1</emissive>
+        </material>
+      </visual>
+      <collision name="beacon_0">
+        <pose>-815.7608 116.1517 5.000 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.6</radius>
+            <length>10.000</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="beacon_1_0">
+        <pose>-1062.9255 -2342.8808 0.675 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>1.350</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.8 0.05 0.05 1</ambient>
+          <diffuse>0.8 0.05 0.05 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_1_1">
+        <pose>-1062.9255 -2342.8808 1.875 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>1.050</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_1_2">
+        <pose>-1062.9255 -2342.8808 2.700 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>0.600</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.8 0.05 0.05 1</ambient>
+          <diffuse>0.8 0.05 0.05 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_1_light">
+        <pose>-1062.9255 -2342.8808 3.250 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.18</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>1 0.9 0.25 1</ambient>
+          <diffuse>1 0.9 0.25 1</diffuse>
+          <emissive>1 0.75 0.1 1</emissive>
+        </material>
+      </visual>
+      <collision name="beacon_1">
+        <pose>-1062.9255 -2342.8808 1.500 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.6</radius>
+            <length>3.000</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="beacon_2_0">
+        <pose>-800.4977 -13.2775 2.250 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>4.500</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.8 0.05 0.05 1</ambient>
+          <diffuse>0.8 0.05 0.05 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_2_1">
+        <pose>-800.4977 -13.2775 6.250 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>3.500</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.75 0.1 1</ambient>
+          <diffuse>0.95 0.75 0.1 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_2_2">
+        <pose>-800.4977 -13.2775 9.000 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>2.000</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.8 0.05 0.05 1</ambient>
+          <diffuse>0.8 0.05 0.05 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_2_light">
+        <pose>-800.4977 -13.2775 10.250 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.18</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>1 0.9 0.25 1</ambient>
+          <diffuse>1 0.9 0.25 1</diffuse>
+          <emissive>1 0.75 0.1 1</emissive>
+        </material>
+      </visual>
+      <collision name="beacon_2">
+        <pose>-800.4977 -13.2775 5.000 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.6</radius>
+            <length>10.000</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="beacon_3_0">
+        <pose>-790.3124 48.3571 0.675 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>1.350</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.8 0.05 0.05 1</ambient>
+          <diffuse>0.8 0.05 0.05 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_3_1">
+        <pose>-790.3124 48.3571 1.875 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>1.050</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.95 0.95 0.95 1</ambient>
+          <diffuse>0.95 0.95 0.95 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_3_2">
+        <pose>-790.3124 48.3571 2.700 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.55</radius>
+            <length>0.600</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.8 0.05 0.05 1</ambient>
+          <diffuse>0.8 0.05 0.05 1</diffuse>
+        </material>
+      </visual>
+      <visual name="beacon_3_light">
+        <pose>-790.3124 48.3571 3.250 0 0 0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.18</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>1 0.9 0.25 1</ambient>
+          <diffuse>1 0.9 0.25 1</diffuse>
+          <emissive>1 0.75 0.1 1</emissive>
+        </material>
+      </visual>
+      <collision name="beacon_3">
+        <pose>-790.3124 48.3571 1.500 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.6</radius>
+            <length>3.000</length>
+          </cylinder>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

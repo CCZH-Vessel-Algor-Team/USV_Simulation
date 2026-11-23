@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "source_model": "iea15_offshore_turbine",
+  "source_sha256": {
+    "meshes/rotor.obj": "736bcb81dce1f5071532498a3181d3656d2b672bad1a9716ed65091180a2abe1",
+    "meshes/tower_nacelle.obj": "1205d303fd14bcec7c39f59208f4ddd3f7bba5d93f270fa14ea48a24d13dee71",
+    "model.config": "04e6834b70c89f5f6e8d91b940607034ecaab8baf3e110efa245948c475de976",
+    "model.sdf": "5b0e5dfc64ee2faceccce009ca87dec798799fcfdd590f7eae651252e7390140"
+  },
+  "generated_sha256": {
+    "iea15_hill_turbine_detailed/model.config": "ec6e004097dcfdc56e100e3204c7fb344a516ff50049c4ef07fd732cdc4c569a",
+    "iea15_hill_turbine_detailed/model.sdf": "bb60631e6c254d35f4f128b6ef3a29d5d3de620597a8e1fe4606d7c69b4bd683",
+    "iea15_offshore_turbine_detailed/meshes/blades.obj": "2e6821ecb2e6be05b2962b447f8229663ac2b2868eac7c5ff44172e1c54a8f98",
+    "iea15_offshore_turbine_detailed/meshes/hill_dark.obj": "1a5bb8f01c058e88ceb2e7f36a0a33300de209aaa399d789914a85d7371fca1c",
+    "iea15_offshore_turbine_detailed/meshes/hill_door.obj": "a71853c73367431ab5093a341a64201d6a534bb5b0036e45a6cab1db15ed23ed",
+    "iea15_offshore_turbine_detailed/meshes/hill_foundation.obj": "16a0f5a5199da3aa9e240acb3be1fa205ff98e6c4758fcbe5155a53de42c2457",
+    "iea15_offshore_turbine_detailed/meshes/hill_red.obj": "c3cdaf39146e2578b8775a631d8708a67f6464cb70d32013cb9a4a2d192361a1",
+    "iea15_offshore_turbine_detailed/meshes/hill_shell.obj": "053888bb0e3e4140b2eb23aa37c8b6dd1c1f0662086208f089e9df987b8d307e",
+    "iea15_offshore_turbine_detailed/meshes/hill_steel.obj": "84dc1c3ef1f6b984132c41916ec8e811e8e5eae45031565a52da1e0cafc493a9",
+    "iea15_offshore_turbine_detailed/meshes/sea_dark.obj": "05e9a610fe5803a3aa8b9e38a422b872f3d37dd4c09a72262268b2e791818a7c",
+    "iea15_offshore_turbine_detailed/meshes/sea_door.obj": "e810b6dbb8f9d10f948d0888ab1a48f082f782c8f7afa75ec88769c6f38b029f",
+    "iea15_offshore_turbine_detailed/meshes/sea_foundation.obj": "16a0f5a5199da3aa9e240acb3be1fa205ff98e6c4758fcbe5155a53de42c2457",
+    "iea15_offshore_turbine_detailed/meshes/sea_patina.obj": "f00a1cb587d6a7dc34f25d95ccc1260a2e34223097fc91a54ad6efd21a8d9b70",
+    "iea15_offshore_turbine_detailed/meshes/sea_red.obj": "c3cdaf39146e2578b8775a631d8708a67f6464cb70d32013cb9a4a2d192361a1",
+    "iea15_offshore_turbine_detailed/meshes/sea_shell.obj": "053888bb0e3e4140b2eb23aa37c8b6dd1c1f0662086208f089e9df987b8d307e",
+    "iea15_offshore_turbine_detailed/meshes/sea_steel.obj": "1b1ef76fbbc5435626cd3690a773ef06e8acd44a362c14b3746fca0d6a9c19e3",
+    "iea15_offshore_turbine_detailed/meshes/spinner.obj": "78482749ffbd456391b0a1955994b02dd7261af9b2013e5cf5d7ff7be9c90ec6",
+    "iea15_offshore_turbine_detailed/model.config": "a04d61e3508934b18c9802647b3302e499208353089edc54fe6e924fc78350b4",
+    "iea15_offshore_turbine_detailed/model.sdf": "f384e669dd94eb5039876f22d5d90e6aabfd11354ce6c7379b2276db18b3da1e"
+  },
+  "statistics": {
+    "blades": 270,
+    "spinner": 480,
+    "iea15_offshore_turbine_detailed": {
+      "support_triangles": 8804,
+      "rotor_triangles": 750,
+      "support_visuals": 7,
+      "rotor_visuals": 2
+    },
+    "iea15_hill_turbine_detailed": {
+      "support_triangles": 4152,
+      "rotor_triangles": 750,
+      "support_visuals": 6,
+      "rotor_visuals": 2
+    }
+  },
+  "policy": "Appearance only. Source assets, physical parameters, blade surfaces, rotor envelope and speed unchanged. New platforms, railings, ladder, coatings and service fixtures are visual-only."
+}

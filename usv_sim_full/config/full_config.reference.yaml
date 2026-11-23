@@ -147,6 +147,29 @@ visualization:
 #
 # spawn_pose: [x, y, z, roll, pitch, yaw] — gz create / robot_bringup 初始位姿。
 #
+# vessel_devices（可选，仅 wamv_no_battery.urdf.xacro）:
+#   enabled: true — 默认十六盏独立灯（十二桅杆灯 + 四船顶角灯）及可放倒桅杆。
+#   缺省 false，不改变旧船模；主配置 full_config.yaml 显式为 usv_1 开启。
+#   lights_on_mast: true — 默认四盏红绿灯挂活动桅杆，front/rear 接口名表示上/下层。
+#   mast_lamp_scale: 0.15 — 横杆灯相对原始灯具 CAD 的适配比例，另乘 lamp_scale 与桅杆缩放。
+#   关闭 lights_on_mast 或 CAD 桅杆时，使用 front_x/rear_x/left_y/right_y/roof_z 的船顶布局。
+#   roof_lights_enabled: true — 另增船顶四角 roof_* 灯，左红右绿，固定于 base_link，不随桅杆运动/缩放。
+#   front_x/rear_x/left_y/right_y/roof_z — 同时控制新增 roof_* 的安装位置；原四灯已在船顶时不重复叠加。
+#   mast_xyz: [-0.35, 0.0, 1.55] — CAD 底板安装基准；简化模式为底部铰链位置。
+#   mast_use_cad / lamp_use_cad: true — 默认使用已转换的 CAD 网格，可设 false 回退圆柱/球体。
+#   mast_length: 1.1957382058263922 — 默认原 CAD 两倍总高（含固定底座，米），XYZ 等比例缩放。
+#   extra_lights_enabled: true — 为剩余七个原灯位置生成独立红绿灯。
+#   extra_light_colors: {aft_lower: red, aft_middle: green} — 可部分覆盖新增灯颜色，仅 red/green。
+#   lamp_scale: 1.0 — 红绿闭盖灯等比例微调；船顶布局下 roof_z 为灯具底部而非球中心。
+#   mast_max_angle: 1.5707963267948966 — 0 竖起，正角向船尾放倒（rad）。
+#   mast_speed: 0.3 — 最大角速度（rad/s）；不挂载或移动现有传感器。
+#   thruster_tilt_enabled: false — 可选 CUSTOM 双舷外机起翘；整机 usv_bringup CCS 场景显式开启。
+#   thruster_tilt_max_angle: 1.3089969389957472 — 最大起翘角，0 放下，正角向船尾抬起；硬上限 75°。
+#   thruster_tilt_speed: 0.25 / thruster_tilt_tolerance: 0.005 — rad/s、rad。
+#   thruster_tilt_effort: 10000.0 — URDF 名义电机力矩限值（Nm），用于保持原推力范围，不代表真实液压力矩。
+#   保留原推力/转向公开话题；起翘断推，放下后须收到新推力命令才恢复，不改变原灯/桅杆状态消息。
+#   完整参数见 usv_vessel_devices/config/devices.yaml；接口在 /<船名>/devices 下。
+#
 # overrides:
 #   visual_mesh, mass, inertia[ixx,iyy,izz] — 传入 xacro。
 #   thruster_positions — 左右桨位置等。
@@ -181,7 +204,7 @@ robot_1:
     enabled: true
   spawn_pose: [0.0, 0.0, 0.5, 0.0, 0.0, 0.0]
   overrides:
-    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
+    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body_colored.dae
     mass: 500.0
     inertia: [100.0, 100.0, 200.0]
     thruster_positions:
@@ -294,7 +317,7 @@ robot_2:
     enabled: true
   spawn_pose: [0.0, 5.0, 0.5, 0.0, 0.0, 0.0]
   overrides:
-    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body.dae
+    visual_mesh: package://usv_sim_full/description/models/body-Base/mesh/M5_body_colored.dae
     mass: 500.0
     inertia: [100.0, 100.0, 200.0]
     thruster_positions:

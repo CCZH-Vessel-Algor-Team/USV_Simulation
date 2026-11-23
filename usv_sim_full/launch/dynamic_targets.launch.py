@@ -1,7 +1,7 @@
 """独立启动无 Gazebo 的动态目标船模块。
 
 模块只启动 dynamic_ship_manager_node 的 virtual 后端，发布与仿真一致的
-/dynamic_ship/tracked_ships 与 /dynamic_ship/names，不启动 Gazebo、感知、
+/dynamic_ship/tracked_ships、/dynamic_ship/snapshot 与 /dynamic_ship/names，不启动 Gazebo、感知、
 导航或 RViz。使用时不得同时运行 simulation.launch.py 中的同名 manager。
 """
 

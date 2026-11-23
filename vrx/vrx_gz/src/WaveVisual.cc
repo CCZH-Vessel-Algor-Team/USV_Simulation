@@ -16,8 +16,10 @@
  */
 
 #include <gz/msgs/param.pb.h>
+#include <gz/msgs/vector3d.pb.h>
 
 #include <chrono>
+#include <cmath>
 #include <list>
 #include <mutex>
 #include <string>
@@ -41,6 +43,7 @@
 
 #include "Wavefield.hh"
 #include "WaveVisual.hh"
+#include "CurrentAdvection.hh"
 
 using namespace gz;
 using namespace vrx;
@@ -78,7 +81,7 @@ class vrx::WaveVisualPrivate
   public: sim::Entity entity = sim::kNullEntity;
 
   /// \brief Current sim time
-  public: std::chrono::steady_clock::duration currentSimTime;
+  public: std::chrono::steady_clock::duration currentSimTime{0};
 
   /// \brief Path to model
   public: std::string modelPath;
@@ -97,6 +100,13 @@ class vrx::WaveVisualPrivate
 
   /// \brief Shader param. Bump map speed in x and y.
   public: math::Vector2d bumpSpeed = math::Vector2d(0.01f, 0.01f);
+
+  /// \brief Optional, opt-in current advection. Legacy water is unchanged.
+  public: bool currentEnabled = false;
+  public: bool currentTimeInitialized = false;
+  public: math::Vector2d currentUvPerMetre;
+  public: math::Quaterniond worldToWaterRotation;
+  public: CurrentAdvection currentAdvection;
 
   /// \brief Shader param. HDR multiplier.
   public: float hdrMultiplier = 0.4f;
@@ -119,6 +129,9 @@ class vrx::WaveVisualPrivate
   /// \brief Callback for receiving wave field updates.
   /// \param[in] _msg The message containing all the wave field parameters.
   public: void OnWavefield(const msgs::Param &_msg);
+
+  /// \brief Store velocity only; never touch rendering from transport threads.
+  public: void OnCurrent(const msgs::Vector3d &_msg);
 
   /// \brief Callback to rendering engine tear down
   public: void OnRenderTeardown();
@@ -220,6 +233,41 @@ void WaveVisual::Configure(const sim::Entity &_entity,
     }
   }
 
+  // Current advection is absent by default and requires a matching shader.
+  // size is the water extent in metres corresponding to one unscaled UV span.
+  if (sdf->HasElement("current"))
+  {
+    const auto currentElem = sdf->GetElement("current");
+    const auto topic = currentElem->Get<std::string>("topic", "").first;
+    const auto size = currentElem->Get<math::Vector2d>(
+      "size", math::Vector2d::Zero).first;
+    const auto uvSign = currentElem->Get<math::Vector2d>(
+      "uv_sign", math::Vector2d(1.0, 1.0)).first;
+    if (!topic.empty() && std::isfinite(size.X()) &&
+        std::isfinite(size.Y()) && size.X() > 0.0 && size.Y() > 0.0 &&
+        std::isfinite(this->dataPtr->bumpScale.X()) &&
+        std::isfinite(this->dataPtr->bumpScale.Y()) &&
+        this->dataPtr->bumpScale.X() > 0.0 &&
+        this->dataPtr->bumpScale.Y() > 0.0 &&
+        std::abs(uvSign.X()) == 1.0 && std::abs(uvSign.Y()) == 1.0)
+    {
+      this->dataPtr->currentUvPerMetre.Set(
+        uvSign.X() * this->dataPtr->bumpScale.X() / size.X(),
+        uvSign.Y() * this->dataPtr->bumpScale.Y() / size.Y());
+      this->dataPtr->worldToWaterRotation =
+        sim::worldPose(_entity, _ecm).Rot().Inverse();
+      this->dataPtr->currentEnabled = this->dataPtr->node.Subscribe(topic,
+        &WaveVisualPrivate::OnCurrent, this->dataPtr.get());
+      if (!this->dataPtr->currentEnabled)
+        gzerr << "Unable to subscribe water visual to " << topic << std::endl;
+    }
+    else
+    {
+      gzerr << "Ignoring invalid water visual <current> topic/size/uv_sign"
+            << std::endl;
+    }
+  }
+
   this->dataPtr->entity = _entity;
   auto nameComp = _ecm.Component<sim::components::Name>(_entity);
   this->dataPtr->visualName = nameComp->Data();
@@ -247,7 +295,20 @@ void WaveVisual::PreUpdate(
 {
   GZ_PROFILE("WaveVisual::PreUpdate");
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
+  if (this->dataPtr->currentEnabled &&
+      this->dataPtr->currentTimeInitialized)
+  {
+    const double dt = std::chrono::duration<double>(
+      _info.simTime - this->dataPtr->currentSimTime).count();
+    if (dt < 0.0)
+      this->dataPtr->currentAdvection.ResetPhase();
+    else
+      // A paused world has zero elapsed sim time. Explicit single steps (and
+      // GUI updates carrying a paused flag) must still follow advancing time.
+      this->dataPtr->currentAdvection.Advance(dt);
+  }
   this->dataPtr->currentSimTime = _info.simTime;
+  this->dataPtr->currentTimeInitialized = true;
 }
 
 //////////////////////////////////////////////////
@@ -334,6 +395,12 @@ void WaveVisualPrivate::OnUpdate()
         static_cast<float>(this->bumpSpeed.Y())};
     (*vsParams)["bumpSpeed"].InitializeBuffer(2);
     (*vsParams)["bumpSpeed"].UpdateBuffer(bumpSpeedV);
+
+    if (this->currentEnabled)
+    {
+      (*vsParams)["currentAdvectionEnabled"] = 1;
+      (*vsParams)["currentUvOffset"].InitializeBuffer(2);
+    }
 
     // wavefield parameters:
     (*vsParams)["Nwaves"] = static_cast<int>(this->wavefield.Number());
@@ -447,6 +514,13 @@ void WaveVisualPrivate::OnUpdate()
     rendering::ShaderParamsPtr params;
     params = this->material->VertexShaderParams();
     (*params)["t"] = floatValue;
+    if (this->currentEnabled)
+    {
+      const auto &offset = this->currentAdvection.Offset();
+      float values[2] = {
+        static_cast<float>(offset[0]), static_cast<float>(offset[1])};
+      (*params)["currentUvOffset"].UpdateBuffer(values);
+    }
   }
 }
 
@@ -466,6 +540,21 @@ void WaveVisualPrivate::OnWavefield(const msgs::Param &_msg)
     std::chrono::duration<double>(this->currentSimTime).count();
   this->wavefield.Load(_msg, simTime, math::Vector3d(0.0, 0.0, 0.0));
   this->paramsSet = false;
+}
+
+//////////////////////////////////////////////////
+void WaveVisualPrivate::OnCurrent(const msgs::Vector3d &_msg)
+{
+  if (!std::isfinite(_msg.x()) || !std::isfinite(_msg.y()) ||
+      !std::isfinite(_msg.z()))
+    return;
+  std::lock_guard<std::mutex> lock(this->mutex);
+  const auto local = this->worldToWaterRotation.RotateVector(
+    math::Vector3d(_msg.x(), _msg.y(), _msg.z()));
+  this->currentAdvection.SetVelocity(
+    local.X() * this->currentUvPerMetre.X(),
+    local.Y() * this->currentUvPerMetre.Y());
+  // Do not reset phase, paramsSet, wave parameters, or reload any textures.
 }
 
 GZ_ADD_PLUGIN(vrx::WaveVisual,

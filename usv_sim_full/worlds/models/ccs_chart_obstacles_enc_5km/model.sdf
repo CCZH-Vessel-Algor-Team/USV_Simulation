@@ -7,18 +7,22 @@
       <visual name="visual">
         <geometry>
           <mesh>
-            <uri>meshes/chart_obstacle_001.obj</uri>
+            <uri>meshes/green_island_001.obj</uri>
           </mesh>
         </geometry>
-        <material>
-          <ambient>0.32 0.28 0.18 1</ambient>
-          <diffuse>0.42 0.36 0.22 1</diffuse>
-        </material>
+      </visual>
+      <visual name="vegetation">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>meshes/green_island_001_vegetation.obj</uri>
+          </mesh>
+        </geometry>
       </visual>
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>meshes/chart_obstacle_001.obj</uri>
+            <uri>meshes/green_island_001_collision.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -28,18 +32,22 @@
       <visual name="visual">
         <geometry>
           <mesh>
-            <uri>meshes/chart_obstacle_002.obj</uri>
+            <uri>meshes/green_island_002.obj</uri>
           </mesh>
         </geometry>
-        <material>
-          <ambient>0.32 0.28 0.18 1</ambient>
-          <diffuse>0.42 0.36 0.22 1</diffuse>
-        </material>
+      </visual>
+      <visual name="vegetation">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>meshes/green_island_002_vegetation.obj</uri>
+          </mesh>
+        </geometry>
       </visual>
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>meshes/chart_obstacle_002.obj</uri>
+            <uri>meshes/green_island_002_collision.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -49,18 +57,22 @@
       <visual name="visual">
         <geometry>
           <mesh>
-            <uri>meshes/chart_obstacle_003.obj</uri>
+            <uri>meshes/green_island_003.obj</uri>
           </mesh>
         </geometry>
-        <material>
-          <ambient>0.32 0.28 0.18 1</ambient>
-          <diffuse>0.42 0.36 0.22 1</diffuse>
-        </material>
+      </visual>
+      <visual name="vegetation">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>meshes/green_island_003_vegetation.obj</uri>
+          </mesh>
+        </geometry>
       </visual>
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>meshes/chart_obstacle_003.obj</uri>
+            <uri>meshes/green_island_003_collision.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -70,18 +82,22 @@
       <visual name="visual">
         <geometry>
           <mesh>
-            <uri>meshes/chart_obstacle_004.obj</uri>
+            <uri>meshes/green_island_004.obj</uri>
           </mesh>
         </geometry>
-        <material>
-          <ambient>0.32 0.28 0.18 1</ambient>
-          <diffuse>0.42 0.36 0.22 1</diffuse>
-        </material>
+      </visual>
+      <visual name="vegetation">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>meshes/green_island_004_vegetation.obj</uri>
+          </mesh>
+        </geometry>
       </visual>
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>meshes/chart_obstacle_004.obj</uri>
+            <uri>meshes/green_island_004_collision.obj</uri>
           </mesh>
         </geometry>
       </collision>

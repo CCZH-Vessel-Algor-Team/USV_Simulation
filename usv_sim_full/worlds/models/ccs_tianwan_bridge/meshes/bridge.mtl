@@ -1,0 +1,12 @@
+newmtl concrete
+Kd 1 1 1
+newmtl solid
+Kd 1 1 1
+newmtl asphalt
+Kd 1 1 1
+newmtl railing
+Kd 1 1 1
+newmtl markings_white
+Kd 1 1 1
+newmtl markings_yellow
+Kd 1 1 1

@@ -1,0 +1,7 @@
+newmtl terrain
+Ka 1 1 1
+Kd 1 1 1
+Ks 0.015 0.015 0.015
+Ns 4
+d 1
+map_Kd ../textures/green_island_002_albedo.jpg

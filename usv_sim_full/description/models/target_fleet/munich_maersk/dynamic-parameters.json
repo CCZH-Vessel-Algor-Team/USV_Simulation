@@ -1,0 +1,27 @@
+{
+  "id": "munich_maersk",
+  "name": "MUNICH MAERSK",
+  "kind": "container",
+  "length": 399.0,
+  "beam": 58.0,
+  "draft": 16.5,
+  "deck": 13.5,
+  "source": "https://www.hafen-hamburg.de/en/vessels/munich-maersk-47294/",
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet",
+  "lane_y_m": -151.685,
+  "start_x_m": -199.5,
+  "start_z_m": 0.2,
+  "mass_kg": 299705416.156125,
+  "inertia_kg_m2": [
+    83180490954.48439,
+    3243132538341.0195,
+    3281357216872.0854
+  ],
+  "center_of_mass_z_m": -9.9,
+  "buoyancy_collision_box_m": [
+    359.1,
+    49.3,
+    30.0
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

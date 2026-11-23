@@ -1,0 +1,6 @@
+# 0 = lowered; positive raises aft, within the configured maximum (default pi/2).
+float64 position
+---
+# Accepted, not necessarily arrived. Observe devices/thrusters/state.
+bool success
+string message

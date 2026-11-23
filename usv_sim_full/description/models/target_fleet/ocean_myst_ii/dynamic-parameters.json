@@ -1,0 +1,27 @@
+{
+  "id": "ocean_myst_ii",
+  "name": "OCEAN MYST II",
+  "kind": "fishing",
+  "length": 22.0,
+  "beam": 6.2,
+  "draft": 1.25,
+  "deck": 0.95,
+  "source": "https://vessels.wcpfc.int/vessel/5126",
+  "asset_source": "/home/cczh/Documents/Codex/2026-11-11/new-chat/outputs/ship_fleet",
+  "lane_y_m": 177.585,
+  "start_x_m": -11.0,
+  "start_z_m": 0.2,
+  "mass_kg": 133814.74515749997,
+  "inertia_kg_m2": [
+    363673.90852891916,
+    4425699.671509049,
+    4681429.685610918
+  ],
+  "center_of_mass_z_m": -0.75,
+  "buoyancy_collision_box_m": [
+    19.8,
+    5.27,
+    2.2
+  ],
+  "parameter_basis": "Analytic box-volume equilibrium and dimension-scaled test control/damping, not measured vessel parameters"
+}

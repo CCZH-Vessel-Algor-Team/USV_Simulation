@@ -26,6 +26,7 @@ def make_manager():
     ship = DynamicShip.__new__(DynamicShip)
     ship.model_name = 'dyn_target_1'
     ship.is_virtual = False
+    ship.model_spec = None
     ship.target_id = '12345678-9abc-def0-1234-56789abcdef0'
     ship._publisher_lock = threading.Lock()
     ship._closed = False
@@ -51,6 +52,7 @@ def make_manager():
     node.pose_feedback_timeout = 1.0
     node.dt = 0.1
     node.tracked_pub = Mock()
+    node.snapshot_pub = Mock()
     node.names_pub = Mock()
     node.marker_pub = None
     node.get_clock = lambda: SimpleNamespace(now=lambda: now)

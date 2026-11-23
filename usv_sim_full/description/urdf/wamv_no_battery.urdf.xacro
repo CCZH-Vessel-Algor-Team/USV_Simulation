@@ -25,6 +25,8 @@
   <xacro:arg name="enable_detachable_joint" default="true"/>
   <xacro:arg name="has_extra_sensors" default="false"/>
   <xacro:arg name="extra_sensors" default=""/>
+  <xacro:arg name="vessel_devices_enabled" default="false"/>
+  <xacro:arg name="vessel_devices_config" default=""/>
   
   <!-- 浮力和水动力参数 -->
   <xacro:arg name="hull_length" default="4.9"/>
@@ -217,6 +219,12 @@
   <!-- === 包含额外传感器配置 === -->
   <xacro:if value="$(arg has_extra_sensors)">
     <xacro:include filename="$(arg extra_sensors)" />
+  </xacro:if>
+
+  <!-- Optional boat lights and folding mast; existing sensors remain on base_link. -->
+  <xacro:if value="$(arg vessel_devices_enabled)">
+    <xacro:include filename="$(find usv_vessel_devices)/description/vessel_devices.xacro"/>
+    <xacro:vessel_devices ns="$(arg namespace)" config_file="$(arg vessel_devices_config)"/>
   </xacro:if>
 
   <!-- === Gazebo 原生环境动力学插件 === -->

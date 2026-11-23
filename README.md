@@ -38,6 +38,7 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 | 功能包 | 作用 | 启动或使用 | 文档 |
 | --- | --- | --- | --- |
 | [`usv_sim_full`](usv_sim_full/README.md) | 统一启动世界、船舶、桥接、传感器和后处理组件。 | `ros2 launch usv_sim_full main.launch.py` | [架构](usv_sim_full/docs/ARCHITECTURE.md) · [数据流](usv_sim_full/docs/DATA_FLOW.md) · [变更](usv_sim_full/CHANGELOG.md) |
+| [`usv_vessel_devices`](usv_vessel_devices/README.md) | 双层横杆红绿灯、顶部白灯和可放倒桅杆，含 ROS 消息与服务。 | 完整仿真按船启用，或 `ros2 launch usv_vessel_devices demo.launch.py`。 | [架构](usv_vessel_devices/docs/ARCHITECTURE.md) · [数据流](usv_vessel_devices/docs/DATA_FLOW.md) · [变更](usv_vessel_devices/CHANGELOG.md) |
 | [`ground_truth_sim`](ground_truth_sim/README.md) | 生成运动目标或 Gazebo 实体真值。 | `ros2 launch ground_truth_sim ground_truth_sim.launch.py` | [架构](ground_truth_sim/docs/ARCHITECTURE.md) · [数据流](ground_truth_sim/docs/DATA_FLOW.md) · [变更](ground_truth_sim/CHANGELOG.md) |
 | [`usv_route_planner`](usv_route_planner/README.md) | 根据地图和任务航点生成候选航线。 | `ros2 launch usv_route_planner route_planner.launch.py use_sim_time:=true` | [架构](usv_route_planner/docs/ARCHITECTURE.md) · [数据流](usv_route_planner/docs/DATA_FLOW.md) · [变更](usv_route_planner/CHANGELOG.md) |
 | [`gz_maritime_radar_plugin`](sensor_plugins/gz_maritime_radar_plugin/README.md) | 生成 Gazebo 海事雷达扇区数据。 | 由 `usv_sim_full` 在启用海事雷达时加载。 | [架构](sensor_plugins/gz_maritime_radar_plugin/docs/ARCHITECTURE.md) · [数据流](sensor_plugins/gz_maritime_radar_plugin/docs/DATA_FLOW.md) · [变更](sensor_plugins/gz_maritime_radar_plugin/CHANGELOG.md) |

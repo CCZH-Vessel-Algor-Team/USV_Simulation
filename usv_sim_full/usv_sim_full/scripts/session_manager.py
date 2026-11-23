@@ -460,6 +460,70 @@ def generate_root_xacro(config_data, session_dir, sensors_overlay_path):
     return None  # 后续由 compile_xacro_to_urdf 处理
 
 
+def generate_vessel_devices_config(robot_config, session_dir, urdf_filename):
+    """Validate an optional per-boat attachment configuration; old configs stay unchanged."""
+    devices = robot_config.get('vessel_devices', {})
+    if not isinstance(devices, dict):
+        raise ValueError('robot.vessel_devices must be a mapping')
+    enabled = devices.get('enabled', False)
+    if not isinstance(enabled, bool):
+        raise ValueError('vessel_devices.enabled must be a YAML boolean')
+    if not enabled:
+        return None
+    if robot_config.get('xacro_template') != 'wamv_no_battery.urdf.xacro':
+        raise ValueError('vessel_devices currently requires wamv_no_battery.urdf.xacro')
+    share = get_package_share_directory('usv_vessel_devices')
+    with open(os.path.join(share, 'config', 'devices.yaml'), encoding='utf-8') as stream:
+        defaults = yaml.safe_load(stream)
+    unknown = set(devices) - set(defaults) - {'enabled'}
+    if unknown:
+        raise ValueError(f'Unknown vessel_devices settings: {sorted(unknown)}')
+    settings = {**defaults, **{key: value for key, value in devices.items() if key != 'enabled'}}
+    colors = devices.get('extra_light_colors', {})
+    if not isinstance(colors, dict) or not all(isinstance(name, str) for name in colors):
+        raise ValueError('vessel_devices.extra_light_colors must map lamp names to red/green')
+    if set(colors) - set(defaults['extra_light_colors']):
+        raise ValueError('Unknown extra_light_colors lamp name')
+    settings['extra_light_colors'] = {**defaults['extra_light_colors'], **colors}
+    for key, value in settings.items():
+        if key == 'extra_light_colors':
+            if not all(isinstance(color, str) and color in ('red', 'green') for color in value.values()):
+                raise ValueError('extra_light_colors values must be red or green')
+            continue
+        if key in ('lamp_use_cad', 'mast_use_cad', 'lights_on_mast', 'extra_lights_enabled',
+                   'roof_lights_enabled', 'thruster_tilt_enabled'):
+            if not isinstance(value, bool):
+                raise ValueError(f'vessel_devices.{key} must be a YAML boolean')
+            continue
+        values = value if key == 'mast_xyz' else [value]
+        if key == 'mast_xyz' and (not isinstance(values, list) or len(values) != 3):
+            raise ValueError('vessel_devices.mast_xyz must contain three coordinates')
+        for number in values:
+            if isinstance(number, bool) or not isinstance(number, (float, int)) or not math.isfinite(number):
+                raise ValueError(f'vessel_devices.{key} must contain finite numbers')
+    for key in ('lamp_radius', 'lamp_scale', 'mast_lamp_scale', 'mast_length', 'mast_radius', 'mast_mass', 'mast_base_mass',
+                 'mast_max_angle', 'mast_speed', 'mast_tolerance',
+                 'thruster_tilt_max_angle', 'thruster_tilt_speed',
+                 'thruster_tilt_tolerance', 'thruster_tilt_effort'):
+        if settings[key] <= 0:
+            raise ValueError(f'vessel_devices.{key} must be positive')
+    if settings['mast_max_angle'] > math.pi or settings['mast_tolerance'] >= settings['mast_max_angle']:
+        raise ValueError('Invalid vessel_devices mast angle or tolerance')
+    if settings['front_x'] <= settings['rear_x'] or settings['left_y'] <= settings['right_y']:
+        raise ValueError('vessel_devices requires front_x > rear_x and left_y > right_y')
+    if (settings['thruster_tilt_max_angle'] > math.radians(75.0)
+            or settings['thruster_tilt_tolerance'] >= settings['thruster_tilt_max_angle']):
+        raise ValueError('Invalid vessel_devices thruster tilt angle or tolerance (maximum 75 degrees)')
+    if settings['thruster_tilt_enabled'] and (
+            robot_config.get('thruster_config', 'H') != 'CUSTOM'
+            or robot_config.get('overrides', {}).get('yaml_thruster_generation', False)):
+        raise ValueError('thruster_tilt_enabled requires the CUSTOM thruster layout without YAML generation')
+    path = os.path.join(session_dir, f'{os.path.splitext(urdf_filename)[0]}_devices.yaml')
+    with open(path, 'w', encoding='utf-8') as stream:
+        yaml.safe_dump(settings, stream)
+    return path
+
+
 def compile_xacro_to_urdf(
     root_xacro_path,
     config_data,
@@ -537,6 +601,10 @@ def compile_xacro_to_urdf(
         robot_name_arg,
         namespace_arg
     ]
+
+    devices_path = generate_vessel_devices_config(robot_config, session_dir, urdf_filename)
+    if devices_path:
+        cmd.extend(['vessel_devices_enabled:=true', f'vessel_devices_config:={devices_path}'])
 
     # 多船时关闭 VRX DetachableJoint（否则多实例争抢 platform，常见现象为 Gazebo 仅一条船）
     if xacro_template == 'wamv_no_battery.urdf.xacro' and multi_vehicle_session:
@@ -706,6 +774,17 @@ def generate_bridge_config(config_data):
             "ros_type_name": "tf2_msgs/msg/TFMessage",
             "gz_type_name": "gz.msgs.Pose_V",
             "direction": "GZ_TO_ROS"
+        })
+
+    # A moving mast still needs TF/joint feedback when general telemetry is disabled.
+    if (config_data.get('robot', {}).get('vessel_devices', {}).get('enabled', False)
+            and not config_data.get('visualization', {}).get('enable_telemetry', True)):
+        bridges.append({
+            "ros_topic_name": f"/model/{sanitized_bridge_ns}/joint_state",
+            "gz_topic_name": f"/world/{world_name}/model/{sanitized_bridge_ns}/joint_state",
+            "ros_type_name": "sensor_msgs/msg/JointState",
+            "gz_type_name": "gz.msgs.Model",
+            "direction": "GZ_TO_ROS",
         })
 
     # 添加推进器控制桥接配置（关键修复！）

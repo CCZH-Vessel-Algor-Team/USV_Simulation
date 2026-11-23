@@ -29,6 +29,44 @@ ros2 launch usv_sim_full main.launch.py config_path:=/path/to/full_config.yaml
 
 主配置文件为 `config/full_config.yaml`。
 
+### CCS 水面与波浪增益
+
+`ccs_open_water_crop` 在出生点和附近水域加密水面网格，远海仍用粗网格，
+并逐步淡出网格无法表现的短浪。波峰、波谷和反光的增强只作用于画面；
+船体水动力、随流漂移的细波纹和雷达／激光雷达的水面屏蔽不变。
+
+环境面板默认联动风和波浪。要手动比较波浪增益，先取消「风与波增益/流耦合」，
+把周期固定在 5 秒，再用船边低视角对比增益 0、0.30、1.00。增益从 0.30 调到
+1.00 仍会平滑过渡，约 14 秒到位。
+
+### CCS 高公岛码头
+
+`usv_bringup` 主入口使用的 `ccs_open_water_crop` 已接入高公岛港口、实体接岸堤路和局部坡道，
+统一港口与近岸山体材质，保留绿色岛屿主体、水面及其他场景设置。新增堤路改变局部岸线，
+仿真及 PX4 SITL profile 使用对应的派生导航图；原 ENC 海图和实船配置保留。
+港口外观、碰撞和接岸参数以当前世界与模型配置为准。
+护坡石、12 个浮桥构件和 14 艘装饰船已加入简化静态碰撞；外观与导航地图保持不变。
+
+### CCS 海上光伏场与陆地风机
+
+CCS 世界东南海域的 12 台风机已替换为固定桩式光伏场；4 台陆地风机保留原位置和转动。
+光伏场以 119.49527°E、34.67997°N 为中心，占地范围 1 km × 1 km。Gazebo 保留桩柱碰撞；
+默认全局地图不标光伏，另保留带桩柱标记的备用地图。
+光伏场参数、桩柱碰撞和备用地图以当前场景与地图配置为准。
+
+### CCS 田湾跨海大桥
+
+按 `CN441122.000` 海图位置布置田湾跨海大桥，建至 5 km 地图南边缘。模型保留
+125 m 主跨、70 m 辅通航跨、引桥、栏杆、6 车道标线和 4 个航标；路面和墩形参照照片拟合。
+桥在 Gazebo 中有碰撞，但**默认全局地图不加入大桥**，用于测试局部感知/避障。
+大桥的海图定位、跨径和碰撞以当前模型配置为准。
+
+### 船灯与可放倒桅杆
+
+主配置已为 `usv_1` 设置 `vessel_devices.enabled: true`，默认桅杆整体两倍尺寸（高约 1.196 m），十二个桅杆灯随其竖起/放倒，另增船顶四角左红右绿 `roof_*` 四灯固定在船体，十六灯独立控制。中线等新增桅杆灯颜色可用 `extra_light_colors` 逐灯覆盖；`roof_lights_enabled: false` 仅关闭新增四个角灯。现有传感器和推进器不改。
+
+接口、位置参数、操作示例和独立测试入口见 [usv_vessel_devices](../usv_vessel_devices/README.md)。旧配置缺少 `vessel_devices` 块或设置 `enabled: false` 时保持旧船模；目前支持本地 `wamv_no_battery.urdf.xacro` 模板。
+
 ### RViz导航目标
 
 CCS使用 **Nav2 Goal** 工具（快捷键 `g`）向唯一的 **Navigation 2** 面板输入本船导航目标。
@@ -56,12 +94,17 @@ CCS使用 **Nav2 Goal** 工具（快捷键 `g`）向唯一的 **Navigation 2** �
 固定坐标系必须使用 `map`，沿用 Gazebo world XY 与 map 对齐的前提。单击向
 `/dynamic_ship/spawn_point` 发布 PointStamped，拖拽向 `/dynamic_ship/spawn_pose` 发布
 PoseWithCovarianceStamped；两条路径均拒绝非法坐标系与非有限值，位姿路径还拒绝零四元数。
-速度、形状、half-distance 都取自 DynamicShipConfig，拖拽航向不受默认航向覆盖。
+速度、船型和半程距离都取自 DynamicShipConfig，拖拽航向不受默认航向覆盖。
 管理器不再订阅通用 `/clicked_point`，CCS 工具栏不再使用 Publish Point / 2D Pose Estimate 添加动态船。
-spawn/delete/config 服务继续用于程序化管理。`spawn_pose_topic` 是启动只读参数，
-覆盖时须同时调整工具的 `Topic`。
-请求协方差、Z 和时间戳不作为目标观测；跟踪发布仍等待 Gazebo 实测完整帧。
+`spawn_pose_topic` 是启动只读参数，覆盖时须同时调整工具的 `Topic`。
+请求协方差、Z 和时间戳不作为目标观测。
 
+程序化添加通过 `/dynamic_ship/spawn`（`usv_interfaces/srv/SpawnDynamicShip`），设置后续默认值通过
+`/dynamic_ship/set_config`（`usv_interfaces/srv/SetDynamicShipConfig`）。服务名和类型名不变，
+但字段以 `model_id` 代替 `shape`，旧客户端须更新并重新构建。`/dynamic_ship/models` 列出船型；
+`legacy_10m`、`debug_box`、`debug_cylinder` 对应原有的默认船和调试形状。生成请求的
+`virtual_ship: true` 只创建航迹；`mesh_profile` 可选，用来覆盖采用网格配置的仿真船。
+`ros2 launch usv_sim_full dynamic_targets.launch.py` 可单独运行虚拟后端，不启动 Gazebo。
 
 **添加风暴**（`s`）与面板选中的虚拟动态船也采用同样的单击／拖拽交互，操作备注位于各自面板最下方：
 
@@ -147,8 +190,8 @@ barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smooth
 - `scenario_manager_node` 默认不发布跟踪列表；认证配置由 `merge_certi_config.py` 显式启用，
   默认发布到 `/certificate_case/tracked_ships`。普通 CCS 的 `/dynamic_ship/tracked_ships`
   由动态船管理器／tracked merger 提供完整场景，不能另接一个只包含认证目标的完整列表发布者。
-- CCS 浮标栈开启时，动态船 GT 桥读取 `/_internal`，最终 `/sim/ground_truth` 由浮标栈的
-  `ground_truth_track_merger` 发布；浮标关闭时，桥读取 `/dynamic_ship/tracked_ships`，
+- 普通 CCS 动态船 GT 桥读取含逐船尺寸的 `/dynamic_ship/snapshot`。浮标栈开启时，最终
+  `/sim/ground_truth` 由浮标栈的 `ground_truth_track_merger` 发布；浮标关闭时，
   由 `ccs_ground_truth_track_merger` 汇总各个 `_src` 输入。关闭动态船 GT 桥不关闭该备用 merger，
   认证 GT 仍可使用它。
 - `ccs_certificate_encounter.launch.py` 沿用认证专用话题到 `_src/scenario` 的桥接。
@@ -160,13 +203,13 @@ barrier 第三段 8m、lateral margin 0.3m（第一段 5.3m）。`heading_smooth
 
 - 唯一 Gazebo 位姿订阅读取 `/world/<world>/dynamic_pose/info`。只接受精确根模型名，
   `model::link` 不会覆盖根位姿。累积反馈供原控制使用，最新完整 FRAME 单独用于发布完整性判断。
-- `/dynamic_ship/tracked_ships` 默认只包含本 manager 注册的动态船。Pose 使用实测 XY/艏向，
-  linear twist 使用世界坐标系低通速度；假定 Gazebo world XY 与 `map` 对齐。header 精确保留
-  Gazebo 秒/纳秒，禁止用接收时间补戳。不会发布开环推算的跟踪状态。
-- 所有注册目标必须在同一新鲜帧中，且没有 pending/quarantine，才能发布整批。
-  每个目标需两次递增观测建立速度；缺失、过期、非法位姿或未完成 bootstrap 时整批停止发布。
-  空列表只表示已知零注册且无 pending，并且收到成员变更后的新鲜帧；位姿缺失不等于实体删除。
-  成员变更边界保留所有时间戳准入检查通过的帧的最大时间（含窗口内未来帧和未保留在待处理槽中的帧），新帧必须
+- `/dynamic_ship/tracked_ships` 和 `/dynamic_ship/snapshot` 同批输出仿真船和虚拟船。
+  仿真船使用实测 XY、艏向和世界坐标系低通速度；虚拟船使用自身计算的航迹。混合时保留 Gazebo
+  原始帧时间戳，只有虚拟船时可用 ROS 时钟发布，不等待 Gazebo。
+- 所有仿真船必须在同一新鲜帧中，且没有 pending/quarantine，才能发布整批。
+  每艘仿真船需两次递增观测建立速度；缺失、过期、非法位姿或未完成 bootstrap 时整批停止发布。
+  仿真船清空后以成员变更后的新鲜帧确认；位姿缺失不等于实体删除。独立虚拟后端清空后直接发布空列表。
+  Gazebo 成员变更边界保留所有时间戳准入检查通过的帧的最大时间（含窗口内未来帧和未保留在待处理槽中的帧），新帧必须
   严格越过该边界。已删除根模型还须在边界后的帧中确认缺席，才解除对应的发布阻塞。
   最终发布按 registry → cache 顺序短暂加锁，重查成员版本和当前帧身份，并提升已到时的待处理帧；
   读取最终 ROS 时间后再次检查 reset Event，避免构造期间的新帧或时钟回退绕过发布门控。
