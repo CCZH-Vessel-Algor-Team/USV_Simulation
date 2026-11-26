@@ -4,13 +4,13 @@ lidar:
   vlp16:
     update_rate: 20                    # 激光雷达更新频率 (Hz)
     horizontal_samples: 2000           # 水平方向采样点数
-    vertical_samples: 16               # 垂直方向采样点数
+    vertical_samples: 64               # 垂直方向采样点数，保证 200 m 外能打到浮标
     horizontal_min_angle: -3.14159     # 水平最小扫描角度 (弧度)
     horizontal_max_angle: 3.14159      # 水平最大扫描角度 (弧度)
     vertical_min_angle: -0.261799      # 垂直最小扫描角度 (弧度)
     vertical_max_angle: 0.261799       # 垂直最大扫描角度 (弧度)
     min_range: 5.0                     # 最小测距范围 (m)
-    max_range: 120.0                   # 最大测距范围 (m)
+    max_range: 250.0                   # 最大测距范围 (m)，覆盖 200 m 提前避让
     range_resolution: 0.01             # 距离分辨率 (m)
     noise_stddev: 0.03                 # 测距噪声标准差 (m)
 # 缺少真实相机的运动模糊、局部快门、自动曝光、逆光等

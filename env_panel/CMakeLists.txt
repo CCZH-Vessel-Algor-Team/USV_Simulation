@@ -25,6 +25,7 @@ find_package(ros_gz_interfaces REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(usv_interfaces REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
   include/env_panel/vrx_env_panel.hpp
@@ -45,6 +46,8 @@ add_library(${PROJECT_NAME} SHARED
   src/radar_panel.cpp
   include/env_panel/usv_view_panel.hpp
   src/usv_view_panel.cpp
+  include/env_panel/own_ship_status_panel.hpp
+  src/own_ship_status_panel.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -60,6 +63,8 @@ ament_target_dependencies(${PROJECT_NAME}
   pluginlib
   std_msgs
   geometry_msgs
+  sensor_msgs
+  nav_msgs
   ros_gz_interfaces
   rcl_interfaces
   std_srvs

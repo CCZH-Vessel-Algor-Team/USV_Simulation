@@ -73,4 +73,11 @@
       无人船快捷视角面板，使用 RViz 原生视角控制器切换全局、跟随与自由视角。
     </description>
   </class>
+  <class name="env_panel/OwnShipStatusPanel"
+         type="env_panel::OwnShipStatusPanel"
+         base_class_type="rviz_common::Panel">
+    <description>
+      本船状态面板：航速/指令速度、航向与转向、推力差、位姿 GPS、吃水与导航就绪等实时状态。
+    </description>
+  </class>
 </library>
